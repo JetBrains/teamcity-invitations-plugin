@@ -41,4 +41,5 @@ public class InvitationsController extends BaseController {
 
         return invitation.processInvitationRequest(request, response);
     }
+
 }

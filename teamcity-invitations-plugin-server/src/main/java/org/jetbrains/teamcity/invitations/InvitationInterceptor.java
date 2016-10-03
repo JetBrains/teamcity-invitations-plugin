@@ -3,17 +3,13 @@ package org.jetbrains.teamcity.invitations;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.util.SessionUser;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
-import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import java.lang.reflect.InvocationTargetException;
 
 import static org.jetbrains.teamcity.invitations.Invitations.TOKEN_SESSION_ATTR;
 
@@ -42,8 +38,10 @@ public class InvitationInterceptor extends HandlerInterceptorAdapter {
 
         InvitationProcessor invitation = ((InvitationProcessor) tokenAttr);
 
+
         SUser user = SessionUser.getUser(request);
         if (user != null) {
+            session.removeAttribute(TOKEN_SESSION_ATTR);
             return invitation.userRegistered(user, request, response);
         }
 
