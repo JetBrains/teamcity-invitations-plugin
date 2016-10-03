@@ -7,4 +7,5 @@
     <bean class="org.jetbrains.teamcity.invitations.InvitationInterceptor"/>
     <bean class="org.jetbrains.teamcity.invitations.InvitationsController"/>
     <bean class="org.jetbrains.teamcity.invitations.Invitations"/>
+    <bean class="org.jetbrains.teamcity.invitations.InvitationsAdminPage"/>
 </beans>

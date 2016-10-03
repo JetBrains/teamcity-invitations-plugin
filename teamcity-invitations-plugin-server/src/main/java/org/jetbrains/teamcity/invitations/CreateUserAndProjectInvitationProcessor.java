@@ -54,4 +54,15 @@ class CreateUserAndProjectInvitationProcessor implements InvitationProcessor {
             return true;
         }
     }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+        return "Register and create own project invitation";
+    }
+
+    @Override
+    public boolean isMultiUser() {
+        return true;
+    }
 }

@@ -13,11 +13,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class InvitationsController extends BaseController {
+    public static final String INVITATIONS_PATH = "/invitations.html";
+
     private final Invitations invitations;
 
     public InvitationsController(WebControllerManager webControllerManager, Invitations invitations, AuthorizationInterceptor authorizationInterceptor) {
         this.invitations = invitations;
-        webControllerManager.registerController("/invitations.html", this);
+        webControllerManager.registerController(INVITATIONS_PATH, this);
         authorizationInterceptor.addPathNotRequiringAuth("/invitations.html");
     }
 
