@@ -8,4 +8,5 @@
     <bean class="org.jetbrains.teamcity.invitations.InvitationsController"/>
     <bean class="org.jetbrains.teamcity.invitations.Invitations"/>
     <bean class="org.jetbrains.teamcity.invitations.InvitationAdminController"/>
+    <bean class="org.jetbrains.teamcity.invitations.TeamCityCoreFacadeImpl"/>
 </beans>

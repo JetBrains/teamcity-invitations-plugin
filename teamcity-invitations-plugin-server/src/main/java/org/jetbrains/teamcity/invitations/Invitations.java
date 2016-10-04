@@ -1,10 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
-import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.serverSide.RelativeWebLinks;
-import jetbrains.buildServer.serverSide.SecurityContextEx;
-import jetbrains.buildServer.serverSide.auth.RolesManager;
-import jetbrains.buildServer.serverSide.identifiers.ProjectIdentifiersManager;
+import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,34 +14,23 @@ public class Invitations {
     public static final String TOKEN_SESSION_ATTR = "teamcity.invitation.token";
 
     private final Map<String, InvitationProcessor> myInvitations = new ConcurrentHashMap<>();
-    private final ProjectManager projectManager;
-    private final ProjectIdentifiersManager projectIdentifiersManager;
-    private final RolesManager rolesManager;
-    private final RelativeWebLinks webLinks;
-    private final SecurityContextEx securityContext;
+    private final TeamCityCoreFacade teamCityCore;
 
-    public Invitations(ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, RolesManager rolesManager, RelativeWebLinks webLinks, SecurityContextEx securityContext) {
-        this.projectManager = projectManager;
-        this.projectIdentifiersManager = projectIdentifiersManager;
-        this.rolesManager = rolesManager;
-        this.webLinks = webLinks;
-        this.securityContext = securityContext;
+    public Invitations(@NotNull TeamCityCoreFacade teamCityCore) {
+        this.teamCityCore = teamCityCore;
     }
 
-    @NotNull
-    public String createInvitation(@NotNull InvitationProcessor invitationProcessor) {
+    public String createUserAndProjectInvitation(@NotNull String registrationUrl, String parentProjectExtId) {
         String token = StringUtil.generateUniqueHash();
-        myInvitations.put(token, invitationProcessor);
+        CreateUserAndProjectInvitationProcessor invitation = new CreateUserAndProjectInvitationProcessor(token, registrationUrl,
+                parentProjectExtId, teamCityCore.findRoleById("PROJECT_ADMIN"), teamCityCore);
+        myInvitations.put(token, invitation);
+        Loggers.SERVER.info("User invitation with token " + token + " created: " + invitation.getDescription());
         return token;
     }
 
-    public void createUserAndProjectInvitation(@NotNull String registrationUrl, String parentProjectExtId) {
-        createInvitation(new CreateUserAndProjectInvitationProcessor(registrationUrl,
-                projectManager.findProjectByExternalId(parentProjectExtId), rolesManager.findRoleById("PROJECT_ADMIN"), webLinks, securityContext, projectIdentifiersManager));
-    }
-
     @Nullable
-    public InvitationProcessor getInvitation(String token) {
+    public InvitationProcessor getInvitation(@NotNull String token) {
         return myInvitations.get(token);
     }
 

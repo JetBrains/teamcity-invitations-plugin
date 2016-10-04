@@ -1,11 +1,8 @@
 package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.SecurityContextEx;
 import jetbrains.buildServer.serverSide.auth.Role;
-import jetbrains.buildServer.serverSide.identifiers.ProjectIdentifiersManager;
 import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
@@ -14,25 +11,20 @@ import org.springframework.web.servlet.view.RedirectView;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
-import static jetbrains.buildServer.serverSide.auth.RoleScope.projectScope;
 
 class CreateUserAndProjectInvitationProcessor implements InvitationProcessor {
+    private final String token;
     private final String registrationUrl;
-    private final SProject parentProject;
+    private final String parentProjectExternalId;
     private final Role role;
-    private final RelativeWebLinks webLinks;
-    private final SecurityContextEx securityContext;
-    private final ProjectIdentifiersManager projectIdentifiersManager;
+    private final TeamCityCoreFacade teamCityCore;
 
-    public CreateUserAndProjectInvitationProcessor(String registrationUrl, SProject parentProject, Role role, RelativeWebLinks webLinks, SecurityContextEx securityContext, ProjectIdentifiersManager projectIdentifiersManager) {
+    CreateUserAndProjectInvitationProcessor(String token, String registrationUrl, String parentProjectExternalId, Role role, TeamCityCoreFacade teamCityCore) {
+        this.token = token;
         this.registrationUrl = registrationUrl;
-        this.parentProject = parentProject;
+        this.parentProjectExternalId = parentProjectExternalId;
         this.role = role;
-        this.webLinks = webLinks;
-        this.securityContext = securityContext;
-        this.projectIdentifiersManager = projectIdentifiersManager;
+        this.teamCityCore = teamCityCore;
     }
 
     @Nullable
@@ -42,21 +34,17 @@ class CreateUserAndProjectInvitationProcessor implements InvitationProcessor {
         return new ModelAndView(new RedirectView(registrationUrl));
     }
 
-    @Override
-    public boolean userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws IOException {
+    public boolean userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
         try {
-            securityContext.runAsSystem(() -> {
-                String projectName = user.getUsername() + " project";
-                String externalId = projectIdentifiersManager.generateNewExternalId(parentProject.getExternalId(), projectName, null);
-                SProject project = parentProject.createProject(externalId, projectName);
-                user.addRole(projectScope(project.getProjectId()), role);
-                Loggers.SERVER.info("Creating project for the invited user " + user.describe(false) + ": " + project.describe(false) +
-                        " Giving " + role.describe(false) + " role to user in the project.");
-                response.sendRedirect(webLinks.getEditProjectPageUrl(project.getExternalId()));
-            });
+            SProject createdProject = teamCityCore.createProjectAsSystem(parentProjectExternalId, user.getUsername() + " project");
+            teamCityCore.addRoleAsSystem(user, role, createdProject);
+
+            Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
+                    "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
+            response.sendRedirect(teamCityCore.getEditProjectPageUrl(createdProject.getExternalId()));
             return false;
-        } catch (Throwable throwable) {
-            Loggers.SERVER.warn("Failed to create project for the invited user", throwable);
+        } catch (Exception e) {
+            Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
             return true;
         }
     }
