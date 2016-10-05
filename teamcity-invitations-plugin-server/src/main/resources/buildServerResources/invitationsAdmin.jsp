@@ -44,11 +44,12 @@
 </bs:modalDialog>
 
 
-<c:if test="${not empty invitations}">
+<bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
 
-    <h2>Pending invitations</h2>
+    <c:if test="${not empty invitations}">
 
-    <bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
+        <h2>Pending invitations</h2>
+
         <table class="dark borderBottom">
             <tr>
                 <th>URL</th>
@@ -69,5 +70,5 @@
                 </tr>
             </c:forEach>
         </table>
-    </bs:refreshable>
-</c:if>
+    </c:if>
+</bs:refreshable>
