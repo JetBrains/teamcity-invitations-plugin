@@ -6,6 +6,8 @@ import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface TeamCityCoreFacade {
 
     @Nullable
@@ -18,4 +20,6 @@ public interface TeamCityCoreFacade {
     SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name);
 
     void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
+
+    List<SProject> getActiveProjects();
 }

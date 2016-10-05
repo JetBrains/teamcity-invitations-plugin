@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,25 +26,23 @@ class CreateUserAndProjectInvitationProcessor implements InvitationProcessor {
         this.teamCityCore = teamCityCore;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
-        request.getSession().setAttribute(Invitations.TOKEN_SESSION_ATTR, this);
         return new ModelAndView(new RedirectView(registrationUrl));
     }
 
-    public boolean userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
+    @NotNull
+    public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
         try {
             SProject createdProject = teamCityCore.createProjectAsSystem(parentProjectExternalId, user.getUsername() + " project");
             teamCityCore.addRoleAsSystem(user, role, createdProject);
-
             Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
                     "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
-            response.sendRedirect(teamCityCore.getEditProjectPageUrl(createdProject.getExternalId()));
-            return false;
+            return new ModelAndView(new RedirectView(teamCityCore.getEditProjectPageUrl(createdProject.getExternalId()), true));
         } catch (Exception e) {
             Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
-            return true;
+            return new ModelAndView(new RedirectView("/", true));
         }
     }
 

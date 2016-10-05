@@ -4,7 +4,6 @@ import jetbrains.buildServer.RootUrlHolder;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.admin.AdminPage;
 import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.WebUtil;
 import org.jdom.Element;
@@ -23,17 +22,21 @@ public class InvitationAdminController extends BaseFormXmlController {
     @NotNull
     private final Invitations invitations;
     @NotNull
-    private final ProjectManager projectManager;
+    private final TeamCityCoreFacade teamCityCoreFacade;
+    @NotNull
+    private final InvitationsController invitationsController;
 
     public InvitationAdminController(final PagePlaces pagePlaces,
                                      @NotNull WebControllerManager webControllerManager,
                                      @NotNull RootUrlHolder rootUrlHolder,
                                      @NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull Invitations invitations,
-                                     @NotNull ProjectManager projectManager) {
+                                     @NotNull TeamCityCoreFacade teamCityCoreFacade,
+                                     @NotNull InvitationsController invitationsController) {
         this.webControllerManager = webControllerManager;
         this.invitations = invitations;
-        this.projectManager = projectManager;
+        this.teamCityCoreFacade = teamCityCoreFacade;
+        this.invitationsController = invitationsController;
         new InvitationsAdminPage(pagePlaces, rootUrlHolder, pluginDescriptor).register();
         webControllerManager.registerController("/admin/invitations.html", this);
         webControllerManager.registerAction(this, new CreateInvitationAction());
@@ -70,8 +73,8 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
             model.put("invitations", invitations.getInvitations());
-            model.put("invitationRootUrl", rootUrlHolder.getRootUrl() + InvitationsController.INVITATIONS_PATH);
-            model.put("projects", projectManager.getActiveProjects());
+            model.put("invitationRootUrl", invitationsController.getInvitationsPath());
+            model.put("projects", teamCityCoreFacade.getActiveProjects());
         }
 
         @NotNull

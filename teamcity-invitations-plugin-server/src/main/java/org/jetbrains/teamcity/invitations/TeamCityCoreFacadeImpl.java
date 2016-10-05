@@ -10,6 +10,8 @@ import jetbrains.buildServer.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final RolesManager rolesManager;
     private final ProjectManager projectManager;
@@ -64,5 +66,10 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         } catch (Throwable throwable) {
             ExceptionUtil.rethrowAsRuntimeException(throwable);
         }
+    }
+
+    @Override
+    public List<SProject> getActiveProjects() {
+        return projectManager.getActiveProjects();
     }
 }

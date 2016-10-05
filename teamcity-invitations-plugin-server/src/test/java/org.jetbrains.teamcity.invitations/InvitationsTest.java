@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.RootUrlHolder;
 import jetbrains.buildServer.controllers.AuthorizationInterceptor;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
@@ -16,7 +17,6 @@ import org.testng.annotations.Test;
 
 import static jetbrains.buildServer.serverSide.auth.RoleScope.projectScope;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.teamcity.invitations.InvitationsController.INVITATIONS_PATH;
 import static org.mockito.Mockito.mock;
 
 @Test
@@ -33,7 +33,8 @@ public class InvitationsTest {
         core = new FakeTeamCityCoreFacade();
         core.addRole("PROJECT_ADMIN");
         invitations = new Invitations(core);
-        invitationsController = new InvitationsController(mock(WebControllerManager.class), invitations, mock(AuthorizationInterceptor.class));
+        invitationsController = new InvitationsController(mock(WebControllerManager.class), invitations, mock(AuthorizationInterceptor.class),
+                mock(RootUrlHolder.class));
     }
 
     @Test
@@ -41,15 +42,15 @@ public class InvitationsTest {
         String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId");
 
         //user go to invitation url
-        newRequest(HttpMethod.GET, INVITATIONS_PATH + "?token=" + token);
+        newRequest(HttpMethod.GET, "/invitations.html?token=" + token);
         ModelAndView invitationResponse = invitationsController.doHandle(request, response);
         assertRedirectTo(invitationResponse, "/registerUser.html");
 
         //user registered
         SUser user = core.createUser("oleg");
         newRequest(HttpMethod.GET, "/overview.html");
-        boolean processed = invitations.getInvitation(token).userRegistered(user, request, response);
-        assertThat(processed).isFalse();
+        ModelAndView afterRegistrationMAW = invitations.getInvitation(token).userRegistered(user, request, response);
+        assertThat(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
         assertThat(core.getProject("oleg project")).isNotNull();
         assertThat(user.getRolesWithScope(projectScope("oleg project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
     }

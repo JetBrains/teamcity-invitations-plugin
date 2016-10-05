@@ -11,8 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Invitations {
 
-    public static final String TOKEN_SESSION_ATTR = "teamcity.invitation.token";
-
     private final Map<String, InvitationProcessor> myInvitations = new ConcurrentHashMap<>();
     private final TeamCityCoreFacade teamCityCore;
 

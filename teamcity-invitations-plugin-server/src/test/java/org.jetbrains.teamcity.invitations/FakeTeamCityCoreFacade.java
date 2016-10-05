@@ -51,6 +51,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         when(user.getRolesWithScope(RoleScope.projectScope(project.getProjectId()))).thenReturn(asList(role));
     }
 
+    @Override
+    public List<SProject> getActiveProjects() {
+        return new ArrayList<>(projects);
+    }
+
     void addRole(String id) {
         Role role = mock(Role.class);
         when(role.getId()).thenReturn(id);
