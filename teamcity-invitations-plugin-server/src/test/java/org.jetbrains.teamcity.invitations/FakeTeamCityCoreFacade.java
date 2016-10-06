@@ -52,6 +52,12 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         return project;
     }
 
+    @Nullable
+    @Override
+    public SProject findProjectByExtId(String projectExtId) {
+        return projects.stream().filter(pr -> pr.getExternalId().equals(projectExtId)).findFirst().orElse(null);
+    }
+
     @Override
     public void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
         when(user.getRolesWithScope(RoleScope.projectScope(project.getProjectId()))).thenReturn(asList(role));

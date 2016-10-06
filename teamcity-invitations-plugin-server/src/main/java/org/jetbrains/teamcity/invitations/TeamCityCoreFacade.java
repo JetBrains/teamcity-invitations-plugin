@@ -20,6 +20,9 @@ public interface TeamCityCoreFacade {
     @NotNull
     SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name);
 
+    @Nullable
+    SProject findProjectByExtId(String projectExtId);
+
     void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
 
     List<SProject> getActiveProjects();

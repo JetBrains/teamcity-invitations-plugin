@@ -18,6 +18,8 @@ class CreateUserAndProjectInvitation implements Invitation {
     private final String parentProjectExternalId;
     private final String roleId;
     private volatile TeamCityCoreFacade teamCityCore;
+    private volatile Role role;
+    private volatile SProject parentProject;
 
     CreateUserAndProjectInvitation(String token, String registrationUrl, String parentProjectExternalId, String roleId) {
         this.token = token;
@@ -30,11 +32,13 @@ class CreateUserAndProjectInvitation implements Invitation {
         return new CreateUserAndProjectInvitation(element.getAttributeValue("token"),
                 element.getAttributeValue("registrationUrl"),
                 element.getAttributeValue("parentExtId"),
-                element.getAttributeValue("role"));
+                element.getAttributeValue("roleId"));
     }
 
-    public void setTeamCityCore(TeamCityCoreFacade teamCityCore) {
+    void setTeamCityCore(TeamCityCoreFacade teamCityCore) {
         this.teamCityCore = teamCityCore;
+        this.role = teamCityCore.findRoleById(roleId);
+        this.parentProject = teamCityCore.findProjectByExtId(parentProjectExternalId);
     }
 
     @NotNull
@@ -67,7 +71,9 @@ class CreateUserAndProjectInvitation implements Invitation {
     @NotNull
     @Override
     public String getDescription() {
-        return "Register and create own project invitation";
+        return "Navigate user to '" + registrationUrl + "' to register," +
+                "\nCreate sub-project in the " + (parentProject != null ? parentProject.getFullName() : parentProjectExternalId) +
+                "\nGive user " + (role != null ? role.describe(false) : roleId) + " role in the created project.";
     }
 
     @Override

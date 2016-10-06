@@ -11,6 +11,19 @@
         margin-top: 1em;
     }
 
+    #invitationsTable td,
+    #invitationsTable th {
+        padding: 0.6em 1em;
+    }
+
+    #invitationsTable .edit {
+        vertical-align: top;
+        width: 6%;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        white-space: nowrap;
+    }
+
 </style>
 
 <div>
@@ -22,7 +35,7 @@
                 title="Create Invitation"
                 closeCommand="BS.InvitationsDialog.close();"
                 action="/admin/invitations.html?createInvitation=1"
-                saveCommand="BS.InvitationsDialog.submit();">
+                saveCommand="BS.InvitationsDialog.submit();">q
 
     <span class="greyNote">Invite user to create a project and give him administrator role in the project</span>
 
@@ -57,28 +70,27 @@
 
         <h2>Pending invitations</h2>
 
-        <table id="invitationsTable" class="dark borderBottom">
+        <table id="invitationsTable" class="highlightable parametersTable">
             <tr>
                 <th>URL</th>
                 <th>Description</th>
-                <th>Multi-user</th>
-                <th>Delete</th>
+                <th colspan="2">Multi-user</th>
             </tr>
             <c:forEach items="${invitations}" var="invitation">
                 <tr>
-                    <td>
+                    <td class="highlight">
                         <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
                               data-clipboard-target="#token_${invitation.key}"></span>
                         <span id="token_${invitation.key}"><c:out
                                 value="${invitationRootUrl}?token=${invitation.key}"/></span>
                     </td>
-                    <td>
-                        <c:out value="${invitation.value.description}"/>
+                    <td class="highlight">
+                        <bs:out value="${invitation.value.description}"/>
                     </td>
-                    <td>
+                    <td class="highlight">
                         <c:out value="${invitation.value.multiUser}"/>
                     </td>
-                    <td>
+                    <td class="highlight edit">
                         <a href="#"
                            onclick="BS.Invitations.deleteInvitation('${invitation.key}'); return false">Delete</a>
                     </td>

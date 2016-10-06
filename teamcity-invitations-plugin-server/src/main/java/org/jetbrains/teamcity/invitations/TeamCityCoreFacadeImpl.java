@@ -60,6 +60,12 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         }
     }
 
+    @Nullable
+    @Override
+    public SProject findProjectByExtId(String projectExtId) {
+        return projectManager.findProjectByExternalId(projectExtId);
+    }
+
     @Override
     public void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
         try {
