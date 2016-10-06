@@ -6,6 +6,13 @@
     ${teamcityPluginResourcesPath}invitationsAdmin.js
 </bs:linkScript>
 
+<style type="text/css">
+    #invitationsTable {
+        margin-top: 1em;
+    }
+
+</style>
+
 <div>
     <forms:addButton
             onclick="BS.InvitationsDialog.showCentered(); return false;">Create new invitation...</forms:addButton>
@@ -50,7 +57,7 @@
 
         <h2>Pending invitations</h2>
 
-        <table class="dark borderBottom">
+        <table id="invitationsTable" class="dark borderBottom">
             <tr>
                 <th>URL</th>
                 <th>Description</th>
@@ -60,7 +67,10 @@
             <c:forEach items="${invitations}" var="invitation">
                 <tr>
                     <td>
-                        <c:out value="${invitationRootUrl}?token=${invitation.key}"/>
+                        <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
+                              data-clipboard-target="#token_${invitation.key}"></span>
+                        <span id="token_${invitation.key}"><c:out
+                                value="${invitationRootUrl}?token=${invitation.key}"/></span>
                     </td>
                     <td>
                         <c:out value="${invitation.value.description}"/>
@@ -77,3 +87,7 @@
         </table>
     </c:if>
 </bs:refreshable>
+
+<script type="text/javascript">
+    BS.Clipboard('.clipboard-btn');
+</script>
