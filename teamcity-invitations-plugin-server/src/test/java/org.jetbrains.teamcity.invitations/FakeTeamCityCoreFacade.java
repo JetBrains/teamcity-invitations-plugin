@@ -8,6 +8,7 @@ import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     private final Map<String, Role> roles = new HashMap<>();
     private final List<SProject> projects = new ArrayList<>();
+    private final File pluginDataDir;
+
+    public FakeTeamCityCoreFacade(File pluginDataDir) {
+        this.pluginDataDir = pluginDataDir;
+    }
 
     @Nullable
     @Override
@@ -54,6 +60,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     @Override
     public List<SProject> getActiveProjects() {
         return new ArrayList<>(projects);
+    }
+
+    @Override
+    public File getPluginDataDir() {
+        return pluginDataDir;
     }
 
     void addRole(String id) {

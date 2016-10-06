@@ -10,6 +10,7 @@ import jetbrains.buildServer.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.List;
 
 public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
@@ -18,13 +19,15 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final ProjectIdentifiersManager projectIdentifiersManager;
     private final WebLinks webLinks;
     private final SecurityContextEx securityContext;
+    private final ServerPaths serverPaths;
 
-    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, WebLinks webLinks, SecurityContextEx securityContext) {
+    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, WebLinks webLinks, SecurityContextEx securityContext, ServerPaths serverPaths) {
         this.rolesManager = rolesManager;
         this.projectManager = projectManager;
         this.projectIdentifiersManager = projectIdentifiersManager;
         this.webLinks = webLinks;
         this.securityContext = securityContext;
+        this.serverPaths = serverPaths;
     }
 
     @Nullable
@@ -71,5 +74,10 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public List<SProject> getActiveProjects() {
         return projectManager.getActiveProjects();
+    }
+
+    @Override
+    public File getPluginDataDir() {
+        return serverPaths.getPluginDataDirectory();
     }
 }

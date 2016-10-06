@@ -23,13 +23,13 @@ public class InvitationsController extends BaseController {
     private static final String TOKEN_URL_PARAM = "token";
 
     @NotNull
-    private final Invitations invitations;
+    private final InvitationsStorage invitations;
 
     @NotNull
     private final RootUrlHolder rootUrlHolder;
 
     public InvitationsController(@NotNull WebControllerManager webControllerManager,
-                                 @NotNull Invitations invitations,
+                                 @NotNull InvitationsStorage invitations,
                                  @NotNull AuthorizationInterceptor authorizationInterceptor,
                                  @NotNull RootUrlHolder rootUrlHolder) {
         this.invitations = invitations;
@@ -60,7 +60,7 @@ public class InvitationsController extends BaseController {
 
     private ModelAndView processInvitationRequest(HttpServletRequest request, HttpServletResponse response) {
         String token = request.getParameter(TOKEN_URL_PARAM);
-        InvitationProcessor invitation = invitations.getInvitation(token);
+        Invitation invitation = invitations.getInvitation(token);
         if (invitation == null) {
             Loggers.SERVER.warn("Invitation with token " + token + " not found");
             response.setStatus(404);
@@ -75,7 +75,7 @@ public class InvitationsController extends BaseController {
         Object tokenObj = request.getSession().getAttribute(INVITATION_TOKEN_SESSION_ATTR);
         if (tokenObj != null && tokenObj instanceof String) {
             String token = (String) tokenObj;
-            InvitationProcessor invitation = invitations.getInvitation(token);
+            Invitation invitation = invitations.getInvitation(token);
             if (invitation == null) {
                 Loggers.SERVER.warn("User registered on invitation by token " + token + " but invitation doesn't exist anymore");
                 return redirectTo("/", response);

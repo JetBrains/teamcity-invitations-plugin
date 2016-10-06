@@ -6,6 +6,7 @@ import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.List;
 
 public interface TeamCityCoreFacade {
@@ -22,4 +23,6 @@ public interface TeamCityCoreFacade {
     void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
 
     List<SProject> getActiveProjects();
+
+    File getPluginDataDir();
 }
