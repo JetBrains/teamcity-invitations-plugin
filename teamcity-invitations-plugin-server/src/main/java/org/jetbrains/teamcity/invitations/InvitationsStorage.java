@@ -48,11 +48,18 @@ public class InvitationsStorage {
         return new HashMap<>(invitations);
     }
 
+    public synchronized void removeInvitation(@NotNull String token) {
+        Invitation removed = invitations.remove(token);
+        if (removed != null) persist();
+    }
+
     private synchronized void loadFromFile() {
         if (invitations != null) return;
 
         invitations = new HashMap<>();
         File invitationsFile = getInvitationsFile("inviteProjectAdmin");
+        if (!invitationsFile.exists() || invitationsFile.length() == 0) return;
+
         try {
             Element rootEl = FileUtil.parseDocument(invitationsFile);
             for (Object invitationEl : rootEl.getChildren()) {

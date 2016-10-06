@@ -5,11 +5,14 @@ import jetbrains.buildServer.RootUrlHolder;
 import jetbrains.buildServer.controllers.AuthorizationInterceptor;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.web.impl.TeamCityInternalKeys;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
+import jetbrains.buildServer.web.util.SessionUser;
 import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.servlet.ModelAndView;
@@ -27,6 +30,7 @@ public class InvitationsTest extends BaseTestCase {
     private InvitationsController invitationsController;
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
+    private MockHttpSession session;
     private FakeTeamCityCoreFacade core;
 
     @BeforeMethod
@@ -44,14 +48,12 @@ public class InvitationsTest extends BaseTestCase {
         String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId");
 
         //user go to invitation url
-        newRequest(HttpMethod.GET, "/invitations.html?token=" + token);
-        ModelAndView invitationResponse = invitationsController.doHandle(request, response);
+        ModelAndView invitationResponse = goToInvitationUrl(token);
         assertRedirectTo(invitationResponse, "/registerUser.html");
 
         //user registered
         SUser user = core.createUser("oleg");
-        newRequest(HttpMethod.GET, "/overview.html");
-        ModelAndView afterRegistrationMAW = invitations.getInvitation(token).userRegistered(user, request, response);
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(user);
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
         then(core.getProject("oleg project")).isNotNull();
         then(user.getRolesWithScope(projectScope("oleg project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
@@ -65,13 +67,49 @@ public class InvitationsTest extends BaseTestCase {
         then(invitations.getInvitation(token)).isNotNull();
     }
 
+    public void remove_invitation() throws Exception {
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId");
+        invitations.removeInvitation(token);
+
+        then(invitations.getInvitation(token)).isNull();
+
+        //user go to invitation url
+        ModelAndView invitationResponse = goToInvitationUrl(token);
+        assertRedirectTo(invitationResponse, "/");
+    }
+
+    public void invitation_removed_during_user_registration() throws Exception {
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId");
+
+        //user go to invitation url
+        ModelAndView invitationResponse = goToInvitationUrl(token);
+
+        invitations.removeInvitation(token);
+
+        SUser user = core.createUser("oleg");
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(user);
+        assertRedirectTo(afterRegistrationMAW, "/");
+    }
+
+    private ModelAndView goToAfterRegistrationUrl(SUser user) throws Exception {
+        newRequest(HttpMethod.GET, (String) request.getSession().getAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL));
+        SessionUser.setUser(request, user);
+        return invitationsController.doHandle(request, response);
+    }
+
+    private ModelAndView goToInvitationUrl(String token) throws Exception {
+        newRequest(HttpMethod.GET, "/invitations.html?token=" + token);
+        return invitationsController.doHandle(request, response);
+    }
+
     private void assertRedirectTo(ModelAndView invitationResponse, String expectedRedirect) {
         then(invitationResponse.getView()).isInstanceOf(RedirectView.class);
         then(((RedirectView) invitationResponse.getView()).getUrl()).isEqualTo(expectedRedirect);
     }
 
     private void newRequest(HttpMethod method, String url) {
-        request = MockMvcRequestBuilders.request(method, url).buildRequest(new MockServletContext());
+        if (session == null) session = new MockHttpSession();
+        request = MockMvcRequestBuilders.request(method, url).session(session).buildRequest(new MockServletContext());
         response = new MockHttpServletResponse();
     }
 }

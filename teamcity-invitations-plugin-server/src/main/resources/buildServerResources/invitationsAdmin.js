@@ -23,3 +23,13 @@ BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalD
         return $('invitationsFormProgress');
     }
 }));
+
+BS.Invitations = {
+    deleteInvitation: function (token) {
+        BS.ajaxRequest('/admin/invitations.html?removeInvitation=' + token, {
+            onComplete: function () {
+                BS.reload();
+            }
+        });
+    }
+};

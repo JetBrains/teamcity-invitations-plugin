@@ -55,6 +55,7 @@
                 <th>URL</th>
                 <th>Description</th>
                 <th>Multi-user</th>
+                <th>Delete</th>
             </tr>
             <c:forEach items="${invitations}" var="invitation">
                 <tr>
@@ -66,6 +67,10 @@
                     </td>
                     <td>
                         <c:out value="${invitation.value.multiUser}"/>
+                    </td>
+                    <td>
+                        <a href="#"
+                           onclick="BS.Invitations.deleteInvitation('${invitation.key}'); return false">Delete</a>
                     </td>
                 </tr>
             </c:forEach>

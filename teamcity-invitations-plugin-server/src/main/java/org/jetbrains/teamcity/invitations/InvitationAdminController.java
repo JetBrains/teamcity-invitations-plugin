@@ -1,6 +1,5 @@
 package org.jetbrains.teamcity.invitations;
 
-import jetbrains.buildServer.RootUrlHolder;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.admin.AdminPage;
 import jetbrains.buildServer.log.Loggers;
@@ -28,7 +27,6 @@ public class InvitationAdminController extends BaseFormXmlController {
 
     public InvitationAdminController(final PagePlaces pagePlaces,
                                      @NotNull WebControllerManager webControllerManager,
-                                     @NotNull RootUrlHolder rootUrlHolder,
                                      @NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull InvitationsStorage invitations,
                                      @NotNull TeamCityCoreFacade teamCityCoreFacade,
@@ -37,9 +35,10 @@ public class InvitationAdminController extends BaseFormXmlController {
         this.invitations = invitations;
         this.teamCityCoreFacade = teamCityCoreFacade;
         this.invitationsController = invitationsController;
-        new InvitationsAdminPage(pagePlaces, rootUrlHolder, pluginDescriptor).register();
+        new InvitationsAdminPage(pagePlaces, pluginDescriptor).register();
         webControllerManager.registerController("/admin/invitations.html", this);
         webControllerManager.registerAction(this, new CreateInvitationAction());
+        webControllerManager.registerAction(this, new RemoveInvitationAction());
     }
 
     @Override
@@ -60,13 +59,9 @@ public class InvitationAdminController extends BaseFormXmlController {
 
     public class InvitationsAdminPage extends AdminPage {
 
-        private RootUrlHolder rootUrlHolder;
-
         InvitationsAdminPage(@NotNull PagePlaces pagePlaces,
-                             @NotNull RootUrlHolder rootUrlHolder,
                              @NotNull PluginDescriptor pluginDescriptor) {
             super(pagePlaces, "invitations", pluginDescriptor.getPluginResourcesPath("invitationsAdmin.jsp"), "Invitations");
-            this.rootUrlHolder = rootUrlHolder;
             setPosition(PositionConstraint.last());
         }
 
@@ -96,6 +91,18 @@ public class InvitationAdminController extends BaseFormXmlController {
             String parentProjectExtId = request.getParameter("parentProject");
             //TODO validate
             invitations.createUserAndProjectInvitation(registrationUrl, parentProjectExtId);
+        }
+    }
+
+    private class RemoveInvitationAction implements ControllerAction {
+        @Override
+        public boolean canProcess(@NotNull final HttpServletRequest request) {
+            return request.getParameter("removeInvitation") != null;
+        }
+
+        @Override
+        public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
+            invitations.removeInvitation(request.getParameter("removeInvitation"));
         }
     }
 

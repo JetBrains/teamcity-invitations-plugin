@@ -11,6 +11,7 @@ import jetbrains.buildServer.web.util.WebUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,9 +63,8 @@ public class InvitationsController extends BaseController {
         String token = request.getParameter(TOKEN_URL_PARAM);
         Invitation invitation = invitations.getInvitation(token);
         if (invitation == null) {
-            Loggers.SERVER.warn("Invitation with token " + token + " not found");
-            response.setStatus(404);
-            return null;
+            Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
+            return new ModelAndView(new RedirectView("/"));
         }
         request.getSession().setAttribute(INVITATION_TOKEN_SESSION_ATTR, token);
         request.getSession().setAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL, INVITATIONS_PATH + "?" + AFTER_REGISTRATION_PARAM + "=1");
@@ -78,12 +78,12 @@ public class InvitationsController extends BaseController {
             Invitation invitation = invitations.getInvitation(token);
             if (invitation == null) {
                 Loggers.SERVER.warn("User registered on invitation by token " + token + " but invitation doesn't exist anymore");
-                return redirectTo("/", response);
+                return new ModelAndView(new RedirectView("/"));
             }
             return invitation.userRegistered(SessionUser.getUser(request), request, response);
         } else {
             Loggers.SERVER.warn("User registered on invitation but token doesn't exist in the session:" + WebUtil.getRequestDump(request));
-            return redirectTo("/", response);
+            return new ModelAndView(new RedirectView("/"));
         }
     }
 }
