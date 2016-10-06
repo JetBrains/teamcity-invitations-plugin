@@ -24,11 +24,11 @@ public class InvitationsStorage {
         this.teamCityCore = teamCityCore;
     }
 
-    public synchronized String createUserAndProjectInvitation(@NotNull String registrationUrl, String parentProjectExtId) {
+    public synchronized String createUserAndProjectInvitation(@NotNull String registrationUrl, String parentProjectExtId, boolean multiuser) {
         loadFromFile();
         String token = StringUtil.generateUniqueHash();
         CreateUserAndProjectInvitation invitation = new CreateUserAndProjectInvitation(token, registrationUrl,
-                parentProjectExtId, "PROJECT_ADMIN");
+                parentProjectExtId, "PROJECT_ADMIN", multiuser);
         invitation.setTeamCityCore(teamCityCore);
         invitations.put(token, invitation);
         persist();

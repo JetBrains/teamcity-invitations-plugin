@@ -89,8 +89,9 @@ public class InvitationAdminController extends BaseFormXmlController {
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
             String registrationUrl = request.getParameter("registrationUrl");
             String parentProjectExtId = request.getParameter("parentProject");
+            boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
             //TODO validate
-            invitations.createUserAndProjectInvitation(registrationUrl, parentProjectExtId);
+            invitations.createUserAndProjectInvitation(registrationUrl, parentProjectExtId, multiuser);
         }
     }
 

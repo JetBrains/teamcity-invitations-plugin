@@ -35,7 +35,7 @@
                 title="Create Invitation"
                 closeCommand="BS.InvitationsDialog.close();"
                 action="/admin/invitations.html?createInvitation=1"
-                saveCommand="BS.InvitationsDialog.submit();">q
+                saveCommand="BS.InvitationsDialog.submit();">
 
     <span class="greyNote">Invite user to create a project and give him administrator role in the project</span>
 
@@ -55,6 +55,13 @@
         </c:forEach>
     </forms:select>
 
+    <div class="clr spacing"></div>
+    <label for="multiuser" class="tableLabel">Multi-user</label>
+
+    <forms:checkbox name="multiuser"
+                    checked="true"
+                    onmouseover="BS.Tooltip.showMessage(this, {shift: {x: 10, y: 20}, delay: 600}, 'Invitation can be used many times if checked')"
+                    onmouseout="BS.Tooltip.hidePopup()"/>
 
     <div class="popupSaveButtonsBlock">
         <forms:submit id="createInvitationSumbit" label="Add"/>

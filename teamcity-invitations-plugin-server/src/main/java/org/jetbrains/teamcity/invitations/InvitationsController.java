@@ -80,7 +80,12 @@ public class InvitationsController extends BaseController {
                 Loggers.SERVER.warn("User registered on invitation by token " + token + " but invitation doesn't exist anymore");
                 return new ModelAndView(new RedirectView("/"));
             }
-            return invitation.userRegistered(SessionUser.getUser(request), request, response);
+            ModelAndView result = invitation.userRegistered(SessionUser.getUser(request), request, response);
+            if (!invitation.isMultiUser()) {
+                Loggers.SERVER.info("Single user invitation " + token + "was used to register user " + SessionUser.getUser(request).describe(false));
+                invitations.removeInvitation(token);
+            }
+            return result;
         } else {
             Loggers.SERVER.warn("User registered on invitation but token doesn't exist in the session:" + WebUtil.getRequestDump(request));
             return new ModelAndView(new RedirectView("/"));

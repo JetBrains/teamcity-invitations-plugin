@@ -17,22 +17,25 @@ class CreateUserAndProjectInvitation implements Invitation {
     private final String registrationUrl;
     private final String parentProjectExternalId;
     private final String roleId;
+    private final boolean multi;
     private volatile TeamCityCoreFacade teamCityCore;
     private volatile Role role;
     private volatile SProject parentProject;
 
-    CreateUserAndProjectInvitation(String token, String registrationUrl, String parentProjectExternalId, String roleId) {
+    CreateUserAndProjectInvitation(String token, String registrationUrl, String parentProjectExternalId, String roleId, boolean multi) {
         this.token = token;
         this.registrationUrl = registrationUrl;
         this.parentProjectExternalId = parentProjectExternalId;
         this.roleId = roleId;
+        this.multi = multi;
     }
 
     static CreateUserAndProjectInvitation from(Element element) {
         return new CreateUserAndProjectInvitation(element.getAttributeValue("token"),
                 element.getAttributeValue("registrationUrl"),
                 element.getAttributeValue("parentExtId"),
-                element.getAttributeValue("roleId"));
+                element.getAttributeValue("roleId"),
+                Boolean.valueOf(element.getAttributeValue("multi")));
     }
 
     void setTeamCityCore(TeamCityCoreFacade teamCityCore) {
@@ -78,7 +81,7 @@ class CreateUserAndProjectInvitation implements Invitation {
 
     @Override
     public boolean isMultiUser() {
-        return true;
+        return multi;
     }
 
     public void writeTo(@NotNull Element element) {
@@ -86,5 +89,6 @@ class CreateUserAndProjectInvitation implements Invitation {
         element.setAttribute("token", token);
         element.setAttribute("parentExtId", parentProjectExternalId);
         element.setAttribute("roleId", roleId);
+        element.setAttribute("multi", String.valueOf(multi));
     }
 }
