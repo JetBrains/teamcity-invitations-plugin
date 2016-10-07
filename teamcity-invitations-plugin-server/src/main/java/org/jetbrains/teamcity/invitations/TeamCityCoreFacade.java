@@ -15,9 +15,6 @@ public interface TeamCityCoreFacade {
     Role findRoleById(String roleId);
 
     @NotNull
-    String getEditProjectPageUrl(@NotNull String projectExtId);
-
-    @NotNull
     SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name);
 
     @Nullable

@@ -3,6 +3,7 @@ package org.jetbrains.teamcity.invitations;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.admin.AdminPage;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.WebUtil;
 import org.jdom.Element;
@@ -70,6 +71,7 @@ public class InvitationAdminController extends BaseFormXmlController {
             model.put("invitations", invitations.getInvitations());
             model.put("invitationRootUrl", invitationsController.getInvitationsPath());
             model.put("projects", teamCityCoreFacade.getActiveProjects());
+            model.put("defaultAfterRegistrationUrl", new RelativeWebLinks().getEditProjectPageUrl("{projectExtId}"));
         }
 
         @NotNull
@@ -88,10 +90,11 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
             String registrationUrl = request.getParameter("registrationUrl");
+            String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
             String parentProjectExtId = request.getParameter("parentProject");
             boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
             //TODO validate
-            invitations.createUserAndProjectInvitation(registrationUrl, parentProjectExtId, multiuser);
+            invitations.createUserAndProjectInvitation(registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
         }
     }
 

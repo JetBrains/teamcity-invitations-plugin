@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 class CreateUserAndProjectInvitation implements Invitation {
     private final String token;
     private final String registrationUrl;
+    private final String afterRegistrationUrl;
     private final String parentProjectExternalId;
     private final String roleId;
     private final boolean multi;
@@ -22,9 +23,10 @@ class CreateUserAndProjectInvitation implements Invitation {
     private volatile Role role;
     private volatile SProject parentProject;
 
-    CreateUserAndProjectInvitation(String token, String registrationUrl, String parentProjectExternalId, String roleId, boolean multi) {
+    CreateUserAndProjectInvitation(String token, String registrationUrl, String afterRegistrationUrl, String parentProjectExternalId, String roleId, boolean multi) {
         this.token = token;
         this.registrationUrl = registrationUrl;
+        this.afterRegistrationUrl = afterRegistrationUrl;
         this.parentProjectExternalId = parentProjectExternalId;
         this.roleId = roleId;
         this.multi = multi;
@@ -33,6 +35,7 @@ class CreateUserAndProjectInvitation implements Invitation {
     static CreateUserAndProjectInvitation from(Element element) {
         return new CreateUserAndProjectInvitation(element.getAttributeValue("token"),
                 element.getAttributeValue("registrationUrl"),
+                element.getAttributeValue("afterRegistrationUrl"),
                 element.getAttributeValue("parentExtId"),
                 element.getAttributeValue("roleId"),
                 Boolean.valueOf(element.getAttributeValue("multi")));
@@ -58,7 +61,8 @@ class CreateUserAndProjectInvitation implements Invitation {
             teamCityCore.addRoleAsSystem(user, role, createdProject);
             Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
                     "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
-            return new ModelAndView(new RedirectView(teamCityCore.getEditProjectPageUrl(createdProject.getExternalId()), true));
+            String afterRegistrationUrlFinal = afterRegistrationUrl.replace("{projectExtId}", createdProject.getExternalId());
+            return new ModelAndView(new RedirectView(afterRegistrationUrlFinal, true));
         } catch (Exception e) {
             Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
             return new ModelAndView(new RedirectView("/", true));
@@ -76,7 +80,8 @@ class CreateUserAndProjectInvitation implements Invitation {
     public String getDescription() {
         return "Navigate user to '" + registrationUrl + "' to register," +
                 "\nCreate sub-project in the " + (parentProject != null ? parentProject.getFullName() : parentProjectExternalId) +
-                "\nGive user " + (role != null ? role.describe(false) : roleId) + " role in the created project.";
+                "\nGive user " + (role != null ? role.describe(false) : roleId) + " role in the created project, " +
+                "\nNavigates user to '" + afterRegistrationUrl + "' page.";
     }
 
     @Override

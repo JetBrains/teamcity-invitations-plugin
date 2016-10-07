@@ -17,15 +17,13 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final RolesManager rolesManager;
     private final ProjectManager projectManager;
     private final ProjectIdentifiersManager projectIdentifiersManager;
-    private final WebLinks webLinks;
     private final SecurityContextEx securityContext;
     private final ServerPaths serverPaths;
 
-    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, WebLinks webLinks, SecurityContextEx securityContext, ServerPaths serverPaths) {
+    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext, ServerPaths serverPaths) {
         this.rolesManager = rolesManager;
         this.projectManager = projectManager;
         this.projectIdentifiersManager = projectIdentifiersManager;
-        this.webLinks = webLinks;
         this.securityContext = securityContext;
         this.serverPaths = serverPaths;
     }
@@ -34,12 +32,6 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public Role findRoleById(String roleId) {
         return rolesManager.findRoleById(roleId);
-    }
-
-    @NotNull
-    @Override
-    public String getEditProjectPageUrl(@NotNull String projectExtId) {
-        return webLinks.getEditProjectPageUrl(projectExtId);
     }
 
     @NotNull

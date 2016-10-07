@@ -1,6 +1,5 @@
 package org.jetbrains.teamcity.invitations;
 
-import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.serverSide.auth.RoleScope;
@@ -32,12 +31,6 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     @Override
     public Role findRoleById(String roleId) {
         return roles.get(roleId);
-    }
-
-    @NotNull
-    @Override
-    public String getEditProjectPageUrl(@NotNull String projectExtId) {
-        return new RelativeWebLinks().getEditProjectPageUrl(projectExtId);
     }
 
     @NotNull

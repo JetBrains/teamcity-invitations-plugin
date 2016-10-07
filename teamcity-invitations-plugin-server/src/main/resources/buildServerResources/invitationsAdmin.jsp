@@ -1,4 +1,5 @@
 <%@ taglib prefix="forms" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include-internal.jsp" %>
 <jsp:useBean id="invitations" type="java.util.Map" scope="request"/>
 
@@ -24,6 +25,13 @@
         white-space: nowrap;
     }
 
+    .textField {
+        width: 100%;
+    }
+
+    div .spacing {
+        margin-top: 0.5em;
+    }
 </style>
 
 <div>
@@ -37,31 +45,45 @@
                 action="/admin/invitations.html?createInvitation=1"
                 saveCommand="BS.InvitationsDialog.submit();">
 
-    <span class="greyNote">Invite user to create a project and give him administrator role in the project</span>
+    <span class="greyNote">
+        Create an invitation that allows user to register on the server,
+        creates the project based on username and gives the user Project Administrator role in the project.
+    </span>
 
-    <div class="clr spacing"></div>
+    <div class="spacing"></div>
+    <div>
+        <forms:checkbox name="multiuser" checked="true"/>
+        <label for="multiuser">Allow invitation to be used multiple times.</label>
+    </div>
+    <span class="greyNote">Invitation will be removed after user register using it</span>
 
-    <label for="registrationUrl" class="tableLabel">Registration Endpoint: <l:star/></label>
-    <forms:textField name="registrationUrl" value="/registerUser.html"/>
-    <div class="clr spacing"></div>
+    <div class="spacing"></div>
 
-    <label for="parentProject" class="tableLabel">Parent Project: <l:star/></label>
-    <forms:select id="parentProject" name="parentProject">
-        <c:forEach items="${projects}" var="project">
+    <div><label width="100%" for="registrationUrl">Registration Endpoint: <l:star/></label></div>
+    <div><forms:textField name="registrationUrl" value="/registerUser.html"/></div>
+    <span class="greyNote">User will be redirected to the specified path to register</span>
+    <div class="spacing"></div>
 
-            <forms:option value="${project.externalId}" selected="${project.externalId eq '_Root'}"
-                          title="${project.name}"><c:out value="${project.name}"/>
-            </forms:option>
-        </c:forEach>
-    </forms:select>
+    <div><label for="afterRegistrationUrl">After Registration Endpoint: <l:star/></label></div>
+    <div><forms:textField name="afterRegistrationUrl" value="${defaultAfterRegistrationUrl}"/></div>
+    <span class="greyNote">
+        User will be redirected to the specified path when project is created and role is given to user.
+    Path can contain project external id placeholder {projectExtId}
+    </span>
+    <div class="spacing"></div>
 
-    <div class="clr spacing"></div>
-    <label for="multiuser" class="tableLabel">Multi-user</label>
+    <div>
+        <label for="parentProject">Parent Project: <l:star/></label>
+        <forms:select id="parentProject" name="parentProject">
+            <c:forEach items="${projects}" var="project">
 
-    <forms:checkbox name="multiuser"
-                    checked="true"
-                    onmouseover="BS.Tooltip.showMessage(this, {shift: {x: 10, y: 20}, delay: 600}, 'Invitation can be used many times if checked')"
-                    onmouseout="BS.Tooltip.hidePopup()"/>
+                <forms:option value="${project.externalId}" selected="${project.externalId eq '_Root'}"
+                              title="${project.name}"><c:out value="${project.name}"/>
+                </forms:option>
+            </c:forEach>
+        </forms:select>
+    </div>
+    <span class="greyNote">The parent of the newly created project for the registered user</span>
 
     <div class="popupSaveButtonsBlock">
         <forms:submit id="createInvitationSumbit" label="Add"/>

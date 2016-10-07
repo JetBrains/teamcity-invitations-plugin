@@ -45,7 +45,7 @@ public class InvitationsTest extends BaseTestCase {
 
     @Test
     public void simple_invitation() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId", true);
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
 
         //user go to invitation url
         ModelAndView invitationResponse = goToInvitationUrl(token);
@@ -60,7 +60,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void should_survive_server_restart() {
-        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId", true);
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
 
         invitations = new InvitationsStorage(core);
 
@@ -68,7 +68,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void remove_invitation() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId", true);
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
         invitations.removeInvitation(token);
 
         then(invitations.getInvitation(token)).isNull();
@@ -79,7 +79,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void invitation_removed_during_user_registration() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId", true);
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
 
         //user go to invitation url
         goToInvitationUrl(token);
@@ -92,7 +92,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void multiple_user_invitation_can_be_used_several_times() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId", true);
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
@@ -109,7 +109,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void single_user_invitation_can_be_used_once() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "TestDriveProjectId", false);
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", false);
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
