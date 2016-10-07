@@ -1,6 +1,7 @@
 package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
@@ -56,7 +57,16 @@ class CreateUserAndProjectInvitation implements Invitation {
     @NotNull
     public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
         try {
-            SProject createdProject = teamCityCore.createProjectAsSystem(parentProjectExternalId, user.getUsername() + " project");
+            SProject createdProject = null;
+            String projectName = user.getUsername();
+            int i = 1;
+            while (createdProject == null) {
+                try {
+                    createdProject = teamCityCore.createProjectAsSystem(parentProjectExternalId, projectName);
+                } catch (DuplicateProjectNameException e) {
+                    projectName = user.getUsername() + i++;
+                }
+            }
             Role role = teamCityCore.findRoleById(roleId);
             teamCityCore.addRoleAsSystem(user, role, createdProject);
             Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +

@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.serverSide.auth.RoleScope;
@@ -36,6 +37,9 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     @NotNull
     @Override
     public SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name) {
+        if (projects.stream().anyMatch(p -> p.getName().equals(name))) {
+            throw new DuplicateProjectNameException("Already exists");
+        }
         SProject project = mock(SProject.class);
         when(project.getExternalId()).thenReturn(name);
         when(project.getProjectId()).thenReturn(name);

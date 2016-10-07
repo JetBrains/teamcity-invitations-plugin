@@ -55,8 +55,25 @@ public class InvitationsTest extends BaseTestCase {
         SUser user = core.createUser("oleg");
         ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(user);
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
-        then(core.getProject("oleg project")).isNotNull();
-        then(user.getRolesWithScope(projectScope("oleg project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
+        then(core.getProject("oleg")).isNotNull();
+        then(user.getRolesWithScope(projectScope("oleg"))).extracting(Role::getId).contains("PROJECT_ADMIN");
+    }
+
+    @Test
+    public void project_with_such_name_already_exists() throws Exception {
+        String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        core.createProjectAsSystem("TestDriveProjectId", "oleg");
+
+        //user go to invitation url
+        ModelAndView invitationResponse = goToInvitationUrl(token);
+        assertRedirectTo(invitationResponse, "/registerUser.html");
+
+        //user registered
+        SUser user = core.createUser("oleg");
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(user);
+        then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
+        then(core.getProject("oleg1")).isNotNull();
+        then(user.getRolesWithScope(projectScope("oleg1"))).extracting(Role::getId).contains("PROJECT_ADMIN");
     }
 
     public void should_survive_server_restart() {
@@ -96,16 +113,14 @@ public class InvitationsTest extends BaseTestCase {
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
-        ;
         goToAfterRegistrationUrl(core.createUser("oleg"));
 
         //second
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
-        ;
         goToAfterRegistrationUrl(core.createUser("ivan"));
 
-        then(core.getProject("oleg project")).isNotNull();
-        then(core.getProject("ivan project")).isNotNull();
+        then(core.getProject("oleg")).isNotNull();
+        then(core.getProject("ivan")).isNotNull();
     }
 
     public void single_user_invitation_can_be_used_once() throws Exception {
@@ -113,12 +128,10 @@ public class InvitationsTest extends BaseTestCase {
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
-        ;
         goToAfterRegistrationUrl(core.createUser("oleg"));
 
         //second
         assertRedirectTo(goToInvitationUrl(token), "/");
-        ;
     }
 
     private ModelAndView goToAfterRegistrationUrl(SUser user) throws Exception {
