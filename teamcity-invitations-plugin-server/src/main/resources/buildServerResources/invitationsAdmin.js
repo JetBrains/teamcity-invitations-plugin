@@ -1,4 +1,5 @@
 BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalDialog, {
+
     getContainer: function () {
         return $('invitationsFormDialog');
     },
@@ -9,7 +10,7 @@ BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalD
 
     submit: function () {
         var that = this;
-        BS.FormSaver.save(this, this.formElement().action, OO.extend(BS.SimpleListener, {
+        BS.FormSaver.save(this, this.action, OO.extend(BS.SimpleListener, {
             onCompleteSave: function () {
                 $('invitationsList').refresh();
                 that.enable();
@@ -21,6 +22,33 @@ BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalD
 
     savingIndicator: function () {
         return $('invitationsFormProgress');
+    },
+
+    openNew: function () {
+        this.init(null, "Add", "/admin/invitations.html?createInvitation=1", true, "/registerUser.html", "/admin/editProject.html?init=1&projectId={projectExtId}", "_Root");
+        this.showCentered();
+        return false;
+    },
+
+    openEdit: function (token, multiuser, registrationUrl, afterRegistrationUrl, parentExtId) {
+        this.init(token, "Edit", "/admin/invitations.html?editInvitation=1", multiuser, registrationUrl, afterRegistrationUrl, parentExtId);
+        this.showCentered();
+        return false;
+    },
+
+    init: function (token, buttonText, action, multiuser, registrationUrl, afterRegistrationUrl, parentExtId) {
+        this.action = action;
+        $j('#token').prop("value", token);
+        $j('#createInvitationSumbit').prop("value", buttonText);
+        $j('#invitationsFormTitle').text(buttonText + " Invitation");
+        $j('#multiuser').prop("checked", multiuser);
+        $j('#registrationUrl').val(registrationUrl);
+        $j('#afterRegistrationUrl').val(afterRegistrationUrl);
+        $j('#parentProject > option').each(function () {
+            if (this.value === parentExtId) {
+                $('parentProject').setSelectValue(this.value);
+            }
+        });
     }
 }));
 

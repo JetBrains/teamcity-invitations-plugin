@@ -1,7 +1,7 @@
 <%@ taglib prefix="forms" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include-internal.jsp" %>
-<jsp:useBean id="invitations" type="java.util.Map" scope="request"/>
+<jsp:useBean id="invitations" type="java.util.List" scope="request"/>
 
 <bs:linkScript>
     ${teamcityPluginResourcesPath}invitationsAdmin.js
@@ -35,53 +35,54 @@
 </style>
 
 <div>
-    <forms:addButton
-            onclick="BS.InvitationsDialog.showCentered(); return false;">Create new invitation...</forms:addButton>
+    <forms:addButton onclick="BS.InvitationsDialog.openNew();">Create new invitation...</forms:addButton>
 </div>
 
 <bs:modalDialog formId="invitationsForm"
-                title="Create Invitation"
+                title=""
                 closeCommand="BS.InvitationsDialog.close();"
                 action="/admin/invitations.html?createInvitation=1"
                 saveCommand="BS.InvitationsDialog.submit();">
 
     <span class="greyNote">
-        Create an invitation that allows user to register on the server,
+        Invitation that allows user to register on the server,
         creates the project based on username and gives the user Project Administrator role in the project.
     </span>
 
+    <input type="hidden" name="token" id="token"/>
+
     <div class="spacing"></div>
     <div>
-        <forms:checkbox name="multiuser" checked="true"/>
+        <forms:checkbox name="multiuser"/>
         <label for="multiuser">Allow invitation to be used multiple times.</label>
     </div>
-    <span class="greyNote">Invitation will be removed after user register using it</span>
+    <span class="greyNote">Invitation will be removed after user register using it if unchecked</span>
 
     <div class="spacing"></div>
 
-    <div><label width="100%" for="registrationUrl">Registration Endpoint: <l:star/></label></div>
-    <div><forms:textField name="registrationUrl" value="/registerUser.html"/></div>
+    <div><label for="registrationUrl">Registration Endpoint: <l:star/></label></div>
+    <div><forms:textField name="registrationUrl"/></div>
     <span class="greyNote">User will be redirected to the specified path to register</span>
     <div class="spacing"></div>
 
     <div><label for="afterRegistrationUrl">After Registration Endpoint: <l:star/></label></div>
-    <div><forms:textField name="afterRegistrationUrl" value="${defaultAfterRegistrationUrl}"/></div>
+    <div><forms:textField name="afterRegistrationUrl"/></div>
     <span class="greyNote">
         User will be redirected to the specified path when project is created and role is given to user.
-    Path can contain project external id placeholder {projectExtId}
+        Path can contain project external id placeholder {projectExtId}
     </span>
     <div class="spacing"></div>
 
     <div>
         <label for="parentProject">Parent Project: <l:star/></label>
-        <forms:select id="parentProject" name="parentProject">
+        <forms:select id="parentProject" name="parentProject" enableFilter="true" className="textField">
             <c:forEach items="${projects}" var="project">
-
-                <forms:option value="${project.externalId}" selected="${project.externalId eq '_Root'}"
-                              title="${project.name}"><c:out value="${project.name}"/>
+                <forms:option value="${project.externalId}" title="${project.name}">
+                    <c:out value="${project.name}"/>
                 </forms:option>
             </c:forEach>
         </forms:select>
+
     </div>
     <span class="greyNote">The parent of the newly created project for the registered user</span>
 
@@ -103,25 +104,33 @@
             <tr>
                 <th>URL</th>
                 <th>Description</th>
-                <th colspan="2">Multi-user</th>
+                <th>Multi-user</th>
+                <th colspan="2">Actions</th>
             </tr>
             <c:forEach items="${invitations}" var="invitation">
+                <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
+                <c:set var="editOnClick">
+                    return BS.InvitationsDialog.openEdit('${invitation.token}', ${invitation.multiUser}, '${invitation.registrationUrl}',
+                    '${invitation.afterRegistrationUrl}', '${invitation.parentProjectExternalId}');
+                </c:set>
+
                 <tr>
                     <td class="highlight">
                         <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
-                              data-clipboard-target="#token_${invitation.key}"></span>
-                        <span id="token_${invitation.key}"><c:out
-                                value="${invitationRootUrl}?token=${invitation.key}"/></span>
+                              data-clipboard-target="#token_${invitation.token}"></span>
+                        <span id="token_${invitation.token}"><c:out
+                                value="${invitationRootUrl}?token=${invitation.token}"/></span>
                     </td>
-                    <td class="highlight">
-                        <bs:out value="${invitation.value.description}"/>
+                    <td class="highlight" onclick="${editOnClick}">
+                        <bs:out value="${invitation.description}"/>
                     </td>
-                    <td class="highlight">
-                        <c:out value="${invitation.value.multiUser}"/>
+                    <td class="highlight" onclick="${editOnClick}">
+                        <c:out value="${invitation.multiUser}"/>
                     </td>
                     <td class="highlight edit">
-                        <a href="#"
-                           onclick="BS.Invitations.deleteInvitation('${invitation.key}'); return false">Delete</a>
+                        <a href="#" onclick="${editOnClick}">Edit</a></td>
+                    <td class="edit">
+                        <a href="#" onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
                     </td>
                 </tr>
             </c:forEach>

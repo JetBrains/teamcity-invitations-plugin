@@ -2,7 +2,6 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.FileUtil;
-import jetbrains.buildServer.util.StringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,9 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @ThreadSafe
@@ -24,13 +25,13 @@ public class InvitationsStorage {
         this.teamCityCore = teamCityCore;
     }
 
-    public synchronized String createUserAndProjectInvitation(@NotNull String registrationUrl,
+    public synchronized String createUserAndProjectInvitation(@NotNull String token,
+                                                              @NotNull String registrationUrl,
                                                               @NotNull String afterRegistrationUrl,
                                                               @NotNull String parentProjectExtId,
                                                               boolean multiuser) {
         loadFromFile();
-        String token = StringUtil.generateUniqueHash();
-        CreateUserAndProjectInvitation invitation = new CreateUserAndProjectInvitation(token, registrationUrl,
+        Invitation invitation = new Invitation(token, registrationUrl,
                 afterRegistrationUrl, parentProjectExtId, "PROJECT_ADMIN", multiuser);
         invitation.setTeamCityCore(teamCityCore);
         invitations.put(token, invitation);
@@ -46,9 +47,9 @@ public class InvitationsStorage {
     }
 
     @NotNull
-    public synchronized Map<String, InvitationDescription> getInvitations() {
+    public synchronized List<Invitation> getInvitations() {
         loadFromFile();
-        return new HashMap<>(invitations);
+        return new ArrayList<>(invitations.values());
     }
 
     public synchronized void removeInvitation(@NotNull String token) {
@@ -66,7 +67,7 @@ public class InvitationsStorage {
         try {
             Element rootEl = FileUtil.parseDocument(invitationsFile);
             for (Object invitationEl : rootEl.getChildren()) {
-                CreateUserAndProjectInvitation invitation = CreateUserAndProjectInvitation.from((Element) invitationEl);
+                Invitation invitation = Invitation.from((Element) invitationEl);
                 invitation.setTeamCityCore(teamCityCore);
                 invitations.put(invitation.getToken(), invitation);
             }

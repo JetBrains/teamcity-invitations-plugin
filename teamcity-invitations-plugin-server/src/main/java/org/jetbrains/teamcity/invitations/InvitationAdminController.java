@@ -3,7 +3,7 @@ package org.jetbrains.teamcity.invitations;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.admin.AdminPage;
 import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.serverSide.RelativeWebLinks;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.WebUtil;
 import org.jdom.Element;
@@ -39,6 +39,7 @@ public class InvitationAdminController extends BaseFormXmlController {
         new InvitationsAdminPage(pagePlaces, pluginDescriptor).register();
         webControllerManager.registerController("/admin/invitations.html", this);
         webControllerManager.registerAction(this, new CreateInvitationAction());
+        webControllerManager.registerAction(this, new EditInvitationAction());
         webControllerManager.registerAction(this, new RemoveInvitationAction());
     }
 
@@ -71,7 +72,6 @@ public class InvitationAdminController extends BaseFormXmlController {
             model.put("invitations", invitations.getInvitations());
             model.put("invitationRootUrl", invitationsController.getInvitationsPath());
             model.put("projects", teamCityCoreFacade.getActiveProjects());
-            model.put("defaultAfterRegistrationUrl", new RelativeWebLinks().getEditProjectPageUrl("{projectExtId}"));
         }
 
         @NotNull
@@ -94,20 +94,38 @@ public class InvitationAdminController extends BaseFormXmlController {
             String parentProjectExtId = request.getParameter("parentProject");
             boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
             //TODO validate
-            invitations.createUserAndProjectInvitation(registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+            invitations.createUserAndProjectInvitation(StringUtil.generateUniqueHash(), registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
         }
     }
 
+    private class EditInvitationAction implements ControllerAction {
+        @Override
+        public boolean canProcess(@NotNull HttpServletRequest request) {
+            return request.getParameter("editInvitation") != null;
+        }
+
+        @Override
+        public void process(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @Nullable Element element) {
+            String token = request.getParameter("token");
+            String registrationUrl = request.getParameter("registrationUrl");
+            String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
+            String parentProjectExtId = request.getParameter("parentProject");
+            boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
+            //TODO validate
+            invitations.removeInvitation(token);
+            invitations.createUserAndProjectInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+        }
+    }
     private class RemoveInvitationAction implements ControllerAction {
+
         @Override
         public boolean canProcess(@NotNull final HttpServletRequest request) {
             return request.getParameter("removeInvitation") != null;
         }
-
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
             invitations.removeInvitation(request.getParameter("removeInvitation"));
         }
-    }
 
+    }
 }
