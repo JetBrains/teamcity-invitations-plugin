@@ -13,7 +13,7 @@
         margin-bottom: 1em;
     }
 
-    #invitationsTable {
+    .invitationsList {
         margin-top: 1em;
     }
 
@@ -99,54 +99,59 @@
     </div>
 </bs:modalDialog>
 
+<h2>Pending invitations</h2>
 
 <bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
     <bs:messages key="<%=InvitationAdminController.MESSAGES_KEY%>"/>
 
-    <c:if test="${not empty invitations}">
+    <div class="invitationsList">
+        <c:if test="${empty invitations}">
+            There are no invitations.
+        </c:if>
 
-        <h2>Pending invitations</h2>
-
-        <table id="invitationsTable" class="parametersTable">
-            <tr>
-                <th>URL</th>
-                <th>Description</th>
-                <th colspan="2">Actions</th>
-            </tr>
-            <c:forEach items="${invitations}" var="invitation">
-                <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
-                <c:set var="editOnClick">
-                    return BS.InvitationsDialog.openEdit('${invitation.token}', ${invitation.multiUser}, '${invitation.registrationUrl}',
-                    '${invitation.afterRegistrationUrl}', '${invitation.parentProject.externalId}');
-                </c:set>
-
+        <c:if test="${not empty invitations}">
+            <table id="invitationsTable" class="parametersTable">
                 <tr>
-                    <td class="highlight">
+                    <th>URL</th>
+                    <th>Description</th>
+                    <th colspan="2">Actions</th>
+                </tr>
+                <c:forEach items="${invitations}" var="invitation">
+                    <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
+                    <c:set var="editOnClick">
+                        return BS.InvitationsDialog.openEdit('${invitation.token}', ${invitation.multiUser}, '${invitation.registrationUrl}',
+                        '${invitation.afterRegistrationUrl}', '${invitation.parentProject.externalId}');
+                    </c:set>
+
+                    <tr>
+                        <td class="highlight">
                         <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
                               data-clipboard-target="#token_${invitation.token}"></span>
-                        <span id="token_${invitation.token}"><c:out
-                                value="${invitationRootUrl}?token=${invitation.token}"/></span>
-                    </td>
+                            <span id="token_${invitation.token}"><c:out
+                                    value="${invitationRootUrl}?token=${invitation.token}"/></span>
+                        </td>
 
-                    <td class="highlight">
-                        Registration URL: <a target="_blank"
-                                             href="${invitation.registrationUrl}">${invitation.registrationUrl}</a><br/>
-                        Parent Project: <bs:projectLink project="${invitation.parentProject}" target="_blank"/><br/>
-                        Role: <a target="_blank"
-                                 href="/admin/admin.html?item=roles#${invitation.role.id}">${invitation.role.name}</a><br/>
-                        After Registration URL: <a target="_blank"
-                                                   href="${invitation.afterRegistrationUrl}">${invitation.afterRegistrationUrl}</a><br/>
-                        Multi-user: ${invitation.multiUser}
-                    </td>
-                    <td class="highlight edit" onclick="${editOnClick}">
-                        <a href="#">Edit</a></td>
-                    <td class="edit">
-                        <a href="#" onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
-                    </td>
-                </tr>
-            </c:forEach>
-        </table>
-    </c:if>
+                        <td class="highlight">
+                            Registration URL: <a target="_blank"
+                                                 href="${invitation.registrationUrl}">${invitation.registrationUrl}</a><br/>
+                            Parent Project: <bs:projectLink project="${invitation.parentProject}" target="_blank"/><br/>
+                            Role: <a target="_blank"
+                                     href="/admin/admin.html?item=roles#${invitation.role.id}">${invitation.role.name}</a><br/>
+                            After Registration URL: <a target="_blank"
+                                                       href="${invitation.afterRegistrationUrl}">${invitation.afterRegistrationUrl}</a><br/>
+                            Multi-user: ${invitation.multiUser}
+                        </td>
+                        <td class="highlight edit" onclick="${editOnClick}">
+                            <a href="#">Edit</a></td>
+                        <td class="edit">
+                            <a href="#" onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </table>
+        </c:if>
+    </div>
+
 </bs:refreshable>
 
 <script type="text/javascript">
