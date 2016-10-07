@@ -100,11 +100,10 @@
 
         <h2>Pending invitations</h2>
 
-        <table id="invitationsTable" class="highlightable parametersTable">
+        <table id="invitationsTable" class="parametersTable">
             <tr>
                 <th>URL</th>
                 <th>Description</th>
-                <th>Multi-user</th>
                 <th colspan="2">Actions</th>
             </tr>
             <c:forEach items="${invitations}" var="invitation">
@@ -121,14 +120,19 @@
                         <span id="token_${invitation.token}"><c:out
                                 value="${invitationRootUrl}?token=${invitation.token}"/></span>
                     </td>
-                    <td class="highlight" onclick="${editOnClick}">
-                        <bs:out value="${invitation.description}"/>
+
+                    <td class="highlight">
+                        Registration URL: <a target="_blank"
+                                             href="${invitation.registrationUrl}">${invitation.registrationUrl}</a><br/>
+                        Parent Project: <bs:projectLink project="${invitation.parentProject}" target="_blank"/><br/>
+                        Role: <a target="_blank"
+                                 href="/admin/admin.html?item=roles#${invitation.role.id}">${invitation.role.name}</a><br/>
+                        After Registration URL: <a target="_blank"
+                                                   href="${invitation.afterRegistrationUrl}">${invitation.afterRegistrationUrl}</a><br/>
+                        Multi-user: ${invitation.multiUser}
                     </td>
-                    <td class="highlight" onclick="${editOnClick}">
-                        <c:out value="${invitation.multiUser}"/>
-                    </td>
-                    <td class="highlight edit">
-                        <a href="#" onclick="${editOnClick}">Edit</a></td>
+                    <td class="highlight edit" onclick="${editOnClick}">
+                        <a href="#">Edit</a></td>
                     <td class="edit">
                         <a href="#" onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
                     </td>

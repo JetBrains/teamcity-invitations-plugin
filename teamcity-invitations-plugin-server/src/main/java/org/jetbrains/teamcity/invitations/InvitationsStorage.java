@@ -36,7 +36,7 @@ public class InvitationsStorage {
         invitation.setTeamCityCore(teamCityCore);
         invitations.put(token, invitation);
         persist();
-        Loggers.SERVER.info("User invitation with token " + token + " created: " + invitation.getDescription());
+        Loggers.SERVER.debug("User invitation with token " + token + " created.");
         return token;
     }
 

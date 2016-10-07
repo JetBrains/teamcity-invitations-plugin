@@ -69,6 +69,20 @@ public class Invitation {
         return multi;
     }
 
+
+    public SProject getParentProject() {
+        return parentProject;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    @NotNull
+    public String getToken() {
+        return token;
+    }
+
     @NotNull
     public ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
         return new ModelAndView(new RedirectView(registrationUrl));
@@ -97,19 +111,6 @@ public class Invitation {
             Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
             return new ModelAndView(new RedirectView("/", true));
         }
-    }
-
-    @NotNull
-    public String getToken() {
-        return token;
-    }
-
-    @NotNull
-    public String getDescription() {
-        return "Navigate user to '" + registrationUrl + "' to register," +
-                "\nCreate sub-project in the " + (parentProject != null ? parentProject.getFullName() : parentProjectExternalId) +
-                "\nGive user " + (role != null ? role.describe(false) : roleId) + " role in the created project, " +
-                "\nNavigates user to '" + afterRegistrationUrl + "' page.";
     }
 
     public void writeTo(@NotNull Element element) {

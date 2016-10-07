@@ -5,9 +5,11 @@ import jetbrains.buildServer.RootUrlHolder;
 import jetbrains.buildServer.controllers.AuthorizationInterceptor;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.util.XmlUtil;
 import jetbrains.buildServer.web.impl.TeamCityInternalKeys;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import jetbrains.buildServer.web.util.SessionUser;
+import org.jdom.Element;
 import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -78,12 +80,16 @@ public class InvitationsTest extends BaseTestCase {
 
     public void should_survive_server_restart() {
         String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
-        String expectedDescription = invitations.getInvitation(token).getDescription();    
-        
+        Element beforeRestartEl = new Element("invitation");
+        invitations.getInvitation(token).writeTo(beforeRestartEl);
+
         invitations = new InvitationsStorage(core);
 
         then(invitations.getInvitation(token)).isNotNull();
-        then(invitations.getInvitation(token).getDescription()).isEqualTo(expectedDescription);
+
+        Element afterRestartEl = new Element("invitation");
+        invitations.getInvitation(token).writeTo(afterRestartEl);
+        then(XmlUtil.to_s(afterRestartEl)).isEqualTo(XmlUtil.to_s(beforeRestartEl));
     }
 
     public void remove_invitation() throws Exception {
