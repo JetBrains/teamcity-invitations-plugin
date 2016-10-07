@@ -78,10 +78,12 @@ public class InvitationsTest extends BaseTestCase {
 
     public void should_survive_server_restart() {
         String token = invitations.createUserAndProjectInvitation("/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        String expectedDescription = invitations.getInvitation(token).getDescription();
 
         invitations = new InvitationsStorage(core);
 
         then(invitations.getInvitation(token)).isNotNull();
+        then(invitations.getInvitation(token).getDescription()).isEqualTo(expectedDescription);
     }
 
     public void remove_invitation() throws Exception {

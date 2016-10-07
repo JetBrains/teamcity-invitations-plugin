@@ -101,6 +101,7 @@ class CreateUserAndProjectInvitation implements Invitation {
 
     public void writeTo(@NotNull Element element) {
         element.setAttribute("registrationUrl", registrationUrl);
+        element.setAttribute("afterRegistrationUrl", afterRegistrationUrl);
         element.setAttribute("token", token);
         element.setAttribute("parentExtId", parentProjectExternalId);
         element.setAttribute("roleId", roleId);
