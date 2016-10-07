@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.admin.AdminPage;
 import jetbrains.buildServer.log.Loggers;
@@ -16,6 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 public class InvitationAdminController extends BaseFormXmlController {
+
+    public static final String MESSAGES_KEY = "teamcity.invitations.plugin";
 
     @NotNull
     private final WebControllerManager webControllerManager;
@@ -93,8 +96,12 @@ public class InvitationAdminController extends BaseFormXmlController {
             String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
             String parentProjectExtId = request.getParameter("parentProject");
             boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-            //TODO validate
-            invitations.createUserAndProjectInvitation(StringUtil.generateUniqueHash(), registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+            try {
+                String token = invitations.createUserAndProjectInvitation(StringUtil.generateUniqueHash(), registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' created.");
+            } catch (Exception e) {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
+            }
         }
     }
 
@@ -111,9 +118,13 @@ public class InvitationAdminController extends BaseFormXmlController {
             String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
             String parentProjectExtId = request.getParameter("parentProject");
             boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-            //TODO validate
-            invitations.removeInvitation(token);
-            invitations.createUserAndProjectInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+            try {
+                invitations.removeInvitation(token);
+                invitations.createUserAndProjectInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' updated.");
+            } catch (Exception e) {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
+            }
         }
     }
     private class RemoveInvitationAction implements ControllerAction {
@@ -124,7 +135,9 @@ public class InvitationAdminController extends BaseFormXmlController {
         }
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
-            invitations.removeInvitation(request.getParameter("removeInvitation"));
+            String token = request.getParameter("removeInvitation");
+            invitations.removeInvitation(token);
+            ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' removed.");
         }
 
     }

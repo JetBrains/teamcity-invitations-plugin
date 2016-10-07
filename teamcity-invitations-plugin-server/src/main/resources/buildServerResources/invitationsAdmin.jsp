@@ -1,3 +1,4 @@
+<%@ page import="org.jetbrains.teamcity.invitations.InvitationAdminController" %>
 <%@ taglib prefix="forms" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include-internal.jsp" %>
@@ -8,6 +9,10 @@
 </bs:linkScript>
 
 <style type="text/css">
+    #createNewButton {
+        margin-bottom: 1em;
+    }
+
     #invitationsTable {
         margin-top: 1em;
     }
@@ -35,7 +40,8 @@
 </style>
 
 <div>
-    <forms:addButton onclick="BS.InvitationsDialog.openNew();">Create new invitation...</forms:addButton>
+    <forms:addButton id="createNewButton"
+                     onclick="BS.InvitationsDialog.openNew();">Create new invitation...</forms:addButton>
 </div>
 
 <bs:modalDialog formId="invitationsForm"
@@ -95,6 +101,7 @@
 
 
 <bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
+    <bs:messages key="<%=InvitationAdminController.MESSAGES_KEY%>"/>
 
     <c:if test="${not empty invitations}">
 

@@ -37,12 +37,12 @@ public class Invitation {
         this.teamCityCore = core;
         Role role = core.findRoleById(roleId);
         if (role == null) {
-            throw new CreateInvitationException("Unable to create invitation with a non-existing role " + roleId);
+            throw new CreateInvitationException("Failed to create invitation with a non-existing role " + roleId);
         }
         this.role = role;
         SProject parent = core.findProjectByExtId(parentProjectExternalId);
         if (parent == null) {
-            throw new CreateInvitationException("Unable to create invitation with a non-existing project " + parentProjectExternalId);
+            throw new CreateInvitationException("Failed to create invitation with a non-existing project " + parentProjectExternalId);
         }
         this.parentProject = parent;
     }
