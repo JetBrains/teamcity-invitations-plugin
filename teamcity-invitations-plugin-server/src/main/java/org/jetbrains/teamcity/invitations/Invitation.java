@@ -1,6 +1,5 @@
 package org.jetbrains.teamcity.invitations;
 
-import jetbrains.buildServer.Used;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
 import jetbrains.buildServer.serverSide.SProject;
@@ -8,6 +7,7 @@ import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -15,65 +15,75 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class Invitation {
+    @NotNull
     private final String token;
+    @NotNull
     private final String registrationUrl;
+    @NotNull
     private final String afterRegistrationUrl;
-    private final String parentProjectExternalId;
-    private final String roleId;
+    @NotNull
+    private final SProject parentProject;
     private final boolean multi;
-    private volatile TeamCityCoreFacade teamCityCore;
-    private volatile Role role;
-    private volatile SProject parentProject;
+    @NotNull
+    private final Role role;
+    @NotNull
+    private final TeamCityCoreFacade teamCityCore;
 
-    Invitation(String token, String registrationUrl, String afterRegistrationUrl, String parentProjectExternalId, String roleId, boolean multi) {
+    Invitation(@NotNull String token, @NotNull String registrationUrl, @NotNull String afterRegistrationUrl, String parentProjectExternalId, String roleId, boolean multi, @NotNull TeamCityCoreFacade core) {
         this.token = token;
         this.registrationUrl = registrationUrl;
         this.afterRegistrationUrl = afterRegistrationUrl;
-        this.parentProjectExternalId = parentProjectExternalId;
-        this.roleId = roleId;
         this.multi = multi;
+        this.teamCityCore = core;
+        Role role = core.findRoleById(roleId);
+        if (role == null) {
+            throw new CreateInvitationException("Unable to create invitation with a non-existing role " + roleId);
+        }
+        this.role = role;
+        SProject parent = core.findProjectByExtId(parentProjectExternalId);
+        if (parent == null) {
+            throw new CreateInvitationException("Unable to create invitation with a non-existing project " + parentProjectExternalId);
+        }
+        this.parentProject = parent;
     }
 
-    static Invitation from(Element element) {
-        return new Invitation(element.getAttributeValue("token"),
-                element.getAttributeValue("registrationUrl"),
-                element.getAttributeValue("afterRegistrationUrl"),
-                element.getAttributeValue("parentExtId"),
-                element.getAttributeValue("roleId"),
-                Boolean.valueOf(element.getAttributeValue("multi")));
+    @Nullable
+    static Invitation from(Element element, TeamCityCoreFacade core) {
+        try {
+            return new Invitation(element.getAttributeValue("token"),
+                    element.getAttributeValue("registrationUrl"),
+                    element.getAttributeValue("afterRegistrationUrl"),
+                    element.getAttributeValue("parentExtId"),
+                    element.getAttributeValue("roleId"),
+                    Boolean.valueOf(element.getAttributeValue("multi")),
+                    core);
+        } catch (Exception e) {
+            Loggers.SERVER.warnAndDebugDetails("Unable to load invitation from the file", e);
+            return null;
+        }
     }
 
-    void setTeamCityCore(TeamCityCoreFacade teamCityCore) {
-        this.teamCityCore = teamCityCore;
-        this.role = teamCityCore.findRoleById(roleId);
-        this.parentProject = teamCityCore.findProjectByExtId(parentProjectExternalId);
-    }
 
-    @Used("jsp")
+    @NotNull
     public String getRegistrationUrl() {
         return registrationUrl;
     }
 
-    @Used("jsp")
+    @NotNull
     public String getAfterRegistrationUrl() {
         return afterRegistrationUrl;
     }
 
-    @Used("jsp")
-    public String getParentProjectExternalId() {
-        return parentProjectExternalId;
-    }
-
-    @Used("jsp")
     public boolean isMultiUser() {
         return multi;
     }
 
-
+    @NotNull
     public SProject getParentProject() {
         return parentProject;
     }
 
+    @NotNull
     public Role getRole() {
         return role;
     }
@@ -96,12 +106,11 @@ public class Invitation {
             int i = 1;
             while (createdProject == null) {
                 try {
-                    createdProject = teamCityCore.createProjectAsSystem(parentProjectExternalId, projectName);
+                    createdProject = teamCityCore.createProjectAsSystem(parentProject.getExternalId(), projectName);
                 } catch (DuplicateProjectNameException e) {
                     projectName = user.getUsername() + i++;
                 }
             }
-            Role role = teamCityCore.findRoleById(roleId);
             teamCityCore.addRoleAsSystem(user, role, createdProject);
             Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
                     "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
@@ -117,8 +126,8 @@ public class Invitation {
         element.setAttribute("registrationUrl", registrationUrl);
         element.setAttribute("afterRegistrationUrl", afterRegistrationUrl);
         element.setAttribute("token", token);
-        element.setAttribute("parentExtId", parentProjectExternalId);
-        element.setAttribute("roleId", roleId);
+        element.setAttribute("parentExtId", parentProject.getExternalId());
+        element.setAttribute("roleId", role.getId());
         element.setAttribute("multi", String.valueOf(multi));
     }
 }

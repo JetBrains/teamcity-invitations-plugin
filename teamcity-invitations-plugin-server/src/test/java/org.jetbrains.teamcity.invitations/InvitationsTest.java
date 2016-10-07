@@ -40,6 +40,7 @@ public class InvitationsTest extends BaseTestCase {
         super.setUp();
         core = new FakeTeamCityCoreFacade(createTempDir());
         core.addRole("PROJECT_ADMIN");
+        core.createProjectAsSystem("_Root", "TestDriveProjectId");
         invitations = new InvitationsStorage(core);
         invitationsController = new InvitationsController(Mockito.mock(WebControllerManager.class), invitations, Mockito.mock(AuthorizationInterceptor.class),
                 Mockito.mock(RootUrlHolder.class));

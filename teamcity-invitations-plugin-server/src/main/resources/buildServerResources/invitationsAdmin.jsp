@@ -110,7 +110,7 @@
                 <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
                 <c:set var="editOnClick">
                     return BS.InvitationsDialog.openEdit('${invitation.token}', ${invitation.multiUser}, '${invitation.registrationUrl}',
-                    '${invitation.afterRegistrationUrl}', '${invitation.parentProjectExternalId}');
+                    '${invitation.afterRegistrationUrl}', '${invitation.parentProject.externalId}');
                 </c:set>
 
                 <tr>

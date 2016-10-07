@@ -31,9 +31,7 @@ public class InvitationsStorage {
                                                               @NotNull String parentProjectExtId,
                                                               boolean multiuser) {
         loadFromFile();
-        Invitation invitation = new Invitation(token, registrationUrl,
-                afterRegistrationUrl, parentProjectExtId, "PROJECT_ADMIN", multiuser);
-        invitation.setTeamCityCore(teamCityCore);
+        Invitation invitation = new Invitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, "PROJECT_ADMIN", multiuser, teamCityCore);
         invitations.put(token, invitation);
         persist();
         Loggers.SERVER.debug("User invitation with token " + token + " created.");
@@ -67,9 +65,10 @@ public class InvitationsStorage {
         try {
             Element rootEl = FileUtil.parseDocument(invitationsFile);
             for (Object invitationEl : rootEl.getChildren()) {
-                Invitation invitation = Invitation.from((Element) invitationEl);
-                invitation.setTeamCityCore(teamCityCore);
-                invitations.put(invitation.getToken(), invitation);
+                Invitation invitation = Invitation.from((Element) invitationEl, teamCityCore);
+                if (invitation != null) {
+                    invitations.put(invitation.getToken(), invitation);
+                }
             }
         } catch (Exception e) {
             Loggers.SERVER.warnAndDebugDetails("Failed to load invitations from file: " + invitationsFile.getAbsolutePath(), e);
