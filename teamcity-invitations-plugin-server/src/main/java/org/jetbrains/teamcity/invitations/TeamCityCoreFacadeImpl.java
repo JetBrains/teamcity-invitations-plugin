@@ -75,6 +75,11 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     }
 
     @Override
+    public List<Role> getAvailableRoles() {
+        return rolesManager.getAvailableRoles();
+    }
+
+    @Override
     public File getPluginDataDir() {
         return serverPaths.getPluginDataDirectory();
     }

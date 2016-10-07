@@ -83,14 +83,27 @@
         <label for="parentProject">Parent Project: <l:star/></label>
         <forms:select id="parentProject" name="parentProject" enableFilter="true" className="textField">
             <c:forEach items="${projects}" var="project">
+                <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
                 <forms:option value="${project.externalId}" title="${project.name}">
                     <c:out value="${project.name}"/>
                 </forms:option>
             </c:forEach>
         </forms:select>
-
     </div>
     <span class="greyNote">The parent of the newly created project for the registered user</span>
+
+    <div>
+        <label for="role">Role: <l:star/></label>
+        <forms:select id="role" name="role" enableFilter="true" className="textField">
+            <c:forEach items="${roles}" var="role">
+                <%--@elvariable id="role" type="jetbrains.buildServer.serverSide.auth.Role"--%>
+                <forms:option value="${role.id}" title="${role.name}">
+                    <c:out value="${role.name}"/>
+                </forms:option>
+            </c:forEach>
+        </forms:select>
+    </div>
+    <span class="greyNote">The role will be given to user in the create project</span>
 
     <div class="popupSaveButtonsBlock">
         <forms:submit id="createInvitationSumbit" label="Add"/>
@@ -120,7 +133,7 @@
                     <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
                     <c:set var="editOnClick">
                         return BS.InvitationsDialog.openEdit('${invitation.token}', ${invitation.multiUser}, '${invitation.registrationUrl}',
-                        '${invitation.afterRegistrationUrl}', '${invitation.parentProject.externalId}');
+                        '${invitation.afterRegistrationUrl}', '${invitation.parentProject.externalId}', '${invitation.role.id}');
                     </c:set>
 
                     <tr>

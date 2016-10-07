@@ -24,5 +24,7 @@ public interface TeamCityCoreFacade {
 
     List<SProject> getActiveProjects();
 
+    List<Role> getAvailableRoles();
+
     File getPluginDataDir();
 }

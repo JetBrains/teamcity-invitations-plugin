@@ -48,7 +48,7 @@ public class InvitationsTest extends BaseTestCase {
 
     @Test
     public void simple_invitation() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        String token = createInvitation();
 
         //user go to invitation url
         ModelAndView invitationResponse = goToInvitationUrl(token);
@@ -61,10 +61,9 @@ public class InvitationsTest extends BaseTestCase {
         then(core.getProject("oleg")).isNotNull();
         then(user.getRolesWithScope(projectScope("oleg"))).extracting(Role::getId).contains("PROJECT_ADMIN");
     }
-
     @Test
     public void project_with_such_name_already_exists() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        String token = createInvitation();
         core.createProjectAsSystem("TestDriveProjectId", "oleg");
 
         //user go to invitation url
@@ -80,7 +79,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void should_survive_server_restart() {
-        String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        String token = createInvitation();
         Element beforeRestartEl = new Element("invitation");
         invitations.getInvitation(token).writeTo(beforeRestartEl);
 
@@ -94,7 +93,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void remove_invitation() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        String token = createInvitation();
         invitations.removeInvitation(token);
 
         then(invitations.getInvitation(token)).isNull();
@@ -105,7 +104,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void invitation_removed_during_user_registration() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        String token = createInvitation();
 
         //user go to invitation url
         goToInvitationUrl(token);
@@ -118,7 +117,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void multiple_user_invitation_can_be_used_several_times() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", true);
+        String token = createInvitation();
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
@@ -133,7 +132,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void single_user_invitation_can_be_used_once() throws Exception {
-        String token = invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", false);
+        String token = createInvitation(false);
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
@@ -142,6 +141,7 @@ public class InvitationsTest extends BaseTestCase {
         //second
         assertRedirectTo(goToInvitationUrl(token), "/");
     }
+
 
     private ModelAndView goToAfterRegistrationUrl(SUser user) throws Exception {
         newRequest(HttpMethod.GET, (String) request.getSession().getAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL));
@@ -163,6 +163,14 @@ public class InvitationsTest extends BaseTestCase {
         if (session == null) session = new MockHttpSession();
         request = MockMvcRequestBuilders.request(method, url).session(session).buildRequest(new MockServletContext());
         response = new MockHttpServletResponse();
+    }
+
+    private String createInvitation() {
+        return createInvitation(true);
+    }
+
+    private String createInvitation(boolean multiuser) {
+        return invitations.createUserAndProjectInvitation("token", "/registerUser.html", "/editProject.html?projectId={projectExtId}", "TestDriveProjectId", "PROJECT_ADMIN", multiuser);
     }
 }
 

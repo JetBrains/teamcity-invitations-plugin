@@ -30,13 +30,13 @@ BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalD
         return false;
     },
 
-    openEdit: function (token, multiuser, registrationUrl, afterRegistrationUrl, parentExtId) {
-        this.init(token, "Save", "Edit", "/admin/invitations.html?editInvitation=1", multiuser, registrationUrl, afterRegistrationUrl, parentExtId);
+    openEdit: function (token, multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId) {
+        this.init(token, "Save", "Edit", "/admin/invitations.html?editInvitation=1", multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId);
         this.showCentered();
         return false;
     },
 
-    init: function (token, buttonText, titleText, action, multiuser, registrationUrl, afterRegistrationUrl, parentExtId) {
+    init: function (token, buttonText, titleText, action, multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId) {
         this.action = action;
         $j('#token').prop("value", token);
         $j('#createInvitationSumbit').prop("value", buttonText);
@@ -47,6 +47,11 @@ BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalD
         $j('#parentProject > option').each(function () {
             if (this.value === parentExtId) {
                 $('parentProject').setSelectValue(this.value);
+            }
+        });
+        $j('#roles > option').each(function () {
+            if (this.value === roleId) {
+                $('roles').setSelectValue(this.value);
             }
         });
     }

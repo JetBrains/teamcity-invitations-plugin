@@ -29,9 +29,10 @@ public class InvitationsStorage {
                                                               @NotNull String registrationUrl,
                                                               @NotNull String afterRegistrationUrl,
                                                               @NotNull String parentProjectExtId,
+                                                              @NotNull String roleId,
                                                               boolean multiuser) {
         loadFromFile();
-        Invitation invitation = new Invitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, "PROJECT_ADMIN", multiuser, teamCityCore);
+        Invitation invitation = new Invitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, roleId, multiuser, teamCityCore);
         invitations.put(token, invitation);
         persist();
         Loggers.SERVER.debug("User invitation with token " + token + " created.");

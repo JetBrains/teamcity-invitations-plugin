@@ -66,6 +66,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     }
 
     @Override
+    public List<Role> getAvailableRoles() {
+        return new ArrayList<>(roles.values());
+    }
+
+    @Override
     public File getPluginDataDir() {
         return pluginDataDir;
     }

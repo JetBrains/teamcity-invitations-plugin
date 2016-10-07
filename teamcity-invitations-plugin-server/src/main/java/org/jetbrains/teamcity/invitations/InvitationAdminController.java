@@ -62,6 +62,15 @@ public class InvitationAdminController extends BaseFormXmlController {
         }
     }
 
+    private String createFromRequest(String token, HttpServletRequest request) {
+        String registrationUrl = request.getParameter("registrationUrl");
+        String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
+        String parentProjectExtId = request.getParameter("parentProject");
+        String roleId = request.getParameter("role");
+        boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
+        return invitations.createUserAndProjectInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, roleId, multiuser);
+    }
+
     public class InvitationsAdminPage extends AdminPage {
 
         InvitationsAdminPage(@NotNull PagePlaces pagePlaces,
@@ -75,6 +84,7 @@ public class InvitationAdminController extends BaseFormXmlController {
             model.put("invitations", invitations.getInvitations());
             model.put("invitationRootUrl", invitationsController.getInvitationsPath());
             model.put("projects", teamCityCoreFacade.getActiveProjects());
+            model.put("roles", teamCityCoreFacade.getAvailableRoles());
         }
 
         @NotNull
@@ -92,12 +102,8 @@ public class InvitationAdminController extends BaseFormXmlController {
 
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
-            String registrationUrl = request.getParameter("registrationUrl");
-            String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
-            String parentProjectExtId = request.getParameter("parentProject");
-            boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
             try {
-                String token = invitations.createUserAndProjectInvitation(StringUtil.generateUniqueHash(), registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+                String token = createFromRequest(StringUtil.generateUniqueHash(), request);
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' created.");
             } catch (Exception e) {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
@@ -114,19 +120,16 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void process(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @Nullable Element element) {
             String token = request.getParameter("token");
-            String registrationUrl = request.getParameter("registrationUrl");
-            String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
-            String parentProjectExtId = request.getParameter("parentProject");
-            boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
             try {
                 invitations.removeInvitation(token);
-                invitations.createUserAndProjectInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, multiuser);
+                createFromRequest(token, request);
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' updated.");
             } catch (Exception e) {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
             }
         }
     }
+
     private class RemoveInvitationAction implements ControllerAction {
 
         @Override
