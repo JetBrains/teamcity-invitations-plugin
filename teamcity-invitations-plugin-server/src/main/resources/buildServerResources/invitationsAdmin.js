@@ -25,13 +25,13 @@ BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalD
     },
 
     openNew: function () {
-        this.init(null, "Add", "Add", "/admin/invitations.html?createInvitation=1", true, "/registerUser.html", "/admin/editProject.html?init=1&projectId={projectExtId}", "_Root");
+        this.init(null, "Add", "Add", window['base_uri'] + "/admin/invitations.html?createInvitation=1", true, "/registerUser.html", "/admin/editProject.html?init=1&projectId={projectExtId}", "_Root");
         this.showCentered();
         return false;
     },
 
     openEdit: function (token, multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId) {
-        this.init(token, "Save", "Edit", "/admin/invitations.html?editInvitation=1", multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId);
+        this.init(token, "Save", "Edit", window['base_uri'] + "/admin/invitations.html?editInvitation=1", multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId);
         this.showCentered();
         return false;
     },
@@ -59,7 +59,7 @@ BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalD
 
 BS.Invitations = {
     deleteInvitation: function (token) {
-        BS.ajaxRequest('/admin/invitations.html?removeInvitation=' + token, {
+        BS.ajaxRequest(window['base_uri'] + '/admin/invitations.html?removeInvitation=' + token, {
             onComplete: function () {
                 BS.reload();
             }

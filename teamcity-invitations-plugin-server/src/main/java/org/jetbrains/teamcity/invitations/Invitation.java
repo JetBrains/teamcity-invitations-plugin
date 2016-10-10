@@ -95,7 +95,7 @@ public class Invitation {
 
     @NotNull
     public ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
-        return new ModelAndView(new RedirectView(registrationUrl));
+        return new ModelAndView(new RedirectView(registrationUrl, true));
     }
 
     @NotNull
