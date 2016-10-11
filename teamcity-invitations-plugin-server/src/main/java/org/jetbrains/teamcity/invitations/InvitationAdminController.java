@@ -4,8 +4,10 @@ import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.admin.AdminPage;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.*;
+import jetbrains.buildServer.web.util.SessionUser;
 import jetbrains.buildServer.web.util.WebUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +55,9 @@ public class InvitationAdminController extends BaseFormXmlController {
 
     @Override
     protected synchronized void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
+        if (!SessionUser.getUser(request).isSystemAdministratorRoleGranted()) {
+            throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitations");
+        }
         ControllerAction action = webControllerManager.getAction(this, request);
         if (action == null) {
             Loggers.SERVER.warn("Unrecognized request: " + WebUtil.getRequestDump(request));
@@ -85,6 +90,11 @@ public class InvitationAdminController extends BaseFormXmlController {
             model.put("invitationRootUrl", invitationsController.getInvitationsPath());
             model.put("projects", teamCityCoreFacade.getActiveProjects());
             model.put("roles", teamCityCoreFacade.getAvailableRoles());
+        }
+
+        @Override
+        public boolean isAvailable(@NotNull HttpServletRequest request) {
+            return super.isAvailable(request) && SessionUser.getUser(request).isSystemAdministratorRoleGranted();
         }
 
         @NotNull
