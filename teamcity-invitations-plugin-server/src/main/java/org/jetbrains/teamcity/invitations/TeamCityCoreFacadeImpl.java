@@ -44,7 +44,9 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
                     throw new ProjectNotFoundException("Unable to create project for user: parent project with external id = " + parentExtId + " not found");
                 }
                 String projectExternalId = projectIdentifiersManager.generateNewExternalId(parentExtId, name, null);
-                return parent.createProject(projectExternalId, name);
+                SProject project = parent.createProject(projectExternalId, name);
+                project.persist();
+                return project;
             });
         } catch (Throwable throwable) {
             ExceptionUtil.rethrowAsRuntimeException(throwable);
