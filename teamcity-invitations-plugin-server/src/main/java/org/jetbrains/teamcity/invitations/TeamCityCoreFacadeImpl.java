@@ -7,6 +7,7 @@ import jetbrains.buildServer.serverSide.auth.RolesManager;
 import jetbrains.buildServer.serverSide.identifiers.ProjectIdentifiersManager;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.ExceptionUtil;
+import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,13 +20,15 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final ProjectIdentifiersManager projectIdentifiersManager;
     private final SecurityContextEx securityContext;
     private final ServerPaths serverPaths;
+    private final PluginDescriptor pluginDescriptor;
 
-    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext, ServerPaths serverPaths) {
+    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext, ServerPaths serverPaths, PluginDescriptor pluginDescriptor) {
         this.rolesManager = rolesManager;
         this.projectManager = projectManager;
         this.projectIdentifiersManager = projectIdentifiersManager;
         this.securityContext = securityContext;
         this.serverPaths = serverPaths;
+        this.pluginDescriptor = pluginDescriptor;
     }
 
     @Nullable
@@ -84,5 +87,10 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public File getPluginDataDir() {
         return serverPaths.getPluginDataDirectory();
+    }
+
+    @Override
+    public String getPluginResourcesPath(String path) {
+        return pluginDescriptor.getPluginResourcesPath(path);
     }
 }

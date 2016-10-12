@@ -61,7 +61,7 @@ public class InvitationsController extends BaseController {
 
     private ModelAndView processInvitationRequest(HttpServletRequest request, HttpServletResponse response) {
         String token = request.getParameter(TOKEN_URL_PARAM);
-        Invitation invitation = invitations.getInvitation(token);
+        ProjectAdminInvitation invitation = invitations.getInvitation(token);
         if (invitation == null) {
             Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
             return new ModelAndView(new RedirectView("/"));
@@ -75,7 +75,7 @@ public class InvitationsController extends BaseController {
         Object tokenObj = request.getSession().getAttribute(INVITATION_TOKEN_SESSION_ATTR);
         if (tokenObj != null && tokenObj instanceof String) {
             String token = (String) tokenObj;
-            Invitation invitation = invitations.getInvitation(token);
+            ProjectAdminInvitation invitation = invitations.getInvitation(token);
             if (invitation == null) {
                 Loggers.SERVER.warn("User registered on invitation by token " + token + " but invitation doesn't exist anymore");
                 return new ModelAndView(new RedirectView("/"));

@@ -75,6 +75,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         return pluginDataDir;
     }
 
+    @Override
+    public String getPluginResourcesPath(String path) {
+        return path;
+    }
+
     void addRole(String id) {
         Role role = mock(Role.class);
         when(role.getId()).thenReturn(id);

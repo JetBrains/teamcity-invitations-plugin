@@ -19,7 +19,7 @@ import java.util.Map;
 public class InvitationsStorage {
 
     private final TeamCityCoreFacade teamCityCore;
-    private Map<String, Invitation> invitations;
+    private Map<String, ProjectAdminInvitation> invitations;
 
     public InvitationsStorage(@NotNull TeamCityCoreFacade teamCityCore) {
         this.teamCityCore = teamCityCore;
@@ -32,7 +32,7 @@ public class InvitationsStorage {
                                                               @NotNull String roleId,
                                                               boolean multiuser) {
         loadFromFile();
-        Invitation invitation = new Invitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, roleId, multiuser, teamCityCore);
+        ProjectAdminInvitation invitation = new ProjectAdminInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, roleId, multiuser, teamCityCore);
         invitations.put(token, invitation);
         persist();
         Loggers.SERVER.debug("User invitation with token " + token + " created.");
@@ -40,19 +40,19 @@ public class InvitationsStorage {
     }
 
     @Nullable
-    public synchronized Invitation getInvitation(@NotNull String token) {
+    public synchronized ProjectAdminInvitation getInvitation(@NotNull String token) {
         loadFromFile();
         return invitations.get(token);
     }
 
     @NotNull
-    public synchronized List<Invitation> getInvitations() {
+    public synchronized List<ProjectAdminInvitation> getInvitations() {
         loadFromFile();
         return new ArrayList<>(invitations.values());
     }
 
     public synchronized void removeInvitation(@NotNull String token) {
-        Invitation removed = invitations.remove(token);
+        ProjectAdminInvitation removed = invitations.remove(token);
         if (removed != null) persist();
     }
 
@@ -66,7 +66,7 @@ public class InvitationsStorage {
         try {
             Element rootEl = FileUtil.parseDocument(invitationsFile);
             for (Object invitationEl : rootEl.getChildren()) {
-                Invitation invitation = Invitation.from((Element) invitationEl, teamCityCore);
+                ProjectAdminInvitation invitation = ProjectAdminInvitation.from((Element) invitationEl, teamCityCore);
                 if (invitation != null) {
                     invitations.put(invitation.getToken(), invitation);
                 }

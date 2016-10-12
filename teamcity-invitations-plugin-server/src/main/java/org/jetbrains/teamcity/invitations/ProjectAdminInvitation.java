@@ -14,7 +14,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class Invitation {
+public class ProjectAdminInvitation implements InvitationType {
     @NotNull
     private final String token;
     @NotNull
@@ -29,7 +29,9 @@ public class Invitation {
     @NotNull
     private final TeamCityCoreFacade teamCityCore;
 
-    Invitation(@NotNull String token, @NotNull String registrationUrl, @NotNull String afterRegistrationUrl, String parentProjectExternalId, String roleId, boolean multi, @NotNull TeamCityCoreFacade core) {
+    ProjectAdminInvitation(@NotNull String token, @NotNull String registrationUrl, @NotNull String afterRegistrationUrl, String parentProjectExternalId, String roleId,
+                           boolean multi,
+                           @NotNull TeamCityCoreFacade core) {
         this.token = token;
         this.registrationUrl = registrationUrl;
         this.afterRegistrationUrl = afterRegistrationUrl;
@@ -48,9 +50,9 @@ public class Invitation {
     }
 
     @Nullable
-    static Invitation from(Element element, TeamCityCoreFacade core) {
+    static ProjectAdminInvitation from(Element element, TeamCityCoreFacade core) {
         try {
-            return new Invitation(element.getAttributeValue("token"),
+            return new ProjectAdminInvitation(element.getAttributeValue("token"),
                     element.getAttributeValue("registrationUrl"),
                     element.getAttributeValue("afterRegistrationUrl"),
                     element.getAttributeValue("parentExtId"),
@@ -129,5 +131,11 @@ public class Invitation {
         element.setAttribute("parentExtId", parentProject.getExternalId());
         element.setAttribute("roleId", role.getId());
         element.setAttribute("multi", String.valueOf(multi));
+    }
+
+    @NotNull
+    @Override
+    public String getDescriptionViewPath() {
+        return teamCityCore.getPluginResourcesPath("inviteProjectAdminDescription.jsp");
     }
 }

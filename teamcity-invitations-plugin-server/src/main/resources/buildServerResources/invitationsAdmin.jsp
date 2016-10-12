@@ -130,7 +130,7 @@
                     <th colspan="2">Actions</th>
                 </tr>
                 <c:forEach items="${invitations}" var="invitation">
-                    <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
+                    <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.ProjectAdminInvitation"--%>
                     <c:set var="editOnClick">
                         return BS.InvitationsDialog.openEdit('${invitation.token}', ${invitation.multiUser}, '${invitation.registrationUrl}',
                         '${invitation.afterRegistrationUrl}', '${invitation.parentProject.externalId}', '${invitation.role.id}');
@@ -145,14 +145,8 @@
                         </td>
 
                         <td class="highlight">
-                            Registration URL: <a target="_blank"
-                                                 href="${invitation.registrationUrl}">${invitation.registrationUrl}</a><br/>
-                            Parent Project: <bs:projectLink project="${invitation.parentProject}" target="_blank"/><br/>
-                            Role: <a target="_blank"
-                                     href="/admin/admin.html?item=roles#${invitation.role.id}">${invitation.role.name}</a><br/>
-                            After Registration URL: <a target="_blank"
-                                                       href="${invitation.afterRegistrationUrl}">${invitation.afterRegistrationUrl}</a><br/>
-                            Multi-user: ${invitation.multiUser}
+                            <c:set value="${invitation}" scope="request" var="invitation"/>
+                            <jsp:include page="${invitation.descriptionViewPath}"/>
                         </td>
                         <td class="highlight edit" onclick="${editOnClick}">
                             <a href="#">Edit</a></td>

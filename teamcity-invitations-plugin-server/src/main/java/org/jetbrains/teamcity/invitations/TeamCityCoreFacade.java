@@ -27,4 +27,6 @@ public interface TeamCityCoreFacade {
     List<Role> getAvailableRoles();
 
     File getPluginDataDir();
+
+    String getPluginResourcesPath(String path);
 }
