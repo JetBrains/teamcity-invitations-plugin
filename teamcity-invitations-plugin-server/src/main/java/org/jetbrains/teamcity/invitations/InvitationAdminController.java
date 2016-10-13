@@ -16,7 +16,9 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class InvitationAdminController extends BaseFormXmlController {
 
@@ -30,17 +32,21 @@ public class InvitationAdminController extends BaseFormXmlController {
     private final TeamCityCoreFacade teamCityCoreFacade;
     @NotNull
     private final InvitationsController invitationsController;
+    @NotNull
+    private final List<InvitationType> invitationTypes;
 
     public InvitationAdminController(final PagePlaces pagePlaces,
                                      @NotNull WebControllerManager webControllerManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull InvitationsStorage invitations,
                                      @NotNull TeamCityCoreFacade teamCityCoreFacade,
-                                     @NotNull InvitationsController invitationsController) {
+                                     @NotNull InvitationsController invitationsController,
+                                     @NotNull List<InvitationType> invitationTypes) {
         this.webControllerManager = webControllerManager;
         this.invitations = invitations;
         this.teamCityCoreFacade = teamCityCoreFacade;
         this.invitationsController = invitationsController;
+        this.invitationTypes = invitationTypes;
         new InvitationsAdminPage(pagePlaces, pluginDescriptor).register();
         webControllerManager.registerController("/admin/invitations.html", this);
         webControllerManager.registerAction(this, new CreateInvitationAction());
@@ -50,6 +56,20 @@ public class InvitationAdminController extends BaseFormXmlController {
 
     @Override
     protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
+        if (request.getParameter("addInvitation") != null) {
+            Optional<InvitationType> found = getInvitationType(request);
+            if (!found.isPresent()) return null;
+
+            return found.get().getEditPropertiesView(null);
+        }
+
+        if (request.getParameter("editInvitation") != null && request.getParameter("token") != null) {
+            Invitation found = invitations.getInvitation(request.getParameter("token"));
+            if (found == null) return null;
+
+            return found.getType().getEditPropertiesView(found);
+        }
+
         return null;
     }
 
@@ -67,13 +87,30 @@ public class InvitationAdminController extends BaseFormXmlController {
         }
     }
 
+    @NotNull
     private String createFromRequest(String token, HttpServletRequest request) {
-        String registrationUrl = request.getParameter("registrationUrl");
-        String afterRegistrationUrl = request.getParameter("afterRegistrationUrl");
-        String parentProjectExtId = request.getParameter("parentProject");
-        String roleId = request.getParameter("role");
-        boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return invitations.createUserAndProjectInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, roleId, multiuser);
+        Optional<InvitationType> invitationType = getInvitationType(request);
+        if (!invitationType.isPresent()) {
+            throw new InvitationException("Invitation type is not specified or doesn't exist");
+        }
+        Invitation created = invitationType.get().createNewInvitation(request, token);
+        return invitations.addInvitation(token, created);
+    }
+
+    @NotNull
+    private Optional<InvitationType> getInvitationType(@NotNull HttpServletRequest request) {
+        String invitationType = request.getParameter("invitationType");
+        if (invitationType == null) {
+            Loggers.SERVER.warn("Unrecognized invitation type request: " + WebUtil.getRequestDump(request));
+            return Optional.empty();
+        }
+
+        Optional<InvitationType> found = invitationTypes.stream().filter(type -> type.getId().equals(invitationType)).findFirst();
+        if (!found.isPresent()) {
+            Loggers.SERVER.warn("Unrecognized invitation type request: " + WebUtil.getRequestDump(request));
+            return Optional.empty();
+        }
+        return found;
     }
 
     public class InvitationsAdminPage extends AdminPage {
@@ -86,6 +123,7 @@ public class InvitationAdminController extends BaseFormXmlController {
 
         @Override
         public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
+            model.put("invitationTypes", invitationTypes);
             model.put("invitations", invitations.getInvitations());
             model.put("invitationRootUrl", invitationsController.getInvitationsPath());
             model.put("projects", teamCityCoreFacade.getActiveProjects());

@@ -8,4 +8,7 @@
     <bean class="org.jetbrains.teamcity.invitations.InvitationsStorage"/>
     <bean class="org.jetbrains.teamcity.invitations.InvitationAdminController"/>
     <bean class="org.jetbrains.teamcity.invitations.TeamCityCoreFacadeImpl"/>
+
+    <bean class="org.jetbrains.teamcity.invitations.CreateNewProjectInvitationType"/>
+    <bean class="org.jetbrains.teamcity.invitations.JoinProjectInvitationType"/>
 </beans>

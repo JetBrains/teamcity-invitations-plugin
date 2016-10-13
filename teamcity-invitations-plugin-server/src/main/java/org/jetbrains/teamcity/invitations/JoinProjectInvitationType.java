@@ -1,0 +1,138 @@
+package org.jetbrains.teamcity.invitations;
+
+import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.auth.Permission;
+import jetbrains.buildServer.serverSide.auth.Role;
+import jetbrains.buildServer.users.SUser;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.RedirectView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class JoinProjectInvitationType implements InvitationType<JoinProjectInvitationType.InvitationImpl> {
+
+    private final TeamCityCoreFacade core;
+
+    public JoinProjectInvitationType(TeamCityCoreFacade core) {
+        this.core = core;
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+        return "joinProjectInvitation";
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+        return "Invite user to join a project";
+    }
+
+    @NotNull
+    @Override
+    public String getDescriptionViewPath() {
+        return core.getPluginResourcesPath("joinProjectInvitationDescription.jsp");
+    }
+
+    @NotNull
+    @Override
+    public ModelAndView getEditPropertiesView(@Nullable InvitationImpl invitation) {
+        ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
+        modelAndView.getModel().put("projects", core.getActiveProjects());
+        modelAndView.getModel().put("roles", core.getAvailableRoles());
+        modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
+        modelAndView.getModel().put("projectId", invitation == null ? "_Root" : invitation.projectExtId);
+        modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_DEVELOPER" : invitation.roleId);
+        return modelAndView;
+    }
+
+    @NotNull
+    @Override
+    public InvitationImpl createNewInvitation(HttpServletRequest request, String token) {
+        String projectExtId = request.getParameter("project");
+        String roleId = request.getParameter("role");
+        boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
+        return new InvitationImpl(token, projectExtId, roleId, multiuser);
+    }
+
+    @NotNull
+    @Override
+    public InvitationImpl readFrom(@NotNull Element element) {
+        try {
+            return new InvitationImpl(element);
+        } catch (Exception e) {
+            Loggers.SERVER.warnAndDebugDetails("Unable to load invitation from the file", e);
+            return null;
+        }
+    }
+
+    public final class InvitationImpl extends AbstractInvitation {
+
+        @NotNull
+        private final String projectExtId;
+        @NotNull
+        private final String roleId;
+
+        InvitationImpl(@NotNull String token, @NotNull String projectExtId, @NotNull String roleId, boolean multi) {
+            super(token, multi, JoinProjectInvitationType.this);
+            this.roleId = roleId;
+            this.projectExtId = projectExtId;
+        }
+
+        public InvitationImpl(Element element) {
+            super(element, JoinProjectInvitationType.this);
+            this.projectExtId = element.getAttributeValue("projectExtId");
+            this.roleId = element.getAttributeValue("roleId");
+        }
+
+        @Override
+        public void writeTo(@NotNull Element element) {
+            super.writeTo(element);
+            element.setAttribute("projectExtId", projectExtId);
+            element.setAttribute("roleId", roleId);
+        }
+
+        @NotNull
+        public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
+            try {
+                Role role = getRole();
+                if (role == null) {
+                    throw new InvitationException("Failed to proceed invitation with a non-existing role " + roleId);
+                }
+
+                SProject project = getProject();
+                if (project == null) {
+                    throw new InvitationException("Failed to proceed invitation with a non-existing project " + projectExtId);
+                }
+
+                core.addRoleAsSystem(user, role, project);
+                Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
+                        "User got the role " + role.describe(false) + " in the project " + project.describe(false));
+
+                if (role.getPermissions().contains(Permission.EDIT_PROJECT)) {
+                    return new ModelAndView(new RedirectView("/editProject.html?projectId=" + project.getExternalId(), true));
+                }
+                return new ModelAndView(new RedirectView("/project.html?projectId=" + project.getExternalId(), true));
+            } catch (Exception e) {
+                Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
+                return new ModelAndView(new RedirectView("/", true));
+            }
+        }
+
+        @Nullable
+        public Role getRole() {
+            return JoinProjectInvitationType.this.core.findRoleById(roleId);
+        }
+
+        @Nullable
+        public SProject getProject() {
+            return JoinProjectInvitationType.this.core.findProjectByExtId(projectExtId);
+        }
+    }
+}

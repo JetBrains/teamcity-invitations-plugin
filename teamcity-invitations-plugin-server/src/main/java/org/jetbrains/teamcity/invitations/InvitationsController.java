@@ -61,7 +61,7 @@ public class InvitationsController extends BaseController {
 
     private ModelAndView processInvitationRequest(HttpServletRequest request, HttpServletResponse response) {
         String token = request.getParameter(TOKEN_URL_PARAM);
-        ProjectAdminInvitation invitation = invitations.getInvitation(token);
+        Invitation invitation = invitations.getInvitation(token);
         if (invitation == null) {
             Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
             return new ModelAndView(new RedirectView("/"));
@@ -75,14 +75,14 @@ public class InvitationsController extends BaseController {
         Object tokenObj = request.getSession().getAttribute(INVITATION_TOKEN_SESSION_ATTR);
         if (tokenObj != null && tokenObj instanceof String) {
             String token = (String) tokenObj;
-            ProjectAdminInvitation invitation = invitations.getInvitation(token);
+            Invitation invitation = invitations.getInvitation(token);
             if (invitation == null) {
                 Loggers.SERVER.warn("User registered on invitation by token " + token + " but invitation doesn't exist anymore");
                 return new ModelAndView(new RedirectView("/"));
             }
             ModelAndView result = invitation.userRegistered(SessionUser.getUser(request), request, response);
-            if (!invitation.isMultiUser()) {
-                Loggers.SERVER.info("Single user invitation " + token + "was used to register user " + SessionUser.getUser(request).describe(false));
+            if (!invitation.isReusable()) {
+                Loggers.SERVER.info("Single user invitation " + token + " was used to register user " + SessionUser.getUser(request).describe(false));
                 invitations.removeInvitation(token);
             }
             return result;

@@ -1,59 +1,111 @@
-BS.InvitationsDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalDialog, {
+BS.CreateInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalDialog, {
 
     getContainer: function () {
-        return $('invitationsFormDialog');
+        return $j('#createInvitationFormDialog').get(0);
     },
 
     formElement: function () {
-        return $('invitationsForm');
+        return $j('#createInvitationForm').get(0);
     },
 
     submit: function () {
         var that = this;
-        BS.FormSaver.save(this, this.action, OO.extend(BS.SimpleListener, {
+        BS.FormSaver.save(this, "/admin/invitations.html?createInvitation=1", OO.extend(BS.SimpleListener, {
             onCompleteSave: function () {
                 $('invitationsList').refresh();
                 that.enable();
-                BS.InvitationsDialog.close();
+                BS.CreateInvitationDialog.close();
             }
         }));
         return false;
     },
 
     savingIndicator: function () {
-        return $('invitationsFormProgress');
+        return $('addInvitationFormProgress');
     },
 
-    openNew: function () {
-        this.init(null, "Add", "Add", window['base_uri'] + "/admin/invitations.html?createInvitation=1", true, "/registerUser.html", "/admin/editProject.html?init=1&projectId={projectExtId}", "_Root");
-        this.showCentered();
+    open: function () {
+        var chooser = $j("#invitationType").get(0);
+        chooser.selectedIndex = 0;
+        chooser.value = chooser.options[0].value;
+        this.doReloadInvitationType(false, null, true);
         return false;
     },
 
-    openEdit: function (token, multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId) {
-        this.init(token, "Save", "Edit", window['base_uri'] + "/admin/invitations.html?editInvitation=1", multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId);
-        this.showCentered();
+    reloadInvitationType: function () {
+        var chooser = $j("#invitationType").get(0);
+        this.doReloadInvitationType(chooser.selectedIndex != 0, "invitationType=" + encodeURIComponent(chooser.value) + "&addInvitation=1", false);
+    },
+
+    doReloadInvitationType: function (typeIsSelected, params, show) {
+        var that = this;
+        var dialog = $j(that.getContainer());
+
+        var submitButton = dialog.find(".submitButton");
+        submitButton.prop("disabled", true);
+
+        if (typeIsSelected) {
+            that.showCenteredOrRecenter(show);
+            var progress = submitButton.siblings(".progressRing").show();
+            dialog.find(".content").load(window['base_uri'] + "/admin/invitations.html", params, function () {
+                progress.hide();
+                submitButton.prop("disabled", false);
+                that.recenterDialog();
+            });
+        } else {
+            that.showCenteredOrRecenter(show);
+        }
+    },
+
+    showCenteredOrRecenter: function (show) {
+        if (show) {
+            this.showCentered();
+        } else {
+            this.recenterDialog();
+        }
+    }
+}));
+
+BS.EditInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalDialog, {
+
+    getContainer: function () {
+        return $j('#editInvitationFormDialog').get(0);
+    },
+
+    formElement: function () {
+        return $j('#editInvitationForm').get(0);
+    },
+
+    submit: function () {
+        var that = this;
+        BS.FormSaver.save(this, "/admin/invitations.html?editInvitation=1", OO.extend(BS.SimpleListener, {
+            onCompleteSave: function () {
+                $('invitationsList').refresh();
+                that.enable();
+                BS.EditInvitationDialog.close();
+            }
+        }));
         return false;
     },
 
-    init: function (token, buttonText, titleText, action, multiuser, registrationUrl, afterRegistrationUrl, parentExtId, roleId) {
-        this.action = action;
-        $j('#token').prop("value", token);
-        $j('#createInvitationSumbit').prop("value", buttonText);
-        $j('#invitationsFormTitle').text(titleText + " Invitation");
-        $j('#multiuser').prop("checked", multiuser);
-        $j('#registrationUrl').val(registrationUrl);
-        $j('#afterRegistrationUrl').val(afterRegistrationUrl);
-        $j('#parentProject > option').each(function () {
-            if (this.value === parentExtId) {
-                $('parentProject').setSelectValue(this.value);
-            }
+    savingIndicator: function () {
+        return $('editInvitationsFormProgress');
+    },
+
+    open: function (token) {
+        var that = this;
+        var dialog = $j(that.getContainer());
+        var submitButton = dialog.find(".submitButton");
+        submitButton.prop("disabled", true);
+
+        that.showCentered();
+        var progress = submitButton.siblings(".progressRing").show();
+        dialog.find(".content").load(window['base_uri'] + "/admin/invitations.html", "token=" + encodeURIComponent(token) + "&editInvitation=1", function () {
+            progress.hide();
+            submitButton.prop("disabled", false);
+            that.recenterDialog();
         });
-        $j('#roles > option').each(function () {
-            if (this.value === roleId) {
-                $('roles').setSelectValue(this.value);
-            }
-        });
+
     }
 }));
 

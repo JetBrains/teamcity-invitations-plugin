@@ -34,6 +34,10 @@
         width: 100%;
     }
 
+    .content {
+        margin-top: 0.5em;
+    }
+
     div .spacing {
         margin-top: 0.5em;
     }
@@ -41,74 +45,50 @@
 
 <div>
     <forms:addButton id="createNewButton"
-                     onclick="BS.InvitationsDialog.openNew();">Create new invitation...</forms:addButton>
+                     onclick="BS.CreateInvitationDialog.open();">Create invitation...</forms:addButton>
 </div>
 
-<bs:modalDialog formId="invitationsForm"
-                title=""
-                closeCommand="BS.InvitationsDialog.close();"
-                action="/admin/invitations.html?createInvitation=1"
-                saveCommand="BS.InvitationsDialog.submit();">
-
-    <span class="greyNote">
-        Invitation that allows user to register on the server,
-        creates the project based on username and gives the user Project Administrator role in the project.
-    </span>
-
-    <input type="hidden" name="token" id="token"/>
-
-    <div class="spacing"></div>
-    <div>
-        <forms:checkbox name="multiuser"/>
-        <label for="multiuser">Allow invitation to be used multiple times.</label>
-    </div>
-    <span class="greyNote">Invitation will be removed after user register using it if unchecked</span>
-
-    <div class="spacing"></div>
-
-    <div><label for="registrationUrl">Registration Endpoint: <l:star/></label></div>
-    <div><forms:textField name="registrationUrl"/></div>
-    <span class="greyNote">User will be redirected to the specified path to register</span>
-    <div class="spacing"></div>
-
-    <div><label for="afterRegistrationUrl">After Registration Endpoint: <l:star/></label></div>
-    <div><forms:textField name="afterRegistrationUrl"/></div>
-    <span class="greyNote">
-        User will be redirected to the specified path when project is created and role is given to user.
-        Path can contain project external id placeholder {projectExtId}
-    </span>
-    <div class="spacing"></div>
-
-    <div>
-        <label for="parentProject">Parent Project: <l:star/></label>
-        <forms:select id="parentProject" name="parentProject" enableFilter="true" className="textField">
-            <c:forEach items="${projects}" var="project">
-                <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
-                <forms:option value="${project.externalId}" title="${project.name}">
-                    <c:out value="${project.name}"/>
-                </forms:option>
+<bs:modalDialog formId="createInvitationForm"
+                title="Create Invitation"
+                action="#"
+                closeCommand="BS.CreateInvitationDialog.close();"
+                saveCommand="BS.CreateInvitationDialog.submit();">
+    <div id="invitationTypeChooser">
+        <label for="invitationType">Create invitation:</label>
+        <forms:select id="invitationType" name="invitationType" enableFilter="true"
+                      onchange="BS.CreateInvitationDialog.reloadInvitationType();" className="longField">
+            <forms:option value="">-- Select invitation type --</forms:option>
+            <c:forEach var="type" items="${invitationTypes}">
+                <%--@elvariable id="type" type="org.jetbrains.teamcity.invitations.InvitationType"--%>
+                <forms:option value="${type.id}"><c:out value="${type.description}"/></forms:option>
             </c:forEach>
         </forms:select>
+        <forms:saving id="loadInvitationTypeProgress" className="progressRingInline"/>
     </div>
-    <span class="greyNote">The parent of the newly created project for the registered user</span>
 
-    <div>
-        <label for="role">Role: <l:star/></label>
-        <forms:select id="role" name="role" enableFilter="true" className="textField">
-            <c:forEach items="${roles}" var="role">
-                <%--@elvariable id="role" type="jetbrains.buildServer.serverSide.auth.Role"--%>
-                <forms:option value="${role.id}" title="${role.name}">
-                    <c:out value="${role.name}"/>
-                </forms:option>
-            </c:forEach>
-        </forms:select>
-    </div>
-    <span class="greyNote">The role will be given to user in the create project</span>
+    <div class="content"></div>
 
     <div class="popupSaveButtonsBlock">
-        <forms:submit id="createInvitationSumbit" label="Add"/>
-        <forms:cancel onclick="BS.InvitationsDialog.close();"/>
-        <forms:saving id="invitationsFormProgress"/>
+        <forms:submit label="Add" onclick="return BS.CreateInvitationDialog.submit();"/>
+        <forms:cancel onclick="return BS.CreateInvitationDialog.close();"/>
+        <forms:saving id="addInvitationFormProgress"/>
+    </div>
+</bs:modalDialog>
+
+<bs:modalDialog formId="editInvitationForm"
+                title="Edit invitation"
+                closeCommand="BS.EditInvitationDialog.close();"
+                action="#"
+                saveCommand="BS.EditInvitationDialog.submit();">
+
+    <forms:saving id="loadInvitationProgress" className="progressRingInline"/>
+
+    <div class="content"></div>
+
+    <div class="popupSaveButtonsBlock">
+        <forms:submit id="createInvitationSumbit" label="Save"/>
+        <forms:cancel onclick="BS.EditInvitationDialog.close();"/>
+        <forms:saving id="editInvitationsFormProgress"/>
     </div>
 </bs:modalDialog>
 
@@ -127,15 +107,11 @@
                 <tr>
                     <th>URL</th>
                     <th>Description</th>
+                    <th>Reusable</th>
                     <th colspan="2">Actions</th>
                 </tr>
                 <c:forEach items="${invitations}" var="invitation">
-                    <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.ProjectAdminInvitation"--%>
-                    <c:set var="editOnClick">
-                        return BS.InvitationsDialog.openEdit('${invitation.token}', ${invitation.multiUser}, '${invitation.registrationUrl}',
-                        '${invitation.afterRegistrationUrl}', '${invitation.parentProject.externalId}', '${invitation.role.id}');
-                    </c:set>
-
+                    <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
                     <tr>
                         <td class="highlight">
                         <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
@@ -143,12 +119,14 @@
                             <span id="token_${invitation.token}"><c:out
                                     value="${invitationRootUrl}?token=${invitation.token}"/></span>
                         </td>
-
                         <td class="highlight">
                             <c:set value="${invitation}" scope="request" var="invitation"/>
-                            <jsp:include page="${invitation.descriptionViewPath}"/>
+                            <jsp:include page="${invitation.type.descriptionViewPath}"/>
                         </td>
-                        <td class="highlight edit" onclick="${editOnClick}">
+                        <td class="highlight">
+                                ${!invitation.reusable}
+                        </td>
+                        <td class="highlight edit" onclick="BS.EditInvitationDialog.open('${invitation.token}');">
                             <a href="#">Edit</a></td>
                         <td class="edit">
                             <a href="#" onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
@@ -158,7 +136,6 @@
             </table>
         </c:if>
     </div>
-
 </bs:refreshable>
 
 <script type="text/javascript">

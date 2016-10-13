@@ -14,45 +14,45 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static java.util.function.Function.identity;
 
 @ThreadSafe
 public class InvitationsStorage {
 
     private final TeamCityCoreFacade teamCityCore;
-    private Map<String, ProjectAdminInvitation> invitations;
+    private final Map<String, InvitationType> invitationTypes;
+    private Map<String, Invitation> invitations;
 
-    public InvitationsStorage(@NotNull TeamCityCoreFacade teamCityCore) {
+    public InvitationsStorage(@NotNull TeamCityCoreFacade teamCityCore,
+                              @NotNull List<InvitationType> invitationTypes) {
         this.teamCityCore = teamCityCore;
+        this.invitationTypes = invitationTypes.stream().collect(Collectors.toMap(InvitationType::getId, identity()));
     }
 
-    public synchronized String createUserAndProjectInvitation(@NotNull String token,
-                                                              @NotNull String registrationUrl,
-                                                              @NotNull String afterRegistrationUrl,
-                                                              @NotNull String parentProjectExtId,
-                                                              @NotNull String roleId,
-                                                              boolean multiuser) {
+    public synchronized String addInvitation(@NotNull String token, @NotNull Invitation invitation) {
         loadFromFile();
-        ProjectAdminInvitation invitation = new ProjectAdminInvitation(token, registrationUrl, afterRegistrationUrl, parentProjectExtId, roleId, multiuser, teamCityCore);
         invitations.put(token, invitation);
         persist();
-        Loggers.SERVER.debug("User invitation with token " + token + " created.");
+        Loggers.SERVER.info("User invitation with token " + token + " created.");
         return token;
     }
 
     @Nullable
-    public synchronized ProjectAdminInvitation getInvitation(@NotNull String token) {
+    public synchronized Invitation getInvitation(@NotNull String token) {
         loadFromFile();
         return invitations.get(token);
     }
 
     @NotNull
-    public synchronized List<ProjectAdminInvitation> getInvitations() {
+    public synchronized List<Invitation> getInvitations() {
         loadFromFile();
         return new ArrayList<>(invitations.values());
     }
 
     public synchronized void removeInvitation(@NotNull String token) {
-        ProjectAdminInvitation removed = invitations.remove(token);
+        Invitation removed = invitations.remove(token);
         if (removed != null) persist();
     }
 
@@ -60,15 +60,19 @@ public class InvitationsStorage {
         if (invitations != null) return;
 
         invitations = new HashMap<>();
-        File invitationsFile = getInvitationsFile("inviteProjectAdmin");
+        File invitationsFile = getInvitationsFile();
         if (!invitationsFile.exists() || invitationsFile.length() == 0) return;
 
         try {
             Element rootEl = FileUtil.parseDocument(invitationsFile);
             for (Object invitationEl : rootEl.getChildren()) {
-                ProjectAdminInvitation invitation = ProjectAdminInvitation.from((Element) invitationEl, teamCityCore);
-                if (invitation != null) {
+                try {
+                    InvitationType invitationType = invitationTypes.get(((Element) invitationEl).getAttributeValue("type"));
+                    Invitation invitation = invitationType.readFrom((Element) invitationEl);
                     invitations.put(invitation.getToken(), invitation);
+                } catch (InvitationException e) {
+                    Loggers.SERVER.warnAndDebugDetails("Failed to load invitation from element: " + invitationEl, e);
+
                 }
             }
         } catch (Exception e) {
@@ -82,11 +86,13 @@ public class InvitationsStorage {
         doc.addContent(rootElem);
         invitations.forEach((token, invitation) -> {
             Element invitationEl = new Element("invitation");
+            invitationEl.setAttribute("type", invitation.getType().getId());
             invitation.writeTo(invitationEl);
             rootElem.addContent(invitationEl);
         });
 
-        File file = getInvitationsFile("inviteProjectAdmin");
+        File file = getInvitationsFile();
+        FileUtil.createIfDoesntExist(file);
         try {
             FileUtil.saveDocument(doc, file);
         } catch (IOException e) {
@@ -95,10 +101,8 @@ public class InvitationsStorage {
     }
 
     @NotNull
-    private File getInvitationsFile(String invitationType) {
+    private File getInvitationsFile() {
         File invitationsDir = new File(teamCityCore.getPluginDataDir(), "invitations");
-        File file = new File(invitationsDir, invitationType + ".xml");
-        FileUtil.createIfDoesntExist(file);
-        return file;
+        return new File(invitationsDir, "invitations.xml");
     }
 }
