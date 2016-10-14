@@ -50,6 +50,6 @@ public abstract class AbstractInvitation implements Invitation {
 
     @Override
     public boolean isReusable() {
-        return !multi;
+        return multi;
     }
 }

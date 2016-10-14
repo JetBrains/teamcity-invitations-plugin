@@ -124,7 +124,8 @@
                             <jsp:include page="${invitation.type.descriptionViewPath}"/>
                         </td>
                         <td class="highlight">
-                                ${!invitation.reusable}
+                            <c:if test="${!invitation.reusable}">No</c:if>
+                            <c:if test="${invitation.reusable}">Yes</c:if>
                         </td>
                         <td class="highlight edit" onclick="BS.EditInvitationDialog.open('${invitation.token}');">
                             <a href="#">Edit</a></td>
