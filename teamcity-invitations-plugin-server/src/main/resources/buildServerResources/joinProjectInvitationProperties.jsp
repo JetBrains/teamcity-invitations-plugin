@@ -9,7 +9,7 @@
     <input type="hidden" name="token" id="token"/>
 
     <div class="spacing"></div>
-    <div><label for="name">Name: <l:star/></label></div>
+    <div><label for="name">Invitation name: <l:star/></label></div>
     <div><forms:textField name="name"/></div>
 
     <div class="spacing"></div>
