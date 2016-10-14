@@ -88,7 +88,7 @@ public class InvitationAdminController extends BaseFormXmlController {
     }
 
     @NotNull
-    private String createFromRequest(String token, HttpServletRequest request) {
+    private Invitation createFromRequest(String token, HttpServletRequest request) {
         Optional<InvitationType> invitationType = getInvitationType(request);
         if (!invitationType.isPresent()) {
             throw new InvitationException("Invitation type is not specified or doesn't exist");
@@ -151,8 +151,8 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
             try {
-                String token = createFromRequest(StringUtil.generateUniqueHash(), request);
-                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' created.");
+                Invitation invitation = createFromRequest(StringUtil.generateUniqueHash(), request);
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' created.");
             } catch (Exception e) {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
             }
@@ -170,8 +170,8 @@ public class InvitationAdminController extends BaseFormXmlController {
             String token = request.getParameter("token");
             try {
                 invitations.removeInvitation(token);
-                createFromRequest(token, request);
-                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' updated.");
+                Invitation invitation = createFromRequest(token, request);
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' updated.");
             } catch (Exception e) {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
             }
@@ -187,9 +187,12 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
             String token = request.getParameter("removeInvitation");
-            invitations.removeInvitation(token);
-            ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' removed.");
+            Invitation invitation = invitations.removeInvitation(token);
+            if (invitation != null) {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' removed.");
+            } else {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' doesn't exist.");
+            }
         }
-
     }
 }

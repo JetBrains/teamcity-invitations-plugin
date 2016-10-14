@@ -55,10 +55,11 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @NotNull
     @Override
     public InvitationImpl createNewInvitation(HttpServletRequest request, String token) {
+        String name = request.getParameter("name");
         String projectExtId = request.getParameter("project");
         String roleId = request.getParameter("role");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return new InvitationImpl(token, projectExtId, roleId, multiuser);
+        return new InvitationImpl(name, token, projectExtId, roleId, multiuser);
     }
 
     @NotNull
@@ -79,8 +80,8 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         @NotNull
         private final String roleId;
 
-        InvitationImpl(@NotNull String token, @NotNull String projectExtId, @NotNull String roleId, boolean multi) {
-            super(token, multi, JoinProjectInvitationType.this);
+        InvitationImpl(@NotNull String name, @NotNull String token, @NotNull String projectExtId, @NotNull String roleId, boolean multi) {
+            super(name, token, multi, JoinProjectInvitationType.this);
             this.roleId = roleId;
             this.projectExtId = projectExtId;
         }

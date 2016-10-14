@@ -12,17 +12,26 @@ public abstract class AbstractInvitation implements Invitation {
     protected final String token;
     protected final boolean multi;
     private final InvitationType type;
+    private final String name;
 
-    protected AbstractInvitation(@NotNull String token, boolean multi, InvitationType type) {
+    protected AbstractInvitation(String name, @NotNull String token, boolean multi, InvitationType type) {
         this.token = token;
         this.multi = multi;
         this.type = type;
+        this.name = name;
     }
 
     protected AbstractInvitation(Element element, InvitationType type) {
+        this.name = element.getAttributeValue("name");
         this.token = element.getAttributeValue("token");
         this.multi = Boolean.valueOf(element.getAttributeValue("multi"));
         this.type = type;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+        return name;
     }
 
     @NotNull
@@ -44,6 +53,7 @@ public abstract class AbstractInvitation implements Invitation {
     }
 
     public void writeTo(@NotNull Element element) {
+        element.setAttribute("name", name);
         element.setAttribute("token", token);
         element.setAttribute("multi", multi + "");
     }

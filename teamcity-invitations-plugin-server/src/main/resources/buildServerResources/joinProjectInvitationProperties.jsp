@@ -2,11 +2,15 @@
 
 <input type="hidden" name="invitationType" value="existingProjectInvitation"/>
 <div>
-    <span class="greyNote">
+    <span>
         Invite user to join the existing project.
     </span>
 
     <input type="hidden" name="token" id="token"/>
+
+    <div class="spacing"></div>
+    <div><label for="name">Name: <l:star/></label></div>
+    <div><forms:textField name="name"/></div>
 
     <div class="spacing"></div>
     <div>
@@ -15,6 +19,7 @@
     </div>
 
     <div class="spacing"></div>
+
 
     <div>
         <label for="project">Project: <l:star/></label>

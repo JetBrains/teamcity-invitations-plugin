@@ -2,17 +2,15 @@
 
 <input type="hidden" name="invitationType" value="newProjectInvitation"/>
 <div>
-    <span class="greyNote">
+    <span>
         Invite user to create a project and become it's Project Administrator
     </span>
 
     <input type="hidden" name="token" id="token"/>
 
     <div class="spacing"></div>
-    <div>
-        <forms:checkbox name="multiuser" checked="${multiuser}"/>
-        <label for="multiuser">Allow invitation to be used multiple times.</label>
-    </div>
+    <div><label for="name">Name: <l:star/></label></div>
+    <div><forms:textField name="name"/></div>
 
     <div class="spacing"></div>
 
@@ -41,6 +39,12 @@
                 </forms:option>
             </c:forEach>
         </forms:select>
+    </div>
+
+    <div class="spacing"></div>
+    <div>
+        <forms:checkbox name="multiuser" checked="${multiuser}"/>
+        <label for="multiuser">Allow invitation to be used multiple times.</label>
     </div>
 
 </div>

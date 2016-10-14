@@ -105,19 +105,17 @@
         <c:if test="${not empty invitations}">
             <table id="invitationsTable" class="parametersTable">
                 <tr>
-                    <th>URL</th>
+                    <th>Name</th>
                     <th>Description</th>
                     <th>Reusable</th>
-                    <th colspan="2">Actions</th>
+                    <th>URL</th>
+                    <th>Actions</th>
                 </tr>
                 <c:forEach items="${invitations}" var="invitation">
                     <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
                     <tr>
                         <td class="highlight">
-                        <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
-                              data-clipboard-target="#token_${invitation.token}"></span>
-                            <span id="token_${invitation.token}"><c:out
-                                    value="${invitationRootUrl}?token=${invitation.token}"/></span>
+                            <c:out value="${invitation.name}"/>
                         </td>
                         <td class="highlight">
                             <c:set value="${invitation}" scope="request" var="invitation"/>
@@ -127,9 +125,14 @@
                             <c:if test="${!invitation.reusable}">No</c:if>
                             <c:if test="${invitation.reusable}">Yes</c:if>
                         </td>
-                        <td class="highlight edit" onclick="BS.EditInvitationDialog.open('${invitation.token}');">
-                            <a href="#">Edit</a></td>
+                        <td class="highlight">
+                        <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
+                              data-clipboard-target="#token_${invitation.token}"></span>
+                            <span id="token_${invitation.token}"><c:out
+                                    value="${invitationRootUrl}?token=${invitation.token}"/></span>
+                        </td>
                         <td class="edit">
+                            <a href="#" onclick="BS.EditInvitationDialog.open('${invitation.token}');">Edit</a><br/>
                             <a href="#" onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
                         </td>
                     </tr>

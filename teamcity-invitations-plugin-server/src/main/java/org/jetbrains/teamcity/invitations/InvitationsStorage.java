@@ -31,12 +31,12 @@ public class InvitationsStorage {
         this.invitationTypes = invitationTypes.stream().collect(Collectors.toMap(InvitationType::getId, identity()));
     }
 
-    public synchronized String addInvitation(@NotNull String token, @NotNull Invitation invitation) {
+    public synchronized Invitation addInvitation(@NotNull String token, @NotNull Invitation invitation) {
         loadFromFile();
         invitations.put(token, invitation);
         persist();
         Loggers.SERVER.info("User invitation with token " + token + " created.");
-        return token;
+        return invitation;
     }
 
     @Nullable
@@ -51,9 +51,10 @@ public class InvitationsStorage {
         return new ArrayList<>(invitations.values());
     }
 
-    public synchronized void removeInvitation(@NotNull String token) {
+    public synchronized Invitation removeInvitation(@NotNull String token) {
         Invitation removed = invitations.remove(token);
         if (removed != null) persist();
+        return removed;
     }
 
     private synchronized void loadFromFile() {

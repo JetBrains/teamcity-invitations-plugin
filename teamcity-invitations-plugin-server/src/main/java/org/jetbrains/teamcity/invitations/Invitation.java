@@ -11,6 +11,9 @@ import javax.servlet.http.HttpServletResponse;
 public interface Invitation {
 
     @NotNull
+    String getName();
+
+    @NotNull
     String getToken();
 
     @NotNull

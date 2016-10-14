@@ -64,10 +64,11 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     @NotNull
     @Override
     public InvitationImpl createNewInvitation(HttpServletRequest request, String token) {
+        String name = request.getParameter("name");
         String parentProjectExtId = request.getParameter("parentProject");
         String roleId = request.getParameter("role");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return new InvitationImpl(token, parentProjectExtId, roleId, multiuser);
+        return new InvitationImpl(name, token, parentProjectExtId, roleId, multiuser);
     }
 
     public final class InvitationImpl extends AbstractInvitation {
@@ -76,8 +77,8 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         @NotNull
         private final String roleId;
 
-        InvitationImpl(@NotNull String token, @NotNull String parentExtId, @NotNull String roleId, boolean multi) {
-            super(token, multi, CreateNewProjectInvitationType.this);
+        InvitationImpl(@NotNull String name, @NotNull String token, @NotNull String parentExtId, @NotNull String roleId, boolean multi) {
+            super(name, token, multi, CreateNewProjectInvitationType.this);
             this.roleId = roleId;
             this.parentExtId = parentExtId;
         }
