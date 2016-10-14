@@ -60,23 +60,27 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         when(user.getRolesWithScope(RoleScope.projectScope(project.getProjectId()))).thenReturn(asList(role));
     }
 
+    @NotNull
     @Override
     public List<SProject> getActiveProjects() {
         return new ArrayList<>(projects);
     }
 
+    @NotNull
     @Override
     public List<Role> getAvailableRoles() {
         return new ArrayList<>(roles.values());
     }
 
+    @NotNull
     @Override
     public File getPluginDataDir() {
         return pluginDataDir;
     }
 
+    @NotNull
     @Override
-    public String getPluginResourcesPath(String path) {
+    public String getPluginResourcesPath(@NotNull String path) {
         return path;
     }
 

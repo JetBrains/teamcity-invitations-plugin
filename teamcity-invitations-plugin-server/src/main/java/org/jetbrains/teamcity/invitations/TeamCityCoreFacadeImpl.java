@@ -22,7 +22,8 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final ServerPaths serverPaths;
     private final PluginDescriptor pluginDescriptor;
 
-    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext, ServerPaths serverPaths, PluginDescriptor pluginDescriptor) {
+    public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext,
+                                  ServerPaths serverPaths, PluginDescriptor pluginDescriptor) {
         this.rolesManager = rolesManager;
         this.projectManager = projectManager;
         this.projectIdentifiersManager = projectIdentifiersManager;
@@ -74,23 +75,27 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         }
     }
 
+    @NotNull
     @Override
     public List<SProject> getActiveProjects() {
         return projectManager.getActiveProjects();
     }
 
+    @NotNull
     @Override
     public List<Role> getAvailableRoles() {
         return rolesManager.getAvailableRoles();
     }
 
+    @NotNull
     @Override
     public File getPluginDataDir() {
         return serverPaths.getPluginDataDirectory();
     }
 
+    @NotNull
     @Override
-    public String getPluginResourcesPath(String path) {
+    public String getPluginResourcesPath(@NotNull String path) {
         return pluginDescriptor.getPluginResourcesPath(path);
     }
 }

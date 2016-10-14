@@ -2,6 +2,7 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
+import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
@@ -17,6 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 public class CreateNewProjectInvitationType implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
     @NotNull
     private final TeamCityCoreFacade core;
+
+    @NotNull
+    private final RelativeWebLinks webLinks = new RelativeWebLinks();
 
     public CreateNewProjectInvitationType(@NotNull TeamCityCoreFacade core) {
         this.core = core;
@@ -117,8 +121,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
                 core.addRoleAsSystem(user, role, createdProject);
                 Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
                         "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
-                String afterRegistrationUrlFinal = "/editProject.html?projectId=" + createdProject.getExternalId();
-                return new ModelAndView(new RedirectView(afterRegistrationUrlFinal, true));
+                return new ModelAndView(new RedirectView(webLinks.getEditProjectPageUrl(createdProject.getExternalId()), true));
             } catch (Exception e) {
                 Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
                 return new ModelAndView(new RedirectView("/", true));

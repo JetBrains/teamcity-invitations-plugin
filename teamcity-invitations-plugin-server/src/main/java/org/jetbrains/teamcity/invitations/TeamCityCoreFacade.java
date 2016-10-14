@@ -11,22 +11,29 @@ import java.util.List;
 
 public interface TeamCityCoreFacade {
 
+    //ROLES
     @Nullable
     Role findRoleById(String roleId);
 
+    @NotNull
+    List<Role> getAvailableRoles();
+
+    void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
+
+    //PROJECTS
     @NotNull
     SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name);
 
     @Nullable
     SProject findProjectByExtId(String projectExtId);
 
-    void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
-
+    @NotNull
     List<SProject> getActiveProjects();
 
-    List<Role> getAvailableRoles();
-
+    //Plugins
+    @NotNull
     File getPluginDataDir();
 
-    String getPluginResourcesPath(String path);
+    @NotNull
+    String getPluginResourcesPath(@NotNull String path);
 }
