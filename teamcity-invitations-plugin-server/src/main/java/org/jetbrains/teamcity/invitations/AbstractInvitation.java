@@ -43,7 +43,7 @@ public abstract class AbstractInvitation implements Invitation {
     @NotNull
     @Override
     public ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
-        return new ModelAndView(new RedirectView("/registerUser.html", true));
+        return new ModelAndView(new RedirectView("/login.html", true));
     }
 
     @NotNull

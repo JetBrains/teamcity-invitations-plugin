@@ -39,7 +39,7 @@
     }
 
     div .spacing {
-        margin-top: 0.5em;
+        margin-top: 1em;
     }
 </style>
 

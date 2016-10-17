@@ -62,7 +62,7 @@ public class InvitationsTest extends BaseTestCase {
 
     @Test
     public void invite_user_to_create_a_project() throws Exception {
-        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
+        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
 
         //user go to invitation url
         ModelAndView invitationResponse = goToInvitationUrl(token);
@@ -72,8 +72,8 @@ public class InvitationsTest extends BaseTestCase {
         SUser user = core.createUser("oleg");
         ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(user);
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
-        then(core.getProject("oleg")).isNotNull();
-        then(core.getProject("oleg").getParentProjectExternalId()).isEqualTo("TestDriveProjectId");
+        then(core.getProject("oleg project")).isNotNull();
+        then(core.getProject("oleg project").getParentProjectExternalId()).isEqualTo("TestDriveProjectId");
         then(user.getRolesWithScope(projectScope("oleg"))).extracting(Role::getId).contains("PROJECT_ADMIN");
     }
 
@@ -94,7 +94,7 @@ public class InvitationsTest extends BaseTestCase {
 
     @Test
     public void project_with_such_name_already_exists() throws Exception {
-        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
+        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
         core.createProjectAsSystem("TestDriveProjectId", "oleg");
 
         //user go to invitation url
@@ -105,12 +105,12 @@ public class InvitationsTest extends BaseTestCase {
         SUser user = core.createUser("oleg");
         ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(user);
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
-        then(core.getProject("oleg1")).isNotNull();
-        then(user.getRolesWithScope(projectScope("oleg1"))).extracting(Role::getId).contains("PROJECT_ADMIN");
+        then(core.getProject("oleg project1")).isNotNull();
+        then(user.getRolesWithScope(projectScope("oleg project1"))).extracting(Role::getId).contains("PROJECT_ADMIN");
     }
 
     public void should_survive_server_restart() {
-        String token1 = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
+        String token1 = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
         String token2 = inviteToJoinProject("PROJECT_DEVELOPER", "_Root", false).getToken();
         Element beforeRestartEl1 = new Element("invitation");
         Element beforeRestartEl2 = new Element("invitation");
@@ -131,7 +131,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void remove_invitation() throws Exception {
-        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
+        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
         invitations.removeInvitation(token);
 
         then(invitations.getInvitation(token)).isNull();
@@ -142,7 +142,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void invitation_removed_during_user_registration() throws Exception {
-        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
+        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
 
         //user go to invitation url
         goToInvitationUrl(token);
@@ -155,7 +155,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     public void multiple_user_invitation_can_be_used_several_times() throws Exception {
-        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
+        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
@@ -165,12 +165,12 @@ public class InvitationsTest extends BaseTestCase {
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
         goToAfterRegistrationUrl(core.createUser("ivan"));
 
-        then(core.getProject("oleg")).isNotNull();
-        then(core.getProject("ivan")).isNotNull();
+        then(core.getProject("oleg project")).isNotNull();
+        then(core.getProject("ivan project")).isNotNull();
     }
 
     public void single_user_invitation_can_be_used_once() throws Exception {
-        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", false).getToken();
+        String token = inviteToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", false).getToken();
 
         //first
         assertRedirectTo(goToInvitationUrl(token), "/registerUser.html");
@@ -203,11 +203,12 @@ public class InvitationsTest extends BaseTestCase {
         response = new MockHttpServletResponse();
     }
 
-    private Invitation inviteToCreateProject(String role, String parentExtId, boolean multiuser) {
+    private Invitation inviteToCreateProject(String role, String parentExtId, String newProjectName, boolean multiuser) {
         newRequest(HttpMethod.POST, "/admin/invitations.html?createInvitation=1");
         request.addParameter("parentProject", parentExtId);
         request.addParameter("role", role);
         request.addParameter("multiuser", multiuser + "");
+        request.addParameter("newProjectName", newProjectName);
         return invitations.addInvitation("token", createNewProjectInvitationType.createNewInvitation(request, "token"));
     }
 

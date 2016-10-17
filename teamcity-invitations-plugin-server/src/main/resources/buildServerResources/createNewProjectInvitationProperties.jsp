@@ -2,15 +2,15 @@
 
 <input type="hidden" name="invitationType" value="newProjectInvitation"/>
 <div>
-    <span>
-        Invite user to create a project and become it's Project Administrator
+    <span class="greyNote">
+        Invite user to start a project.
     </span>
 
     <input type="hidden" name="token" id="token"/>
 
     <div class="spacing"></div>
     <div><label for="name">Invitation name: <l:star/></label></div>
-    <div><forms:textField name="name"/></div>
+    <div><forms:textField name="name" value="${name}"/></div>
 
     <div class="spacing"></div>
 
@@ -28,6 +28,11 @@
     </div>
 
     <div class="spacing"></div>
+    <div><label for="newProjectName">Created project name pattern: <l:star/></label></div>
+    <div><forms:textField name="newProjectName" value="${newProjectName}"/></div>
+    <span class="greyNote">The name of the project that will be created. {username} placeholder will be replaced with the username of the registered user.</span>
+
+    <div class="spacing"></div>
 
     <div>
         <label for="role">Give user a role in the created project: <l:star/></label>
@@ -40,6 +45,7 @@
             </c:forEach>
         </forms:select>
     </div>
+    <span class="greyNote">Select the parent of the created project</span>
 
     <div class="spacing"></div>
     <div>

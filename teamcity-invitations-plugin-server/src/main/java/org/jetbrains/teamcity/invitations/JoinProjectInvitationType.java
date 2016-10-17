@@ -46,6 +46,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("projects", core.getActiveProjects());
         modelAndView.getModel().put("roles", core.getAvailableRoles());
+        modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("projectId", invitation == null ? "_Root" : invitation.projectExtId);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_DEVELOPER" : invitation.roleId);

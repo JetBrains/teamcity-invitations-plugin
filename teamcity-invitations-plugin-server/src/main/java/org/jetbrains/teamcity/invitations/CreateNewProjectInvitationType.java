@@ -55,9 +55,11 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("projects", core.getActiveProjects());
         modelAndView.getModel().put("roles", core.getAvailableRoles());
+        modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("parentProjectId", invitation == null ? "_Root" : invitation.parentExtId);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_ADMIN" : invitation.roleId);
+        modelAndView.getModel().put("newProjectName", invitation == null ? "{username} project" : invitation.newProjectName);
         return modelAndView;
     }
 
@@ -67,8 +69,9 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         String name = request.getParameter("name");
         String parentProjectExtId = request.getParameter("parentProject");
         String roleId = request.getParameter("role");
+        String newProjectName = request.getParameter("newProjectName");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return new InvitationImpl(name, token, parentProjectExtId, roleId, multiuser);
+        return new InvitationImpl(name, token, parentProjectExtId, roleId, newProjectName, multiuser);
     }
 
     public final class InvitationImpl extends AbstractInvitation {
@@ -76,17 +79,22 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         private final String parentExtId;
         @NotNull
         private final String roleId;
+        @NotNull
+        private final String newProjectName;
 
-        InvitationImpl(@NotNull String name, @NotNull String token, @NotNull String parentExtId, @NotNull String roleId, boolean multi) {
+        InvitationImpl(@NotNull String name, @NotNull String token, @NotNull String parentExtId, @NotNull String roleId,
+                       @NotNull String newProjectName, boolean multi) {
             super(name, token, multi, CreateNewProjectInvitationType.this);
             this.roleId = roleId;
             this.parentExtId = parentExtId;
+            this.newProjectName = newProjectName;
         }
 
         InvitationImpl(@NotNull Element element) {
             super(element, CreateNewProjectInvitationType.this);
             this.parentExtId = element.getAttributeValue("parentExtId");
             this.roleId = element.getAttributeValue("roleId");
+            this.newProjectName = element.getAttributeValue("newProjectName");
         }
 
         @Override
@@ -94,6 +102,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
             super.writeTo(element);
             element.setAttribute("parentExtId", parentExtId);
             element.setAttribute("roleId", roleId);
+            element.setAttribute("newProjectName", newProjectName);
         }
 
         @NotNull
@@ -105,7 +114,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
                 }
 
                 SProject createdProject = null;
-                String projectName = user.getUsername();
+                String projectName = newProjectName.replace("{username}", user.getUsername());
                 int i = 1;
                 while (createdProject == null) {
                     try {
