@@ -37,7 +37,7 @@ public class InvitationAdminController extends BaseFormXmlController {
     @NotNull
     private final List<InvitationType> invitationTypes;
 
-    public InvitationAdminController(final PagePlaces pagePlaces,
+    public InvitationAdminController(@NotNull PagePlaces pagePlaces,
                                      @NotNull WebControllerManager webControllerManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull InvitationsStorage invitations,

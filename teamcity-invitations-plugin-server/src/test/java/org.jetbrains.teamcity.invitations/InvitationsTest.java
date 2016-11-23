@@ -1,21 +1,22 @@
 package org.jetbrains.teamcity.invitations;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.RootUrlHolder;
 import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.controllers.AuthorizationInterceptor;
+import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.XmlUtil;
-import jetbrains.buildServer.web.impl.PagePlacesRegistry;
 import jetbrains.buildServer.web.impl.TeamCityInternalKeys;
-import jetbrains.buildServer.web.impl.WebControllerManagerImpl;
-import jetbrains.buildServer.web.openapi.PluginDescriptor;
+import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.SessionUser;
-import jetbrains.spring.web.UrlMapping;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.mockito.Mockito;
@@ -30,13 +31,16 @@ import org.springframework.web.servlet.view.RedirectView;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.StringReader;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static jetbrains.buildServer.serverSide.auth.RoleScope.projectScope;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @Test
@@ -77,17 +81,35 @@ public class InvitationsTest extends BaseTestCase {
         systemAdmin = core.createUser("admin");
         systemAdmin.addRole(RoleScope.globalScope(), systemAdminRole);
 
-        WebControllerManagerImpl webControllerManager = new WebControllerManagerImpl();
-        webControllerManager.setHandlerMapping(new UrlMapping());
+        WebControllerManager webControllerManager = createWebControllerManager();
+
         invitationsController = new InvitationsController(webControllerManager, invitations, Mockito.mock(AuthorizationInterceptor.class),
                 Mockito.mock(RootUrlHolder.class));
 
         PluginDescriptor pluginDescriptor = Mockito.mock(PluginDescriptor.class);
         when(pluginDescriptor.getPluginResourcesPath(anyString())).thenReturn("fake.jsp");
-        invitationsAdminController = new InvitationAdminController(new PagePlacesRegistry(), webControllerManager,
+        invitationsAdminController = new InvitationAdminController(createPagePlaces(), webControllerManager,
                 pluginDescriptor, invitations, core, invitationsController, asList(createNewProjectInvitationType, joinProjectInvitationType));
 
         newRequest(HttpMethod.GET, "/");
+    }
+
+    private PagePlaces createPagePlaces() {
+        PagePlaces pagePlaces = Mockito.mock(PagePlaces.class);
+        when(pagePlaces.getPlaceById(any())).thenReturn(Mockito.mock(PagePlace.class));
+        return pagePlaces;
+    }
+
+    @NotNull
+    private WebControllerManager createWebControllerManager() {
+        WebControllerManager webControllerManager = Mockito.mock(WebControllerManager.class);
+        Multimap<BaseController, ControllerAction> actions = Multimaps.synchronizedMultimap(HashMultimap.create());
+
+        when(webControllerManager.getAction(any(BaseController.class), any(HttpServletRequest.class)))
+                .thenAnswer(inv -> actions.get(inv.getArgument(0)).stream().filter(action -> action.canProcess(request)).findAny().orElseGet(null));
+        doAnswer(inv -> actions.put(inv.getArgument(0), inv.getArgument(1)))
+                .when(webControllerManager).registerAction(any(BaseController.class), any(ControllerAction.class));
+        return webControllerManager;
     }
 
     @NotNull
