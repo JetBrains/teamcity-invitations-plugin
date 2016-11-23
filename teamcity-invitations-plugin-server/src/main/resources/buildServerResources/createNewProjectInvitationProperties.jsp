@@ -20,7 +20,7 @@
             <c:forEach items="${projects}" var="project">
                 <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
                 <forms:option value="${project.externalId}" title="${project.name}"
-                              selected="${project.externalId eq selectedProjectId}">
+                              selected="${project.externalId eq parentProjectId}">
                     <c:out value="${project.name}"/>
                 </forms:option>
             </c:forEach>
