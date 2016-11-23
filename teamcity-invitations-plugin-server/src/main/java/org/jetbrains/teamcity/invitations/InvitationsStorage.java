@@ -1,6 +1,7 @@
 package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
 
 @ThreadSafe
 public class InvitationsStorage {
@@ -49,6 +51,11 @@ public class InvitationsStorage {
     public synchronized List<Invitation> getInvitations() {
         loadFromFile();
         return new ArrayList<>(invitations.values());
+    }
+
+    @NotNull
+    public synchronized List<Invitation> getInvitationsAvailableFor(@NotNull SUser user) {
+        return getInvitations().stream().filter(invitation -> invitation.isAvailableFor(user)).collect(toList());
     }
 
     public synchronized Invitation removeInvitation(@NotNull String token) {

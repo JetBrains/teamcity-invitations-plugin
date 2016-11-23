@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.stream.Collectors.toList;
+
 public class InvitationAdminController extends BaseFormXmlController {
 
     public static final String MESSAGES_KEY = "teamcity.invitations.plugin";
@@ -60,12 +62,22 @@ public class InvitationAdminController extends BaseFormXmlController {
             Optional<InvitationType> found = getInvitationType(request);
             if (!found.isPresent()) return null;
 
+            if (!found.get().isAvailableFor(SessionUser.getUser(request))) {
+                throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to create invitation of type " + found.get().getId());
+            }
+
             return found.get().getEditPropertiesView(null);
         }
 
         if (request.getParameter("editInvitation") != null && request.getParameter("token") != null) {
-            Invitation found = invitations.getInvitation(request.getParameter("token"));
+            String token = request.getParameter("token");
+            if (token == null) return null;
+            Invitation found = invitations.getInvitation(token);
             if (found == null) return null;
+
+            if (!found.isAvailableFor(SessionUser.getUser(request))) {
+                throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitation " + found.getToken());
+            }
 
             return found.getType().getEditPropertiesView(found);
         }
@@ -75,9 +87,6 @@ public class InvitationAdminController extends BaseFormXmlController {
 
     @Override
     protected synchronized void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
-        if (!SessionUser.getUser(request).isSystemAdministratorRoleGranted()) {
-            throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitations");
-        }
         ControllerAction action = webControllerManager.getAction(this, request);
         if (action == null) {
             Loggers.SERVER.warn("Unrecognized request: " + WebUtil.getRequestDump(request));
@@ -123,8 +132,8 @@ public class InvitationAdminController extends BaseFormXmlController {
 
         @Override
         public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
-            model.put("invitationTypes", invitationTypes);
-            model.put("invitations", invitations.getInvitations());
+            model.put("invitationTypes", invitationTypes.stream().filter(invitationType -> invitationType.isAvailableFor(SessionUser.getUser(request))).collect(toList()));
+            model.put("invitations", invitations.getInvitations().stream().filter(i -> i.isAvailableFor(SessionUser.getUser(request))).collect(toList()));
             model.put("invitationRootUrl", invitationsController.getInvitationsPath());
             model.put("projects", teamCityCoreFacade.getActiveProjects());
             model.put("roles", teamCityCoreFacade.getAvailableRoles());
@@ -132,7 +141,7 @@ public class InvitationAdminController extends BaseFormXmlController {
 
         @Override
         public boolean isAvailable(@NotNull HttpServletRequest request) {
-            return super.isAvailable(request) && SessionUser.getUser(request).isSystemAdministratorRoleGranted();
+            return super.isAvailable(request) && invitationTypes.stream().anyMatch(type -> type.isAvailableFor(SessionUser.getUser(request)));
         }
 
         @NotNull
@@ -150,9 +159,17 @@ public class InvitationAdminController extends BaseFormXmlController {
 
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
+            Optional<InvitationType> invitationType = getInvitationType(request);
+            if (invitationType.isPresent() && !invitationType.get().isAvailableFor(SessionUser.getUser(request))) {
+                throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to create invitation of type " + invitationType.get().getId());
+            }
+
             try {
                 Invitation invitation = createFromRequest(StringUtil.generateUniqueHash(), request);
+                ajaxResponse.setAttribute("token", invitation.getToken());
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' created.");
+            } catch (AccessDeniedException e) {
+                throw e;
             } catch (Exception e) {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
             }
@@ -168,6 +185,13 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void process(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @Nullable Element element) {
             String token = request.getParameter("token");
+            if (token != null) {
+                Invitation invitation = invitations.getInvitation(token);
+                if (invitation != null && !invitation.isAvailableFor(SessionUser.getUser(request))) {
+                    throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitation " + token);
+                }
+            }
+
             try {
                 invitations.removeInvitation(token);
                 Invitation invitation = createFromRequest(token, request);
@@ -184,9 +208,17 @@ public class InvitationAdminController extends BaseFormXmlController {
         public boolean canProcess(@NotNull final HttpServletRequest request) {
             return request.getParameter("removeInvitation") != null;
         }
+
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
             String token = request.getParameter("removeInvitation");
+            if (token != null) {
+                Invitation invitation = invitations.getInvitation(token);
+                if (invitation != null && !invitation.isAvailableFor(SessionUser.getUser(request))) {
+                    throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to remove invitation " + token);
+                }
+            }
+
             Invitation invitation = invitations.removeInvitation(token);
             if (invitation != null) {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' removed.");

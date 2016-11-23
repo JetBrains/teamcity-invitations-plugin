@@ -2,8 +2,10 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
+import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.users.SUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -13,13 +15,19 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class JoinProjectInvitationType implements InvitationType<JoinProjectInvitationType.InvitationImpl> {
 
     private final TeamCityCoreFacade core;
 
-    public JoinProjectInvitationType(TeamCityCoreFacade core) {
+    @NotNull
+    private final SecurityContext securityContext;
+
+    public JoinProjectInvitationType(TeamCityCoreFacade core, @NotNull SecurityContext securityContext) {
         this.core = core;
+        this.securityContext = securityContext;
     }
 
     @NotNull
@@ -44,7 +52,13 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @Override
     public ModelAndView getEditPropertiesView(@Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
-        modelAndView.getModel().put("projects", core.getActiveProjects());
+        AuthorityHolder user = securityContext.getAuthorityHolder();
+
+        List<SProject> availableProjects = core.getActiveProjects().stream().filter(p ->
+                user.isPermissionGrantedForProject(p.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT)
+        ).collect(Collectors.toList());
+
+        modelAndView.getModel().put("projects", availableProjects);
         modelAndView.getModel().put("roles", core.getAvailableRoles());
         modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
@@ -74,6 +88,11 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         }
     }
 
+    @Override
+    public boolean isAvailableFor(AuthorityHolder authorityHolder) {
+        return authorityHolder.isPermissionGrantedForAnyProject(Permission.CHANGE_USER_ROLES_IN_PROJECT);
+    }
+
     public final class InvitationImpl extends AbstractInvitation {
 
         @NotNull
@@ -98,6 +117,11 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
             super.writeTo(element);
             element.setAttribute("projectExtId", projectExtId);
             element.setAttribute("roleId", roleId);
+        }
+
+        @Override
+        public boolean isAvailableFor(@NotNull AuthorityHolder user) {
+            return user.isPermissionGrantedForProject(getProject().getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT);
         }
 
         @NotNull

@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,4 +30,6 @@ public interface InvitationType<T extends Invitation> {
 
     @NotNull
     T readFrom(@NotNull Element element);
+
+    boolean isAvailableFor(AuthorityHolder authorityHolder);
 }

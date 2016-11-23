@@ -2,21 +2,19 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.auth.Role;
-import jetbrains.buildServer.serverSide.auth.RoleScope;
+import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.users.impl.RoleEntryImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
@@ -36,7 +34,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name) {
+    public SProject createProjectAsSystem(@Nullable String parentExtId, @NotNull String name) {
         if (projects.stream().anyMatch(p -> p.getName().equals(name))) {
             throw new DuplicateProjectNameException("Already exists");
         }
@@ -57,7 +55,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @Override
     public void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
-        when(user.getRolesWithScope(RoleScope.projectScope(project.getProjectId()))).thenReturn(asList(role));
+        user.addRole(RoleScope.projectScope(project.getProjectId()), role);
     }
 
     @NotNull
@@ -84,10 +82,12 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         return path;
     }
 
-    void addRole(String id) {
+    Role addRole(String id, Permissions permissions) {
         Role role = mock(Role.class);
         when(role.getId()).thenReturn(id);
+        when(role.getPermissions()).thenReturn(permissions);
         roles.put(id, role);
+        return role;
     }
 
     @Nullable
@@ -97,8 +97,41 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     SUser createUser(String username) {
+        Collection<RoleEntry> roles = Collections.synchronizedSet(new HashSet<>());
         SUser user = mock(SUser.class);
         when(user.getUsername()).thenReturn(username);
+        when(user.getRoles()).thenReturn(roles);
+
+        when(user.getRolesWithScope(any(RoleScope.class))).thenAnswer(invocation ->
+                roles.stream().
+                        filter(roleEntry -> roleEntry.getScope().equals(invocation.getArgument(0))).
+                        map(RoleEntry::getRole).
+                        collect(Collectors.toList()));
+
+        when(user.isPermissionGrantedForProject(anyString(), any(Permission.class))).thenAnswer(invocation -> {
+            String projectIntId = invocation.getArgument(0);
+            Permission permission = invocation.getArgument(1);
+
+            return roles.stream().
+                    filter(entry -> projectIntId.equals(entry.getScope().getProjectId()) || entry.getScope().isGlobal()).
+                    findFirst().
+                    map(roleEntry -> roleEntry.getRole().getPermissions().contains(permission)).
+                    orElse(false);
+        });
+
+        when(user.isPermissionGrantedForAnyProject(any(Permission.class))).thenAnswer(invocation -> {
+            Permission permission = invocation.getArgument(0);
+            return roles.stream().
+                    filter(entry -> entry.getRole().getPermissions().contains(permission)).
+                    findAny().
+                    isPresent();
+        });
+
+        doAnswer(invocation -> {
+            roles.add(new RoleEntryImpl(invocation.getArgument(0), invocation.getArgument(1)));
+            return null;
+        }).when(user).addRole(any(RoleScope.class), any(Role.class));
+
         return user;
     }
 }
