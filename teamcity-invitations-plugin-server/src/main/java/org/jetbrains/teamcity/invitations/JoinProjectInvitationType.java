@@ -18,6 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 public class JoinProjectInvitationType implements InvitationType<JoinProjectInvitationType.InvitationImpl> {
 
     private final TeamCityCoreFacade core;
@@ -59,7 +61,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         ).collect(Collectors.toList());
 
         modelAndView.getModel().put("projects", availableProjects);
-        modelAndView.getModel().put("roles", core.getAvailableRoles());
+        modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("projectId", invitation == null ? "_Root" : invitation.projectExtId);

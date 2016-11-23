@@ -67,9 +67,9 @@ public class InvitationsTest extends BaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
         core = new FakeTeamCityCoreFacade(createTempDir());
-        systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()));
-        adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT));
-        developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD));
+        systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()), false);
+        adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT), true);
+        developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD), true);
 
         core.createProjectAsSystem(null, "_Root");
         testDriveProject = core.createProjectAsSystem("_Root", "TestDriveProjectId");
@@ -268,6 +268,7 @@ public class InvitationsTest extends BaseTestCase {
         newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&invitationType=newProjectInvitation");
         ModelAndView modelAndView = invitationsAdminController.handleRequestInternal(request, response);
         then(((List<SProject>) modelAndView.getModel().get("projects"))).containsOnly(testDriveProject);
+        then(((List<Role>) modelAndView.getModel().get("roles"))).containsOnly(adminRole, developerRole).doesNotContain(systemAdminRole);
 
         try {
             createInvitationToCreateProject(adminRole.getId(), "_Root", "{username} project", true); //can't invite to roo
@@ -278,7 +279,7 @@ public class InvitationsTest extends BaseTestCase {
 
     public void user_cant_invite_project_admin_without_assign_role_permission() throws Exception {
         SUser oleg = core.createUser("oleg");
-        Role role = core.addRole("PROJECT_ADMIN2", new Permissions(Permission.CREATE_SUB_PROJECT));//no CHANGE_USER_ROLES_IN_PROJECT permission
+        Role role = core.addRole("PROJECT_ADMIN2", new Permissions(Permission.CREATE_SUB_PROJECT), true);//no CHANGE_USER_ROLES_IN_PROJECT permission
         oleg.addRole(projectScope(testDriveProject.getProjectId()), role);
         login(oleg);
 

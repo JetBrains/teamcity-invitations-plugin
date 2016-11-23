@@ -15,7 +15,8 @@ import org.springframework.web.servlet.view.RedirectView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public class CreateNewProjectInvitationType implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
     @NotNull
@@ -71,10 +72,10 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         List<SProject> availableParents = core.getActiveProjects().stream().filter(p ->
                 user.isPermissionGrantedForProject(p.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
                         user.isPermissionGrantedForProject(p.getProjectId(), Permission.CREATE_SUB_PROJECT)
-        ).collect(Collectors.toList());
+        ).collect(toList());
 
         modelAndView.getModel().put("projects", availableParents);
-        modelAndView.getModel().put("roles", core.getAvailableRoles());
+        modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("parentProjectId", invitation == null ? null : invitation.parentExtId);

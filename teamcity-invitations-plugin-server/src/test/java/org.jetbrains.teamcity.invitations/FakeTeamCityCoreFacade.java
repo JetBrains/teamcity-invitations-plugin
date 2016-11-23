@@ -82,10 +82,12 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         return path;
     }
 
-    Role addRole(String id, Permissions permissions) {
+    Role addRole(String id, Permissions permissions, boolean isProjectAssociationSupported) {
         Role role = mock(Role.class);
         when(role.getId()).thenReturn(id);
         when(role.getPermissions()).thenReturn(permissions);
+        when(role.isProjectAssociationSupported()).thenReturn(isProjectAssociationSupported);
+        when(role.toString()).thenReturn(id);
         roles.put(id, role);
         return role;
     }
