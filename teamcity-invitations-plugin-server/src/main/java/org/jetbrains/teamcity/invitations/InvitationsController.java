@@ -39,6 +39,11 @@ public class InvitationsController extends BaseController {
         authorizationInterceptor.addPathNotRequiringAuth(INVITATIONS_PATH);
     }
 
+    @NotNull
+    static String computeUserRegisteredUrl() {
+        return INVITATIONS_PATH + "?" + AFTER_REGISTRATION_PARAM + "=1";
+    }
+
     @Nullable
     @Override
     protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
@@ -67,7 +72,7 @@ public class InvitationsController extends BaseController {
             return new ModelAndView(new RedirectView("/"));
         }
         request.getSession().setAttribute(INVITATION_TOKEN_SESSION_ATTR, token);
-        request.getSession().setAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL, INVITATIONS_PATH + "?" + AFTER_REGISTRATION_PARAM + "=1");
+        request.getSession().setAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL, computeUserRegisteredUrl());
         return invitation.processInvitationRequest(request, response);
     }
 

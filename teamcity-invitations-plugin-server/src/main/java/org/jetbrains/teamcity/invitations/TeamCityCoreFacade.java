@@ -18,6 +18,9 @@ public interface TeamCityCoreFacade {
     @NotNull
     List<Role> getAvailableRoles();
 
+    @Nullable
+    SUser getUser(long userId);
+
     void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
 
     //PROJECTS

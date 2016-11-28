@@ -6,6 +6,7 @@ import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,9 +93,10 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         String roleId = request.getParameter("role");
         String newProjectName = request.getParameter("newProjectName");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        InvitationImpl invitation = new InvitationImpl(name, token, parentProjectExtId, roleId, newProjectName, multiuser);
-        if (!invitation.isAvailableFor(securityContext.getAuthorityHolder())) {
-            throw new AccessDeniedException(securityContext.getAuthorityHolder(), "You don't have permissions to create the invitation");
+        SUser currentUser = SessionUser.getUser(request);
+        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, parentProjectExtId, roleId, newProjectName, multiuser);
+        if (!invitation.isAvailableFor(currentUser)) {
+            throw new AccessDeniedException(currentUser, "You don't have permissions to create the invitation");
         }
         return invitation;
     }
@@ -107,9 +109,9 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         @NotNull
         private final String newProjectName;
 
-        InvitationImpl(@NotNull String name, @NotNull String token, @NotNull String parentExtId, @NotNull String roleId,
+        InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull String parentExtId, @NotNull String roleId,
                        @NotNull String newProjectName, boolean multi) {
-            super(name, token, multi, CreateNewProjectInvitationType.this);
+            super(name, token, multi, CreateNewProjectInvitationType.this, currentUser.getId());
             this.roleId = roleId;
             this.parentExtId = parentExtId;
             this.newProjectName = newProjectName;
@@ -120,6 +122,12 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
             this.parentExtId = element.getAttributeValue("parentExtId");
             this.roleId = element.getAttributeValue("roleId");
             this.newProjectName = element.getAttributeValue("newProjectName");
+        }
+
+        @NotNull
+        @Override
+        protected String getLandingPage() {
+            return core.getPluginResourcesPath("createNewProjectInvitationLanding.jsp");
         }
 
         @Override
@@ -173,6 +181,11 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         @Nullable
         public SProject getParent() {
             return CreateNewProjectInvitationType.this.core.findProjectByExtId(parentExtId);
+        }
+
+        @Nullable
+        public SUser getUser() {
+            return CreateNewProjectInvitationType.this.core.getUser(createdByUserId);
         }
     }
 }

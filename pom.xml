@@ -7,7 +7,7 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
-      <teamcity-version>10.0.3-SNAPSHOT</teamcity-version>
+      <teamcity-version>10.1-SNAPSHOT</teamcity-version>
   </properties>
   <repositories>
     <repository>
@@ -44,7 +44,7 @@
                   <artifactId>teamcity-sdk-maven-plugin</artifactId>
                   <version>0.2</version>
                   <configuration>
-                      <teamcityDir>TeamCity-10.0.2</teamcityDir>
+                      <teamcityDir>TeamCity-10.1</teamcityDir>
                   </configuration>
               </plugin>
           </plugins>

@@ -20,6 +20,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     private final Map<String, Role> roles = new HashMap<>();
     private final List<SProject> projects = new ArrayList<>();
+    private final List<SUser> users = new ArrayList<>();
     private final File pluginDataDir;
 
     public FakeTeamCityCoreFacade(File pluginDataDir) {
@@ -70,6 +71,12 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         return new ArrayList<>(roles.values());
     }
 
+    @Nullable
+    @Override
+    public SUser getUser(long userId) {
+        return users.get((int) userId - 1);
+    }
+
     @NotNull
     @Override
     public File getPluginDataDir() {
@@ -101,6 +108,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     SUser createUser(String username) {
         Collection<RoleEntry> roles = Collections.synchronizedSet(new HashSet<>());
         SUser user = mock(SUser.class);
+        when(user.getId()).thenReturn(users.size() + 1L);
         when(user.getUsername()).thenReturn(username);
         when(user.getRoles()).thenReturn(roles);
 
@@ -134,6 +142,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
             return null;
         }).when(user).addRole(any(RoleScope.class), any(Role.class));
 
+        users.add(user);
         return user;
     }
 }

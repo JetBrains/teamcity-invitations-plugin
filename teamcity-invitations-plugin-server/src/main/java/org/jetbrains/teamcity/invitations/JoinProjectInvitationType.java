@@ -7,6 +7,7 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
         modelAndView.getModel().put("projects", availableProjects);
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
-        modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
+        modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("projectId", invitation == null ? "_Root" : invitation.projectExtId);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_DEVELOPER" : invitation.roleId);
@@ -76,7 +77,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         String projectExtId = request.getParameter("project");
         String roleId = request.getParameter("role");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return new InvitationImpl(name, token, projectExtId, roleId, multiuser);
+        return new InvitationImpl(SessionUser.getUser(request), name, token, projectExtId, roleId, multiuser);
     }
 
     @NotNull
@@ -102,8 +103,8 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         @NotNull
         private final String roleId;
 
-        InvitationImpl(@NotNull String name, @NotNull String token, @NotNull String projectExtId, @NotNull String roleId, boolean multi) {
-            super(name, token, multi, JoinProjectInvitationType.this);
+        InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull String projectExtId, @NotNull String roleId, boolean multi) {
+            super(name, token, multi, JoinProjectInvitationType.this, currentUser.getId());
             this.roleId = roleId;
             this.projectExtId = projectExtId;
         }
@@ -112,6 +113,12 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
             super(element, JoinProjectInvitationType.this);
             this.projectExtId = element.getAttributeValue("projectExtId");
             this.roleId = element.getAttributeValue("roleId");
+        }
+
+        @NotNull
+        @Override
+        protected String getLandingPage() {
+            return core.getPluginResourcesPath("joinProjectInvitationLanding.jsp");
         }
 
         @Override
@@ -161,6 +168,11 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         @Nullable
         public SProject getProject() {
             return JoinProjectInvitationType.this.core.findProjectByExtId(projectExtId);
+        }
+
+        @Nullable
+        public SUser getUser() {
+            return JoinProjectInvitationType.this.core.getUser(createdByUserId);
         }
     }
 }

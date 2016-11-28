@@ -125,7 +125,11 @@ public class InvitationsTest extends BaseTestCase {
         //user go to invitation url
         logout();
         ModelAndView invitationResponse = goToInvitationUrl(token);
-        assertRedirectTo(invitationResponse, "/login.html");
+        then(invitationResponse.getViewName()).isEqualTo("createNewProjectInvitationLanding.jsp");
+        then(invitationResponse.getModel().get("invitation")).isInstanceOf(CreateNewProjectInvitationType.InvitationImpl.class);
+        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
+        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getParent()).isEqualTo(testDriveProject);
+        then(invitationResponse.getModel().get("loggedInUser")).isEqualTo(null);
 
         //user registered
         SUser user = core.createUser("oleg");
@@ -145,7 +149,11 @@ public class InvitationsTest extends BaseTestCase {
         //user go to invitation url
         logout();
         ModelAndView invitationResponse = goToInvitationUrl(token);
-        assertRedirectTo(invitationResponse, "/login.html");
+        then(invitationResponse.getViewName()).isEqualTo("joinProjectInvitationLanding.jsp");
+        then(invitationResponse.getModel().get("invitation")).isInstanceOf(JoinProjectInvitationType.InvitationImpl.class);
+        then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
+        then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
+        then(invitationResponse.getModel().get("loggedInUser")).isEqualTo(null);
 
         //user registered
         SUser user = core.createUser("oleg");
@@ -156,6 +164,30 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     @Test
+    public void process_invitation_when_user_already_logged_in() throws Exception {
+        login(systemAdmin);
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+
+        //logged in user go to invitation url
+        SUser user = core.createUser("oleg");
+        login(user);
+        ModelAndView invitationResponse = goToInvitationUrl(token);
+        then(invitationResponse.getViewName()).isEqualTo("createNewProjectInvitationLanding.jsp");
+        then(invitationResponse.getModel().get("invitation")).isInstanceOf(CreateNewProjectInvitationType.InvitationImpl.class);
+        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
+        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getParent()).isEqualTo(testDriveProject);
+        then((invitationResponse.getModel().get("loggedInUser"))).isEqualTo(user);
+        then((invitationResponse.getModel().get("proceedUrl"))).isEqualTo(InvitationsController.computeUserRegisteredUrl());
+
+        //user registered
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
+        then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
+        then(core.getProject("oleg project")).isNotNull();
+        then(core.getProject("oleg project").getParentProjectExternalId()).isEqualTo("TestDriveProjectId");
+        then(user.getRolesWithScope(projectScope("oleg project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
+    }
+
+    @Test
     public void project_with_such_name_already_exists() throws Exception {
         login(systemAdmin);
         String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
@@ -163,8 +195,7 @@ public class InvitationsTest extends BaseTestCase {
 
         //user go to invitation url
         logout();
-        ModelAndView invitationResponse = goToInvitationUrl(token);
-        assertRedirectTo(invitationResponse, "/login.html");
+        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
 
         //user registered
         SUser user = core.createUser("oleg");
@@ -232,13 +263,13 @@ public class InvitationsTest extends BaseTestCase {
 
         //first
         logout();
-        assertRedirectTo(goToInvitationUrl(token), "/login.html");
+        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
         login(core.createUser("oleg"));
         goToAfterRegistrationUrl();
 
         //second
         logout();
-        assertRedirectTo(goToInvitationUrl(token), "/login.html");
+        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
         login(core.createUser("ivan"));
         goToAfterRegistrationUrl();
 
@@ -252,7 +283,7 @@ public class InvitationsTest extends BaseTestCase {
 
         //first
         logout();
-        assertRedirectTo(goToInvitationUrl(token), "/login.html");
+        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
         login(core.createUser("oleg"));
         goToAfterRegistrationUrl();
 
@@ -331,6 +362,10 @@ public class InvitationsTest extends BaseTestCase {
     private void assertRedirectTo(ModelAndView invitationResponse, String expectedRedirect) {
         then(invitationResponse.getView()).isInstanceOf(RedirectView.class);
         then(((RedirectView) invitationResponse.getView()).getUrl()).isEqualTo(expectedRedirect);
+    }
+
+    private void assertViewName(ModelAndView invitationResponse, String expectedViewName) {
+        then((invitationResponse.getViewName())).isEqualTo(expectedViewName);
     }
 
     private void newRequest(HttpMethod method, String url) {

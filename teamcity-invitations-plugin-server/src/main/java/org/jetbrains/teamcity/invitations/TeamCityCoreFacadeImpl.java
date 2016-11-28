@@ -6,6 +6,7 @@ import jetbrains.buildServer.serverSide.auth.RoleScope;
 import jetbrains.buildServer.serverSide.auth.RolesManager;
 import jetbrains.buildServer.serverSide.identifiers.ProjectIdentifiersManager;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.users.UserModel;
 import jetbrains.buildServer.util.ExceptionUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -21,15 +22,17 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final SecurityContextEx securityContext;
     private final ServerPaths serverPaths;
     private final PluginDescriptor pluginDescriptor;
+    private final UserModel userModel;
 
     public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext,
-                                  ServerPaths serverPaths, PluginDescriptor pluginDescriptor) {
+                                  ServerPaths serverPaths, PluginDescriptor pluginDescriptor, UserModel userModel) {
         this.rolesManager = rolesManager;
         this.projectManager = projectManager;
         this.projectIdentifiersManager = projectIdentifiersManager;
         this.securityContext = securityContext;
         this.serverPaths = serverPaths;
         this.pluginDescriptor = pluginDescriptor;
+        this.userModel = userModel;
     }
 
     @Nullable
@@ -85,6 +88,12 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public List<Role> getAvailableRoles() {
         return rolesManager.getAvailableRoles();
+    }
+
+    @Nullable
+    @Override
+    public SUser getUser(long userId) {
+        return userModel.findUserById(userId);
     }
 
     @NotNull
