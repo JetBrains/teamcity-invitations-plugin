@@ -18,24 +18,21 @@
 
     <bs:_loginPageDecoration id="loginPage" title="${title}">
       <p id="formNote">
+         <p>
+                 ${invitation.user.descriptiveName} invites you to join the ${invitation.project.fullName} project.
+         </p>
         <c:choose>
           <c:when test="${loggedInUser == null}">
             <p>
-                    ${invitation.user.descriptiveName} invites you to join the ${invitation.project.fullName} project.
-            </p>
-            <p>
-                Please <a href="<c:url value='/login.html'/>">login or register</a> to accept the invitation.
+                Please <a href="<c:url value='${proceedUrl}'/>">login or register</a> to accept the invitation.
             </p>
           </c:when>
           <c:otherwise>
             <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>
-              <p>
-                      ${invitation.user.descriptiveName} invites you to join the ${invitation.project.fullName} project.
-              </p>
             <p>
                 You are logged in as '${loggedInUser.descriptiveName}'. <br/>
-                Please <a href="<c:url value='${proceedUrl}'/>">proceed</a> as a currently logged-in user
-                or <a href="<c:url value='/login.html'/>">re-login</a> with another account to accept the invitation.
+                Please <a href="<c:url value='${proceedUrl}'/>">proceed</a> as a currently logged-in user to accept the
+                invitation.
             </p>
 
           </c:otherwise>

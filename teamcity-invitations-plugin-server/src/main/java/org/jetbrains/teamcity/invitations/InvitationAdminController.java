@@ -33,7 +33,7 @@ public class InvitationAdminController extends BaseFormXmlController {
     @NotNull
     private final TeamCityCoreFacade teamCityCoreFacade;
     @NotNull
-    private final InvitationsController invitationsController;
+    private final InvitationsLandingController invitationsController;
     @NotNull
     private final List<InvitationType> invitationTypes;
 
@@ -42,7 +42,7 @@ public class InvitationAdminController extends BaseFormXmlController {
                                      @NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull InvitationsStorage invitations,
                                      @NotNull TeamCityCoreFacade teamCityCoreFacade,
-                                     @NotNull InvitationsController invitationsController,
+                                     @NotNull InvitationsLandingController invitationsController,
                                      @NotNull List<InvitationType> invitationTypes) {
         this.webControllerManager = webControllerManager;
         this.invitations = invitations;

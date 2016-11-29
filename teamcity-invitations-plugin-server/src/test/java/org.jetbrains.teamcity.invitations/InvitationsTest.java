@@ -14,7 +14,6 @@ import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.XmlUtil;
-import jetbrains.buildServer.web.impl.TeamCityInternalKeys;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
@@ -47,7 +46,8 @@ import static org.mockito.Mockito.when;
 public class InvitationsTest extends BaseTestCase {
 
     private InvitationsStorage invitations;
-    private InvitationsController invitationsController;
+    private InvitationsLandingController invitationsController;
+    private InvitationsProceedController invitationsProceedController;
     private InvitationAdminController invitationsAdminController;
     private CreateNewProjectInvitationType createNewProjectInvitationType;
     private JoinProjectInvitationType joinProjectInvitationType;
@@ -83,8 +83,10 @@ public class InvitationsTest extends BaseTestCase {
 
         WebControllerManager webControllerManager = createWebControllerManager();
 
-        invitationsController = new InvitationsController(webControllerManager, invitations, Mockito.mock(AuthorizationInterceptor.class),
+        invitationsController = new InvitationsLandingController(webControllerManager, invitations, Mockito.mock(AuthorizationInterceptor.class),
                 Mockito.mock(RootUrlHolder.class));
+
+        invitationsProceedController = new InvitationsProceedController(webControllerManager, invitations);
 
         PluginDescriptor pluginDescriptor = Mockito.mock(PluginDescriptor.class);
         when(pluginDescriptor.getPluginResourcesPath(anyString())).thenReturn("fake.jsp");
@@ -177,7 +179,7 @@ public class InvitationsTest extends BaseTestCase {
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getParent()).isEqualTo(testDriveProject);
         then((invitationResponse.getModel().get("loggedInUser"))).isEqualTo(user);
-        then((invitationResponse.getModel().get("proceedUrl"))).isEqualTo(InvitationsController.computeUserRegisteredUrl());
+        then((invitationResponse.getModel().get("proceedUrl"))).isEqualTo(InvitationsProceedController.PATH);
 
         //user registered
         ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
@@ -350,8 +352,8 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     private ModelAndView goToAfterRegistrationUrl() throws Exception {
-        newRequest(HttpMethod.GET, (String) request.getSession().getAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL));
-        return invitationsController.doHandle(request, response);
+        newRequest(HttpMethod.GET, InvitationsProceedController.PATH);
+        return invitationsProceedController.doHandle(request, response);
     }
 
     private ModelAndView goToInvitationUrl(String token) throws Exception {
