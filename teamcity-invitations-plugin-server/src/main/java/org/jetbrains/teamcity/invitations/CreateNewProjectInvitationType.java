@@ -171,7 +171,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
                 core.addRoleAsSystem(user, role, createdProject);
                 Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
                         "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
-                return new ModelAndView(new RedirectView("/admin/createObjectMenu.html?showMode=createBuildTypeMenu&projectId=" + createdProject.getExternalId(), true));
+                return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateConfigurationPageUrl(createdProject.getExternalId()), true));
             } catch (Exception e) {
                 Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
                 return new ModelAndView(new RedirectView("/", true));
