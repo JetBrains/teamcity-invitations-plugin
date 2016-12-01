@@ -79,7 +79,9 @@ public class InvitationAdminController extends BaseFormXmlController {
                 throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitation " + found.getToken());
             }
 
-            return found.getType().getEditPropertiesView(found);
+            ModelAndView editPropertiesView = found.getType().getEditPropertiesView(found);
+            editPropertiesView.addObject("token", token);
+            return editPropertiesView;
         }
 
         return null;

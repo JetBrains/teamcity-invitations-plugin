@@ -6,11 +6,11 @@
         Invite user to join the existing project.
     </span>
 
-    <input type="hidden" name="token" id="token"/>
+    <input type="hidden" name="token" id="token" value="${token}"/>
 
     <div class="spacing"></div>
     <div><label for="name">Invitation name: <l:star/></label></div>
-    <div><forms:textField name="name"/></div>
+    <div><forms:textField name="name" value="${name}"/></div>
 
     <div class="spacing"></div>
     <div>

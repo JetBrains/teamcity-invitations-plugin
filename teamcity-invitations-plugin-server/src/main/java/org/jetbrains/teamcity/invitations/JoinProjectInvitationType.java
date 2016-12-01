@@ -61,6 +61,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
                 user.isPermissionGrantedForProject(p.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT)
         ).collect(Collectors.toList());
 
+        modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
         modelAndView.getModel().put("projects", availableProjects);
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
