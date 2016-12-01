@@ -10,7 +10,7 @@ BS.CreateInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractM
 
     submit: function () {
         var that = this;
-        BS.FormSaver.save(this, "/admin/invitations.html?createInvitation=1", OO.extend(BS.SimpleListener, {
+        BS.FormSaver.save(this, window['base_uri'] + "/admin/invitations.html?createInvitation=1", OO.extend(BS.SimpleListener, {
             onCompleteSave: function () {
                 $('invitationsList').refresh();
                 that.enable();
@@ -78,7 +78,7 @@ BS.EditInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractMod
 
     submit: function () {
         var that = this;
-        BS.FormSaver.save(this, "/admin/invitations.html?editInvitation=1", OO.extend(BS.SimpleListener, {
+        BS.FormSaver.save(this, window['base_uri'] + "/admin/invitations.html?editInvitation=1", OO.extend(BS.SimpleListener, {
             onCompleteSave: function () {
                 $('invitationsList').refresh();
                 that.enable();
