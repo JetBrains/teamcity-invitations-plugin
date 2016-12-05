@@ -78,7 +78,12 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         String projectExtId = request.getParameter("project");
         String roleId = request.getParameter("role");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return new InvitationImpl(SessionUser.getUser(request), name, token, projectExtId, roleId, multiuser);
+        return createNewInvitation(SessionUser.getUser(request), name, token, projectExtId, roleId, multiuser);
+    }
+
+    @NotNull
+    public InvitationImpl createNewInvitation(SUser inviter, String token, String name, String projectExtId, String roleId, boolean multiuser) {
+        return new InvitationImpl(inviter, name, token, projectExtId, roleId, multiuser);
     }
 
     @NotNull
