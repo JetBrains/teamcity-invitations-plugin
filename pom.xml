@@ -13,6 +13,9 @@
     <repository>
         <id>JetBrains</id>
         <url>http://download.jetbrains.com/teamcity-repository/</url>
+        <snapshots>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
     </repository>
   </repositories>
   <pluginRepositories>
