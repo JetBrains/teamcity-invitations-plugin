@@ -2,6 +2,7 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class InvitationsFacadeApi {
 
@@ -13,9 +14,9 @@ public class InvitationsFacadeApi {
         this.joinProjectInvitationType = joinProjectInvitationType;
     }
 
-    public Invitation createJoinProjectInvitation(SUser inviter, String name, String projectExtId, String roleId, boolean multiuser) {
+    public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull String projectExtId, @NotNull String roleId, boolean multiuser) {
         String token = StringUtil.generateUniqueHash();
-        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, token, name, projectExtId, roleId, multiuser);
+        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, projectExtId, roleId, multiuser);
         return invitationsStorage.addInvitation(token, created);
     }
 }
