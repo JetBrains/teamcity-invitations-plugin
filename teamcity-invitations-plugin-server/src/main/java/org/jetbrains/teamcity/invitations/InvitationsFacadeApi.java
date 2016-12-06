@@ -13,10 +13,12 @@ public class InvitationsFacadeApi {
 
     private final InvitationsStorage invitationsStorage;
     private final JoinProjectInvitationType joinProjectInvitationType;
+    private final InvitationsLandingController invitationsLandingController;
 
-    public InvitationsFacadeApi(InvitationsStorage invitationsStorage, JoinProjectInvitationType joinProjectInvitationType) {
+    public InvitationsFacadeApi(InvitationsStorage invitationsStorage, JoinProjectInvitationType joinProjectInvitationType, InvitationsLandingController invitationsLandingController) {
         this.invitationsStorage = invitationsStorage;
         this.joinProjectInvitationType = joinProjectInvitationType;
+        this.invitationsLandingController = invitationsLandingController;
     }
 
     public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull String projectExtId, @NotNull String roleId, boolean multiuser) {
@@ -31,5 +33,10 @@ public class InvitationsFacadeApi {
                 .filter(invitation -> invitation.getType().equals(joinProjectInvitationType))
                 .filter(invitation -> project.equals(((JoinProjectInvitationType.InvitationImpl) invitation).getProject()))
                 .collect(toList());
+    }
+
+    @NotNull
+    public String getAbsoluteUrl(@NotNull Invitation invitation) {
+        return invitationsLandingController.getInvitationsPath() + "?token" + invitation.getToken();
     }
 }
