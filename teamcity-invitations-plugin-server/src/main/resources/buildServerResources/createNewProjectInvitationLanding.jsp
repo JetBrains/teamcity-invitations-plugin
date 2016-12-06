@@ -19,8 +19,8 @@
     <bs:_loginPageDecoration id="loginPage" title="${title}">
       <p id="formNote">
         <p>
-                ${invitation.user.descriptiveName} invites you to join TeamCity and create a project
-            under ${invitation.parent.fullName}.
+            <c:out value="${invitation.user.descriptiveName}"/> invites you to join TeamCity and create a project
+            under <c:out value="${invitation.parent.fullName}"/>.
         </p>
         <c:choose>
              <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>
@@ -31,7 +31,7 @@
             </c:when>
             <c:otherwise>
               <p>
-                  You are logged in as '${loggedInUser.descriptiveName}'. <br/>
+                  You are logged in as '<c:out value="${loggedInUser.descriptiveName}"/>'. <br/>
                   Please <a href="<c:url value='${proceedUrl}'/>">proceed</a> as a currently logged-in user to accept
                   the invitation.
               </p>
