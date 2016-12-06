@@ -61,7 +61,7 @@
                     <artifactId>teamcity-sdk-maven-plugin</artifactId>
                     <version>0.2</version>
                     <configuration>
-                        <teamcityDir>TeamCity-10.1</teamcityDir>
+                        <teamcityDir>/Users/dmitry/IdeaProjects/TeamCity-TD</teamcityDir>
                     </configuration>
                 </plugin>
             </plugins>

@@ -82,7 +82,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     }
 
     @NotNull
-    public InvitationImpl createNewInvitation(SUser inviter, String token, String name, String projectExtId, String roleId, boolean multiuser) {
+    public InvitationImpl createNewInvitation(SUser inviter, String name, String token, String projectExtId, String roleId, boolean multiuser) {
         return new InvitationImpl(inviter, name, token, projectExtId, roleId, multiuser);
     }
 
