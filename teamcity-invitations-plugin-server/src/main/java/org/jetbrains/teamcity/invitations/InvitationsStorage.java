@@ -1,20 +1,15 @@
 package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.users.SUser;
-import jetbrains.buildServer.util.FileUtil;
-import org.jdom.Document;
-import org.jdom.Element;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
@@ -23,9 +18,11 @@ import static java.util.stream.Collectors.toList;
 @ThreadSafe
 public class InvitationsStorage {
 
+    private static final String PROJECT_FEATURE_TYPE = "Invitation";
+    private static final String INVITATION_TYPE = "invitationType";
+
     private final TeamCityCoreFacade teamCityCore;
     private final Map<String, InvitationType> invitationTypes;
-    private Map<String, Invitation> invitations;
 
     public InvitationsStorage(@NotNull TeamCityCoreFacade teamCityCore,
                               @NotNull List<InvitationType> invitationTypes) {
@@ -34,83 +31,49 @@ public class InvitationsStorage {
     }
 
     public synchronized Invitation addInvitation(@NotNull String token, @NotNull Invitation invitation) {
-        loadFromFile();
-        invitations.put(token, invitation);
-        persist();
-        Loggers.SERVER.info("User invitation with token " + token + " created.");
+        Map<String, String> params = invitation.asMap();
+        params.put(INVITATION_TYPE, invitation.getType().getId());
+        invitation.getProject().addFeature(PROJECT_FEATURE_TYPE, params);
+        teamCityCore.persist(invitation.getProject(), "Invitation added");
+        Loggers.SERVER.info("User invitation with token " + token + " created in the project " + invitation.getProject().describe(false));
         return invitation;
     }
 
     @Nullable
     public synchronized Invitation getInvitation(@NotNull String token) {
-        loadFromFile();
-        return invitations.get(token);
+        for (SProject project : teamCityCore.getActiveProjects()) {
+            for (SProjectFeatureDescriptor feature : project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE)) {
+                if (feature.getParameters().get("token").equals(token)) {
+                    return fromProjectFeature(project, feature);
+                }
+            }
+        }
+        return null;
     }
 
     @NotNull
     public synchronized List<Invitation> getInvitations() {
-        loadFromFile();
-        return new ArrayList<>(invitations.values());
+        return teamCityCore.getActiveProjects().stream()
+                .flatMap(project -> project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)))
+                .collect(toList());
     }
 
-    @NotNull
-    public synchronized List<Invitation> getInvitationsAvailableFor(@NotNull SUser user) {
-        return getInvitations().stream().filter(invitation -> invitation.isAvailableFor(user)).collect(toList());
-    }
+    public synchronized boolean removeInvitation(@NotNull SProject project, @NotNull String token) {
+        Optional<SProjectFeatureDescriptor> featureDescriptor = project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
+                .filter(feature -> feature.getParameters().get("token").equals(token))
+                .findFirst();
 
-    public synchronized Invitation removeInvitation(@NotNull String token) {
-        Invitation removed = invitations.remove(token);
-        if (removed != null) persist();
-        return removed;
-    }
-
-    private synchronized void loadFromFile() {
-        if (invitations != null) return;
-
-        invitations = new HashMap<>();
-        File invitationsFile = getInvitationsFile();
-        if (!invitationsFile.exists() || invitationsFile.length() == 0) return;
-
-        try {
-            Element rootEl = FileUtil.parseDocument(invitationsFile);
-            for (Object invitationEl : rootEl.getChildren()) {
-                try {
-                    InvitationType invitationType = invitationTypes.get(((Element) invitationEl).getAttributeValue("type"));
-                    Invitation invitation = invitationType.readFrom((Element) invitationEl);
-                    invitations.put(invitation.getToken(), invitation);
-                } catch (InvitationException e) {
-                    Loggers.SERVER.warnAndDebugDetails("Failed to load invitation from element: " + invitationEl, e);
-
-                }
-            }
-        } catch (Exception e) {
-            Loggers.SERVER.warnAndDebugDetails("Failed to load invitations from file: " + invitationsFile.getAbsolutePath(), e);
+        if (featureDescriptor.isPresent()) {
+            project.removeFeature(featureDescriptor.get().getId());
+            teamCityCore.persist(project, "Invitation removed");
+            return true;
+        } else {
+            return false;
         }
     }
 
-    private synchronized void persist() {
-        Document doc = new Document();
-        Element rootElem = new Element("invitations");
-        doc.addContent(rootElem);
-        invitations.forEach((token, invitation) -> {
-            Element invitationEl = new Element("invitation");
-            invitationEl.setAttribute("type", invitation.getType().getId());
-            invitation.writeTo(invitationEl);
-            rootElem.addContent(invitationEl);
-        });
-
-        File file = getInvitationsFile();
-        FileUtil.createIfDoesntExist(file);
-        try {
-            FileUtil.saveDocument(doc, file);
-        } catch (IOException e) {
-            Loggers.SERVER.warnAndDebugDetails("Failed to save invitations to file: " + file.getAbsolutePath(), e);
-        }
-    }
-
-    @NotNull
-    private File getInvitationsFile() {
-        File invitationsDir = new File(teamCityCore.getPluginDataDir(), "invitations");
-        return new File(invitationsDir, "invitations.xml");
+    private Invitation fromProjectFeature(SProject project, SProjectFeatureDescriptor feature) {
+        InvitationType invitationType = invitationTypes.get(feature.getParameters().get(INVITATION_TYPE));
+        return invitationType.readFrom(feature.getParameters(), project);
     }
 }

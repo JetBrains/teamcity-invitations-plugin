@@ -110,8 +110,8 @@ BS.EditInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractMod
 }));
 
 BS.Invitations = {
-    deleteInvitation: function (token) {
-        BS.ajaxRequest(window['base_uri'] + '/admin/invitations.html?removeInvitation=' + token, {
+    deleteInvitation: function (token, projectId) {
+        BS.ajaxRequest(window['base_uri'] + '/admin/invitations.html?removeInvitation=' + token + "&projectId=" + projectId, {
             onComplete: function () {
                 BS.reload();
             }

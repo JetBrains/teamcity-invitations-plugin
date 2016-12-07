@@ -13,7 +13,6 @@ import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.FileUtil;
-import jetbrains.buildServer.util.XmlUtil;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
@@ -33,6 +32,7 @@ import org.testng.annotations.Test;
 import javax.servlet.http.HttpServletRequest;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static jetbrains.buildServer.serverSide.auth.RoleScope.projectScope;
@@ -212,28 +212,24 @@ public class InvitationsTest extends BaseTestCase {
         login(systemAdmin);
         String token1 = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
         String token2 = createInvitationToJoinProject("PROJECT_DEVELOPER", "_Root", false).getToken();
-        Element beforeRestartEl1 = new Element("invitation");
-        Element beforeRestartEl2 = new Element("invitation");
-        invitations.getInvitation(token1).writeTo(beforeRestartEl1);
-        invitations.getInvitation(token2).writeTo(beforeRestartEl2);
+        Map<String, String> beforeRestartEl1 = invitations.getInvitation(token1).asMap();
+        Map<String, String> beforeRestartEl2 = invitations.getInvitation(token2).asMap();
 
         invitations = createInvitationStorage();
 
         then(invitations.getInvitation(token1)).isNotNull();
         then(invitations.getInvitation(token2)).isNotNull();
 
-        Element afterRestartEl1 = new Element("invitation");
-        Element afterRestartEl2 = new Element("invitation");
-        invitations.getInvitation(token1).writeTo(afterRestartEl1);
-        invitations.getInvitation(token2).writeTo(afterRestartEl2);
-        then(XmlUtil.to_s(afterRestartEl1)).isEqualTo(XmlUtil.to_s(beforeRestartEl1));
-        then(XmlUtil.to_s(afterRestartEl2)).isEqualTo(XmlUtil.to_s(beforeRestartEl2));
+        Map<String, String> afterRestartEl1 = invitations.getInvitation(token1).asMap();
+        Map<String, String> afterRestartEl2 = invitations.getInvitation(token2).asMap();
+        then(afterRestartEl1).isEqualTo(beforeRestartEl1);
+        then(afterRestartEl2).isEqualTo(beforeRestartEl2);
     }
 
     public void remove_invitation() throws Exception {
         login(systemAdmin);
         String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
-        invitations.removeInvitation(token);
+        invitations.removeInvitation(testDriveProject, token);
 
         then(invitations.getInvitation(token)).isNull();
 
@@ -251,7 +247,7 @@ public class InvitationsTest extends BaseTestCase {
         logout();
         goToInvitationUrl(token);
 
-        invitations.removeInvitation(token);
+        invitations.removeInvitation(testDriveProject, token);
 
         SUser user = core.createUser("oleg");
         login(user);

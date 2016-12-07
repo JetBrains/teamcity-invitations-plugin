@@ -1,12 +1,13 @@
 package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.web.util.SessionUser;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class AbstractInvitation implements Invitation {
     protected final String token;
@@ -23,11 +24,11 @@ public abstract class AbstractInvitation implements Invitation {
         this.createdByUserId = createdByUserId;
     }
 
-    protected AbstractInvitation(Element element, InvitationType type) {
-        this.name = element.getAttributeValue("name");
-        this.token = element.getAttributeValue("token");
-        this.multi = Boolean.valueOf(element.getAttributeValue("multi"));
-        this.createdByUserId = Long.parseLong(element.getAttributeValue("createdByUserId"));
+    protected AbstractInvitation(Map<String, String> params, InvitationType type) {
+        this.name = params.get("name");
+        this.token = params.get("token");
+        this.multi = Boolean.valueOf(params.get("multi"));
+        this.createdByUserId = Long.parseLong(params.get("createdByUserId"));
         this.type = type;
     }
 
@@ -62,11 +63,14 @@ public abstract class AbstractInvitation implements Invitation {
         return type;
     }
 
-    public void writeTo(@NotNull Element element) {
-        element.setAttribute("name", name);
-        element.setAttribute("token", token);
-        element.setAttribute("multi", multi + "");
-        element.setAttribute("createdByUserId", createdByUserId + "");
+    @NotNull
+    public Map<String, String> asMap() {
+        Map<String, String> result = new HashMap<>();
+        result.put("name", name);
+        result.put("multi", multi + "");
+        result.put("createdByUserId", createdByUserId + "");
+        result.put("token", token);
+        return result;
     }
 
     @Override

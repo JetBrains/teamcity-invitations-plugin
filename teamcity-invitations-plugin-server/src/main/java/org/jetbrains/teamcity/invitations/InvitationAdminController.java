@@ -221,6 +221,7 @@ public class InvitationAdminController extends BaseFormXmlController {
 
         @Override
         public void process(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @Nullable Element element) {
+
             String token = request.getParameter("token");
             if (token != null) {
                 Invitation invitation = invitations.getInvitation(token);
@@ -230,7 +231,13 @@ public class InvitationAdminController extends BaseFormXmlController {
             }
 
             try {
-                invitations.removeInvitation(token);
+                SProject project = getProject(request);
+                if (project == null) {
+                    ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation project is not specified or doesn't exist");
+                    return;
+                }
+
+                invitations.removeInvitation(project, token);
                 Invitation invitation = createFromRequest(token, request);
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' updated.");
             } catch (Exception e) {
@@ -256,9 +263,15 @@ public class InvitationAdminController extends BaseFormXmlController {
                 }
             }
 
-            Invitation invitation = invitations.removeInvitation(token);
-            if (invitation != null) {
-                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' removed.");
+            SProject project = getProject(request);
+            if (project == null) {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation project is not specified or doesn't exist");
+                return;
+            }
+
+            boolean deleted = invitations.removeInvitation(project, token);
+            if (deleted) {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' removed.");
             } else {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' doesn't exist.");
             }

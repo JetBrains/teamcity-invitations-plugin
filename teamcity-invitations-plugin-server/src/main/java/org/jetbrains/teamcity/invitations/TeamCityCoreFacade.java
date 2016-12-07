@@ -6,7 +6,6 @@ import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 public interface TeamCityCoreFacade {
@@ -25,7 +24,7 @@ public interface TeamCityCoreFacade {
 
     //PROJECTS
     @NotNull
-    SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name);
+    SProject createProjectAsSystem(@Nullable String parentExtId, @NotNull String name);
 
     @Nullable
     SProject findProjectByExtId(String projectExtId);
@@ -33,10 +32,9 @@ public interface TeamCityCoreFacade {
     @NotNull
     List<SProject> getActiveProjects();
 
-    //Plugins
-    @NotNull
-    File getPluginDataDir();
+    void persist(@NotNull SProject project, @NotNull String description);
 
+    //Plugins
     @NotNull
     String getPluginResourcesPath(@NotNull String path);
 }

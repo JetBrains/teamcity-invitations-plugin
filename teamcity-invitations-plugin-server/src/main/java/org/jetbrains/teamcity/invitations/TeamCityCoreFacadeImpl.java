@@ -12,7 +12,6 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
@@ -23,9 +22,10 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final ServerPaths serverPaths;
     private final PluginDescriptor pluginDescriptor;
     private final UserModel userModel;
+    private final ConfigActionFactory myConfigActionFactory;
 
     public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext,
-                                  ServerPaths serverPaths, PluginDescriptor pluginDescriptor, UserModel userModel) {
+                                  ServerPaths serverPaths, PluginDescriptor pluginDescriptor, UserModel userModel, ConfigActionFactory myConfigActionFactory) {
         this.rolesManager = rolesManager;
         this.projectManager = projectManager;
         this.projectIdentifiersManager = projectIdentifiersManager;
@@ -33,6 +33,7 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         this.serverPaths = serverPaths;
         this.pluginDescriptor = pluginDescriptor;
         this.userModel = userModel;
+        this.myConfigActionFactory = myConfigActionFactory;
     }
 
     @Nullable
@@ -43,7 +44,7 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public SProject createProjectAsSystem(@NotNull String parentExtId, @NotNull String name) {
+    public SProject createProjectAsSystem(@Nullable String parentExtId, @NotNull String name) {
         try {
             return securityContext.runAsSystem(() -> {
                 SProject parent = projectManager.findProjectByExternalId(parentExtId);
@@ -84,6 +85,11 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         return projectManager.getActiveProjects();
     }
 
+    @Override
+    public void persist(@NotNull SProject project, @NotNull String description) {
+        project.persist(myConfigActionFactory.createAction(project, description));
+    }
+
     @NotNull
     @Override
     public List<Role> getAvailableRoles() {
@@ -94,12 +100,6 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public SUser getUser(long userId) {
         return userModel.findUserById(userId);
-    }
-
-    @NotNull
-    @Override
-    public File getPluginDataDir() {
-        return serverPaths.getPluginDataDirectory();
     }
 
     @NotNull

@@ -2,16 +2,19 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.serverSide.auth.*;
+import jetbrains.buildServer.serverSide.impl.ProjectFeatureDescriptorImpl;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.users.impl.RoleEntryImpl;
+import jetbrains.buildServer.util.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -44,6 +47,27 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         when(project.getProjectId()).thenReturn(name);
         when(project.getName()).thenReturn(name);
         when(project.getParentProjectExternalId()).thenReturn(parentExtId);
+
+        MultiMap<String, SProjectFeatureDescriptor> features = new MultiMap<>();
+
+        when(project.addFeature(anyString(), anyMap())).thenAnswer(invocation -> {
+            ProjectFeatureDescriptorImpl descriptor = new ProjectFeatureDescriptorImpl(features.size() + "", invocation.getArgument(0), invocation.getArgument(1), project);
+            features.putValue(invocation.getArgument(0), descriptor);
+            return descriptor;
+        });
+
+        when(project.getAvailableFeaturesOfType(anyString())).thenAnswer(invocation -> features.get(invocation.getArgument(0)));
+
+        when(project.removeFeature(anyString())).thenAnswer(invocation -> {
+            List<SProjectFeatureDescriptor> toRemove = features.values().stream()
+                    .flatMap(List::stream)
+                    .filter(feature -> feature.getId().equals(invocation.getArgument(0)))
+                    .collect(toList());
+            for (SProjectFeatureDescriptor featureDescriptor : toRemove) {
+                features.removeValue(featureDescriptor);
+            }
+            return null;
+        });
         projects.add(project);
         return project;
     }
@@ -65,6 +89,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         return new ArrayList<>(projects);
     }
 
+    @Override
+    public void persist(@NotNull SProject project, @NotNull String description) {
+
+    }
+
     @NotNull
     @Override
     public List<Role> getAvailableRoles() {
@@ -75,12 +104,6 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     @Override
     public SUser getUser(long userId) {
         return users.get((int) userId - 1);
-    }
-
-    @NotNull
-    @Override
-    public File getPluginDataDir() {
-        return pluginDataDir;
     }
 
     @NotNull
@@ -116,7 +139,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
                 roles.stream().
                         filter(roleEntry -> roleEntry.getScope().equals(invocation.getArgument(0))).
                         map(RoleEntry::getRole).
-                        collect(Collectors.toList()));
+                        collect(toList()));
 
         when(user.isPermissionGrantedForProject(anyString(), any(Permission.class))).thenAnswer(invocation -> {
             String projectIntId = invocation.getArgument(0);

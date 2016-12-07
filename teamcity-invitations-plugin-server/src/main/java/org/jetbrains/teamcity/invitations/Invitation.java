@@ -3,12 +3,12 @@ package org.jetbrains.teamcity.invitations;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.users.SUser;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 public interface Invitation {
 
@@ -30,7 +30,7 @@ public interface Invitation {
     @NotNull
     InvitationType getType();
 
-    void writeTo(@NotNull Element element);
+    Map<String, String> asMap();
 
     boolean isReusable();
 

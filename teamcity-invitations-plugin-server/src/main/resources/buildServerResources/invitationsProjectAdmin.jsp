@@ -130,7 +130,7 @@
                                 <a href="#"
                                    onclick="BS.EditInvitationDialog.open('${invitation.token}', '${projectExternalId}');">Edit</a><br/>
                                 <a href="#"
-                                   onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
+                                   onclick="BS.Invitations.deleteInvitation('${invitation.token}', '${projectExternalId}'); return false">Delete</a>
                             </td>
                         </tr>
                     </c:forEach>

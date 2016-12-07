@@ -7,7 +7,6 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.util.SessionUser;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
@@ -15,6 +14,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 
@@ -72,11 +72,11 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
     @NotNull
     @Override
-    public InvitationImpl readFrom(@NotNull Element element) {
+    public InvitationImpl readFrom(@NotNull Map<String, String> params, @NotNull SProject project) {
         try {
-            return new InvitationImpl(element);
+            return new InvitationImpl(params, project);
         } catch (Exception e) {
-            Loggers.SERVER.warnAndDebugDetails("Unable to load invitation from the file", e);
+            Loggers.SERVER.warnAndDebugDetails("Unable to load the invitation", e);
             return null;
         }
     }
@@ -99,10 +99,10 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
             this.projectExtId = projectExtId;
         }
 
-        public InvitationImpl(Element element) {
-            super(element, JoinProjectInvitationType.this);
-            this.projectExtId = element.getAttributeValue("projectExtId");
-            this.roleId = element.getAttributeValue("roleId");
+        public InvitationImpl(Map<String, String> params, SProject project) {
+            super(params, JoinProjectInvitationType.this);
+            this.projectExtId = project.getExternalId();
+            this.roleId = params.get("roleId");
         }
 
         @NotNull
@@ -111,11 +111,12 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
             return core.getPluginResourcesPath("joinProjectInvitationLanding.jsp");
         }
 
+        @NotNull
         @Override
-        public void writeTo(@NotNull Element element) {
-            super.writeTo(element);
-            element.setAttribute("projectExtId", projectExtId);
-            element.setAttribute("roleId", roleId);
+        public Map<String, String> asMap() {
+            Map<String, String> result = super.asMap();
+            result.put("roleId", roleId);
+            return result;
         }
 
         @Override

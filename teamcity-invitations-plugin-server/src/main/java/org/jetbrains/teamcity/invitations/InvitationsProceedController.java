@@ -41,7 +41,7 @@ public class InvitationsProceedController extends BaseController {
             ModelAndView result = invitation.userRegistered(SessionUser.getUser(request), request, response);
             if (!invitation.isReusable()) {
                 Loggers.SERVER.info("Single user invitation " + token + " was used by user " + SessionUser.getUser(request).describe(false));
-                invitations.removeInvitation(token);
+                invitations.removeInvitation(invitation.getProject(), token);
             }
             return result;
         } else {

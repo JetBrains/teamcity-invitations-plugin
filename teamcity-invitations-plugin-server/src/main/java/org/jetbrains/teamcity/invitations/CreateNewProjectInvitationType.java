@@ -10,7 +10,6 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.util.SessionUser;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
@@ -18,6 +17,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 
@@ -48,8 +48,8 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     }
 
     @NotNull
-    public InvitationImpl readFrom(@NotNull Element element) {
-        return new InvitationImpl(element);
+    public InvitationImpl readFrom(@NotNull Map<String, String> params, @NotNull SProject project) {
+        return new InvitationImpl(params, project);
     }
 
     @Override
@@ -101,11 +101,11 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
             this.newProjectName = newProjectName;
         }
 
-        InvitationImpl(@NotNull Element element) {
-            super(element, CreateNewProjectInvitationType.this);
-            this.parentExtId = element.getAttributeValue("parentExtId");
-            this.roleId = element.getAttributeValue("roleId");
-            this.newProjectName = element.getAttributeValue("newProjectName");
+        InvitationImpl(@NotNull Map<String, String> params, @NotNull SProject project) {
+            super(params, CreateNewProjectInvitationType.this);
+            this.parentExtId = project.getExternalId();
+            this.roleId = params.get("roleId");
+            this.newProjectName = params.get("newProjectName");
         }
 
         @NotNull
@@ -114,12 +114,13 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
             return core.getPluginResourcesPath("createNewProjectInvitationLanding.jsp");
         }
 
+        @NotNull
         @Override
-        public void writeTo(@NotNull Element element) {
-            super.writeTo(element);
-            element.setAttribute("parentExtId", parentExtId);
-            element.setAttribute("roleId", roleId);
-            element.setAttribute("newProjectName", newProjectName);
+        public Map<String, String> asMap() {
+            Map<String, String> result = super.asMap();
+            result.put("roleId", roleId);
+            result.put("newProjectName", newProjectName);
+            return result;
         }
 
         @Override
