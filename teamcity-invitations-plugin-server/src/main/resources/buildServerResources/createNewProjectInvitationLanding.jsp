@@ -20,7 +20,7 @@
       <p id="formNote">
         <p>
             <c:out value="${invitation.user.descriptiveName}"/> invites you to join TeamCity and create a project
-            under <c:out value="${invitation.parent.fullName}"/>.
+            under <c:out value="${invitation.project.fullName}"/>.
         </p>
         <c:choose>
              <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>

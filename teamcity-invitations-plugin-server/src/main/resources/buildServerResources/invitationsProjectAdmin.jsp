@@ -3,16 +3,12 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include-internal.jsp" %>
 <jsp:useBean id="invitations" type="java.util.List" scope="request"/>
-
+<c:set var="projectExternalId" value="${project.externalId}"/>
 <bs:linkScript>
     ${teamcityPluginResourcesPath}invitationsAdmin.js
 </bs:linkScript>
 
 <style type="text/css">
-    #createNewButton {
-        margin-bottom: 1em;
-    }
-
     .invitationsList {
         margin-top: 1em;
     }
@@ -43,11 +39,6 @@
     }
 </style>
 
-<div>
-    <forms:addButton id="createNewButton"
-                     onclick="BS.CreateInvitationDialog.open();">Create invitation...</forms:addButton>
-</div>
-
 <bs:modalDialog formId="createInvitationForm"
                 title="Create Invitation"
                 action="#"
@@ -56,7 +47,8 @@
     <div id="invitationTypeChooser">
         <label for="invitationType">Create invitation:</label>
         <forms:select id="invitationType" name="invitationType" enableFilter="true"
-                      onchange="BS.CreateInvitationDialog.reloadInvitationType();" className="longField">
+                      onchange="BS.CreateInvitationDialog.reloadInvitationType('${projectExternalId}');"
+                      className="longField">
             <forms:option value="">-- Select invitation type --</forms:option>
             <c:forEach var="type" items="${invitationTypes}">
                 <%--@elvariable id="type" type="org.jetbrains.teamcity.invitations.InvitationType"--%>
@@ -92,56 +84,62 @@
     </div>
 </bs:modalDialog>
 
-<h2>Pending invitations</h2>
+<div class="section noMargin">
+    <h2 class="noBorder">Invitations</h2>
+    <bs:smallNote>
+        This page allows to invite users to join the project.
+    </bs:smallNote>
+    <div>
+        <forms:addButton onclick="BS.CreateInvitationDialog.open();">Create invitation...</forms:addButton>
+    </div>
 
-<bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
-    <bs:messages key="<%=InvitationAdminController.MESSAGES_KEY%>"/>
+    <bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
+        <bs:messages key="<%=InvitationAdminController.MESSAGES_KEY%>"/>
 
-    <div class="invitationsList">
-        <c:if test="${empty invitations}">
-            There are no invitations.
-        </c:if>
-
-        <c:if test="${not empty invitations}">
-            <table id="invitationsTable" class="parametersTable">
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Reusable</th>
-                    <th>URL</th>
-                    <th>Actions</th>
-                </tr>
-                <c:forEach items="${invitations}" var="invitation">
-                    <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
+        <div class="invitationsList">
+            <c:if test="${not empty invitations}">
+                <table id="invitationsTable" class="parametersTable">
                     <tr>
-                        <td class="highlight">
-                            <c:out value="${invitation.name}"/>
-                        </td>
-                        <td class="highlight">
-                            <c:set value="${invitation}" scope="request" var="invitation"/>
-                            <jsp:include page="${invitation.type.descriptionViewPath}"/>
-                        </td>
-                        <td class="highlight">
-                            <c:if test="${!invitation.reusable}">No</c:if>
-                            <c:if test="${invitation.reusable}">Yes</c:if>
-                        </td>
-                        <td class="highlight">
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Reusable</th>
+                        <th>URL</th>
+                        <th>Actions</th>
+                    </tr>
+                    <c:forEach items="${invitations}" var="invitation">
+                        <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
+                        <tr>
+                            <td class="highlight">
+                                <c:out value="${invitation.name}"/>
+                            </td>
+                            <td class="highlight">
+                                <c:set value="${invitation}" scope="request" var="invitation"/>
+                                <jsp:include page="${invitation.type.descriptionViewPath}"/>
+                            </td>
+                            <td class="highlight">
+                                <c:if test="${!invitation.reusable}">No</c:if>
+                                <c:if test="${invitation.reusable}">Yes</c:if>
+                            </td>
+                            <td class="highlight">
                         <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
                               data-clipboard-target="#token_${invitation.token}"></span>
-                            <span id="token_${invitation.token}"><c:out
-                                    value="${invitationRootUrl}?token=${invitation.token}"/></span>
-                        </td>
-                        <td class="edit">
-                            <a href="#" onclick="BS.EditInvitationDialog.open('${invitation.token}');">Edit</a><br/>
-                            <a href="#" onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
-                        </td>
-                    </tr>
-                </c:forEach>
-            </table>
-        </c:if>
-    </div>
-</bs:refreshable>
+                                <span id="token_${invitation.token}"><c:out
+                                        value="${invitationRootUrl}?token=${invitation.token}"/></span>
+                            </td>
+                            <td class="edit">
+                                <a href="#"
+                                   onclick="BS.EditInvitationDialog.open('${invitation.token}', '${projectExternalId}');">Edit</a><br/>
+                                <a href="#"
+                                   onclick="BS.Invitations.deleteInvitation('${invitation.token}'); return false">Delete</a>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </table>
+            </c:if>
+        </div>
+    </bs:refreshable>
 
+</div>
 <script type="text/javascript">
     BS.Clipboard('.clipboard-btn');
 </script>

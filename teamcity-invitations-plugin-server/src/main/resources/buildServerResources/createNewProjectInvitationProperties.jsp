@@ -1,9 +1,13 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include-internal.jsp" %>
+<%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
 
 <input type="hidden" name="invitationType" value="newProjectInvitation"/>
+<input type="hidden" name="projectId" value="${project.externalId}"/>
+
 <div>
     <span class="greyNote">
-        Invite user to start a project.
+        Invite user to create a <c:out value="${project.fullName}"/> sub-project.
     </span>
 
     <input type="hidden" name="token" id="token" value="${token}"/>
@@ -11,21 +15,6 @@
     <div class="spacing"></div>
     <div><label for="name">Invitation name: <l:star/></label></div>
     <div><forms:textField name="name" value="${name}"/></div>
-
-    <div class="spacing"></div>
-
-    <div>
-        <label for="parentProject">Create project under: <l:star/></label>
-        <forms:select id="parentProject" name="parentProject" enableFilter="true" className="textField">
-            <c:forEach items="${projects}" var="project">
-                <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
-                <forms:option value="${project.externalId}" title="${project.name}"
-                              selected="${project.externalId eq parentProjectId}">
-                    <c:out value="${project.name}"/>
-                </forms:option>
-            </c:forEach>
-        </forms:select>
-    </div>
 
     <div class="spacing"></div>
     <div><label for="newProjectName">Created project name pattern: <l:star/></label></div>
@@ -45,7 +34,6 @@
             </c:forEach>
         </forms:select>
     </div>
-    <span class="greyNote">Select the parent of the created project</span>
 
     <div class="spacing"></div>
     <div>

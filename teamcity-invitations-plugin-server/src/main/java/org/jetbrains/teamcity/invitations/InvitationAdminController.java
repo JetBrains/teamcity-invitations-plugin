@@ -2,11 +2,15 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
-import jetbrains.buildServer.controllers.admin.AdminPage;
+import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
 import jetbrains.buildServer.util.StringUtil;
-import jetbrains.buildServer.web.openapi.*;
+import jetbrains.buildServer.web.openapi.ControllerAction;
+import jetbrains.buildServer.web.openapi.PagePlaces;
+import jetbrains.buildServer.web.openapi.PluginDescriptor;
+import jetbrains.buildServer.web.openapi.WebControllerManager;
 import jetbrains.buildServer.web.util.SessionUser;
 import jetbrains.buildServer.web.util.WebUtil;
 import org.jdom.Element;
@@ -49,7 +53,8 @@ public class InvitationAdminController extends BaseFormXmlController {
         this.teamCityCoreFacade = teamCityCoreFacade;
         this.invitationsController = invitationsController;
         this.invitationTypes = invitationTypes;
-        new InvitationsAdminPage(pagePlaces, pluginDescriptor).register();
+        new InvitationsProjectAdminPage(pagePlaces, pluginDescriptor).register();
+
         webControllerManager.registerController("/admin/invitations.html", this);
         webControllerManager.registerAction(this, new CreateInvitationAction());
         webControllerManager.registerAction(this, new EditInvitationAction());
@@ -58,15 +63,21 @@ public class InvitationAdminController extends BaseFormXmlController {
 
     @Override
     protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
-        if (request.getParameter("addInvitation") != null) {
-            Optional<InvitationType> found = getInvitationType(request);
-            if (!found.isPresent()) return null;
+        SProject project = getProject(request);
+        if (project == null) return null;
 
-            if (!found.get().isAvailableFor(SessionUser.getUser(request))) {
-                throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to create invitation of type " + found.get().getId());
+        if (request.getParameter("addInvitation") != null) {
+            Optional<InvitationType> invitationType = getInvitationType(request);
+            if (!invitationType.isPresent()) return null;
+
+            if (!invitationType.get().isAvailableFor(SessionUser.getUser(request), project)) {
+                throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to create invitation of type '" + invitationType.get().getDescription() + "'"
+                        + " in the project " + project.describe(false));
             }
 
-            return found.get().getEditPropertiesView(null);
+            ModelAndView view = invitationType.get().getEditPropertiesView(null);
+            view.addObject("project", project);
+            return view;
         }
 
         if (request.getParameter("editInvitation") != null && request.getParameter("token") != null) {
@@ -81,6 +92,7 @@ public class InvitationAdminController extends BaseFormXmlController {
 
             ModelAndView editPropertiesView = found.getType().getEditPropertiesView(found);
             editPropertiesView.addObject("token", token);
+            editPropertiesView.addObject("project", project);
             return editPropertiesView;
         }
 
@@ -94,7 +106,6 @@ public class InvitationAdminController extends BaseFormXmlController {
             Loggers.SERVER.warn("Unrecognized request: " + WebUtil.getRequestDump(request));
         } else {
             action.process(request, response, xmlResponse);
-
         }
     }
 
@@ -104,7 +115,11 @@ public class InvitationAdminController extends BaseFormXmlController {
         if (!invitationType.isPresent()) {
             throw new InvitationException("Invitation type is not specified or doesn't exist");
         }
-        Invitation created = invitationType.get().createNewInvitation(request, token);
+        SProject project = getProject(request);
+        if (project == null) {
+            throw new InvitationException("Invitation project is not specified or doesn't exist");
+        }
+        Invitation created = invitationType.get().createNewInvitation(request, project, token);
         return invitations.addInvitation(token, created);
     }
 
@@ -124,34 +139,48 @@ public class InvitationAdminController extends BaseFormXmlController {
         return found;
     }
 
-    public class InvitationsAdminPage extends AdminPage {
+    @Nullable
+    private SProject getProject(@NotNull HttpServletRequest request) {
+        String projectExtId = request.getParameter("projectId");
+        if (projectExtId == null) {
+            Loggers.SERVER.warn("Unrecognized invitation request (missing project id): " + WebUtil.getRequestDump(request));
+            return null;
+        }
 
-        InvitationsAdminPage(@NotNull PagePlaces pagePlaces,
-                             @NotNull PluginDescriptor pluginDescriptor) {
-            super(pagePlaces, "invitations", pluginDescriptor.getPluginResourcesPath("invitationsAdmin.jsp"), "Invitations");
-            setPosition(PositionConstraint.last());
+        SProject found = teamCityCoreFacade.findProjectByExtId(projectExtId);
+        if (found == null) {
+            Loggers.SERVER.warn("Unrecognized invitation request (not found project): " + WebUtil.getRequestDump(request));
+            return null;
+        }
+        return found;
+    }
+
+    public class InvitationsProjectAdminPage extends EditProjectTab {
+
+        public InvitationsProjectAdminPage(PagePlaces pagePlaces, PluginDescriptor pluginDescriptor) {
+            super(pagePlaces, "invitations", pluginDescriptor.getPluginResourcesPath("invitationsProjectAdmin.jsp"), "Invitations");
         }
 
         @Override
         public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
-            model.put("invitationTypes", invitationTypes.stream().filter(invitationType -> invitationType.isAvailableFor(SessionUser.getUser(request))).collect(toList()));
-            model.put("invitations", invitations.getInvitations().stream().filter(i -> i.isAvailableFor(SessionUser.getUser(request))).collect(toList()));
+            model.put("project", getProject(request));
+            model.put("invitations", invitations.getInvitations().stream()
+                    .filter(i -> i.isAvailableFor(SessionUser.getUser(request)))
+                    .filter(i -> i.getProject().equals(getProject(request)))
+                    .collect(toList()));
+            model.put("invitationTypes", invitationTypes.stream()
+                    .filter(invitationType -> invitationType.isAvailableFor(SessionUser.getUser(request), getProject(request)))
+                    .collect(toList()));
             model.put("invitationRootUrl", invitationsController.getInvitationsPath());
-            model.put("projects", teamCityCoreFacade.getActiveProjects());
             model.put("roles", teamCityCoreFacade.getAvailableRoles());
         }
 
         @Override
         public boolean isAvailable(@NotNull HttpServletRequest request) {
-            return super.isAvailable(request) && invitationTypes.stream().anyMatch(type -> type.isAvailableFor(SessionUser.getUser(request)));
-        }
-
-        @NotNull
-        @Override
-        public String getGroup() {
-            return AdminPage.USER_MANAGEMENT_GROUP;
+            return super.isAvailable(request) && invitationTypes.stream().anyMatch(type -> type.isAvailableFor(SessionUser.getUser(request), getProject(request)));
         }
     }
+
 
     private class CreateInvitationAction implements ControllerAction {
         @Override
@@ -162,7 +191,13 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void process(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @Nullable final Element ajaxResponse) {
             Optional<InvitationType> invitationType = getInvitationType(request);
-            if (invitationType.isPresent() && !invitationType.get().isAvailableFor(SessionUser.getUser(request))) {
+            SProject project = getProject(request);
+            if (project == null) {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Not found project");
+                return;
+            }
+
+            if (invitationType.isPresent() && !invitationType.get().isAvailableFor(SessionUser.getUser(request), project)) {
                 throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to create invitation of type " + invitationType.get().getId());
             }
 

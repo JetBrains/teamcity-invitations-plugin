@@ -5,7 +5,6 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
-import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
@@ -16,8 +15,6 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -25,12 +22,8 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
     private final TeamCityCoreFacade core;
 
-    @NotNull
-    private final SecurityContext securityContext;
-
-    public JoinProjectInvitationType(TeamCityCoreFacade core, @NotNull SecurityContext securityContext) {
+    public JoinProjectInvitationType(TeamCityCoreFacade core) {
         this.core = core;
-        this.securityContext = securityContext;
     }
 
     @NotNull
@@ -55,30 +48,21 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @Override
     public ModelAndView getEditPropertiesView(@Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
-        AuthorityHolder user = securityContext.getAuthorityHolder();
-
-        List<SProject> availableProjects = core.getActiveProjects().stream().filter(p ->
-                user.isPermissionGrantedForProject(p.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT)
-        ).collect(Collectors.toList());
-
         modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
-        modelAndView.getModel().put("projects", availableProjects);
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
-        modelAndView.getModel().put("projectId", invitation == null ? "_Root" : invitation.projectExtId);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_DEVELOPER" : invitation.roleId);
         return modelAndView;
     }
 
     @NotNull
     @Override
-    public InvitationImpl createNewInvitation(HttpServletRequest request, String token) {
+    public InvitationImpl createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token) {
         String name = request.getParameter("name");
-        String projectExtId = request.getParameter("project");
         String roleId = request.getParameter("role");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return createNewInvitation(SessionUser.getUser(request), name, token, projectExtId, roleId, multiuser);
+        return createNewInvitation(SessionUser.getUser(request), name, token, project.getExternalId(), roleId, multiuser);
     }
 
     @NotNull
@@ -98,8 +82,8 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     }
 
     @Override
-    public boolean isAvailableFor(AuthorityHolder authorityHolder) {
-        return authorityHolder.isPermissionGrantedForAnyProject(Permission.CHANGE_USER_ROLES_IN_PROJECT);
+    public boolean isAvailableFor(AuthorityHolder authorityHolder, @NotNull SProject project) {
+        return authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT);
     }
 
     public final class InvitationImpl extends AbstractInvitation {
@@ -171,7 +155,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
             return JoinProjectInvitationType.this.core.findRoleById(roleId);
         }
 
-        @Nullable
+        @NotNull
         public SProject getProject() {
             return JoinProjectInvitationType.this.core.findProjectByExtId(projectExtId);
         }

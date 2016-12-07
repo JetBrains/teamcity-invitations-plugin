@@ -4,7 +4,10 @@ import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
 import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.auth.*;
+import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
+import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
+import jetbrains.buildServer.serverSide.auth.Permission;
+import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
@@ -15,7 +18,6 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 
@@ -23,15 +25,8 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     @NotNull
     private final TeamCityCoreFacade core;
 
-    @NotNull
-    private final SecurityContext securityContext;
-
-    @NotNull
-    private final RelativeWebLinks webLinks = new RelativeWebLinks();
-
-    public CreateNewProjectInvitationType(@NotNull TeamCityCoreFacade core, @NotNull SecurityContext securityContext) {
+    public CreateNewProjectInvitationType(@NotNull TeamCityCoreFacade core) {
         this.core = core;
-        this.securityContext = securityContext;
     }
 
     @NotNull
@@ -58,28 +53,18 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     }
 
     @Override
-    public boolean isAvailableFor(AuthorityHolder authorityHolder) {
-        return authorityHolder.isPermissionGrantedForAnyProject(Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
-                authorityHolder.isPermissionGrantedForAnyProject(Permission.CREATE_SUB_PROJECT);
+    public boolean isAvailableFor(AuthorityHolder authorityHolder, @NotNull SProject project) {
+        return authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
+                authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CREATE_SUB_PROJECT);
     }
 
     @NotNull
     @Override
     public ModelAndView getEditPropertiesView(@Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
-
-        AuthorityHolder user = securityContext.getAuthorityHolder();
-
-        List<SProject> availableParents = core.getActiveProjects().stream().filter(p ->
-                user.isPermissionGrantedForProject(p.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
-                        user.isPermissionGrantedForProject(p.getProjectId(), Permission.CREATE_SUB_PROJECT)
-        ).collect(toList());
-
-        modelAndView.getModel().put("projects", availableParents);
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
-        modelAndView.getModel().put("parentProjectId", invitation == null ? null : invitation.parentExtId);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_ADMIN" : invitation.roleId);
         modelAndView.getModel().put("newProjectName", invitation == null ? "{username} project" : invitation.newProjectName);
         return modelAndView;
@@ -87,14 +72,13 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
 
     @NotNull
     @Override
-    public InvitationImpl createNewInvitation(HttpServletRequest request, String token) {
+    public InvitationImpl createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token) {
         String name = request.getParameter("name");
-        String parentProjectExtId = request.getParameter("parentProject");
         String roleId = request.getParameter("role");
         String newProjectName = request.getParameter("newProjectName");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
         SUser currentUser = SessionUser.getUser(request);
-        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, parentProjectExtId, roleId, newProjectName, multiuser);
+        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, project.getExternalId(), roleId, newProjectName, multiuser);
         if (!invitation.isAvailableFor(currentUser)) {
             throw new AccessDeniedException(currentUser, "You don't have permissions to create the invitation");
         }
@@ -140,14 +124,14 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
 
         @Override
         public boolean isAvailableFor(@NotNull AuthorityHolder user) {
-            return user.isPermissionGrantedForProject(getParent().getProjectId(), Permission.CREATE_SUB_PROJECT) &&
-                    user.isPermissionGrantedForProject(getParent().getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT);
+            return user.isPermissionGrantedForProject(getProject().getProjectId(), Permission.CREATE_SUB_PROJECT) &&
+                    user.isPermissionGrantedForProject(getProject().getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT);
         }
 
         @NotNull
         public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             try {
-                SProject parent = getParent();
+                SProject parent = getProject();
                 if (parent == null) {
                     throw new InvitationException("Failed to proceed invitation with a non-existing project " + parentExtId);
                 }
@@ -178,8 +162,8 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
             }
         }
 
-        @Nullable
-        public SProject getParent() {
+        @NotNull
+        public SProject getProject() {
             return CreateNewProjectInvitationType.this.core.findProjectByExtId(parentExtId);
         }
 

@@ -74,8 +74,8 @@ public class InvitationsTest extends BaseTestCase {
         core.createProjectAsSystem(null, "_Root");
         testDriveProject = core.createProjectAsSystem("_Root", "TestDriveProjectId");
         securityContext = new SecurityContextImpl();
-        createNewProjectInvitationType = new CreateNewProjectInvitationType(core, securityContext);
-        joinProjectInvitationType = new JoinProjectInvitationType(core, securityContext);
+        createNewProjectInvitationType = new CreateNewProjectInvitationType(core);
+        joinProjectInvitationType = new JoinProjectInvitationType(core);
         invitations = createInvitationStorage();
 
         systemAdmin = core.createUser("admin");
@@ -130,7 +130,7 @@ public class InvitationsTest extends BaseTestCase {
         then(invitationResponse.getViewName()).isEqualTo("createNewProjectInvitationLanding.jsp");
         then(invitationResponse.getModel().get("invitation")).isInstanceOf(CreateNewProjectInvitationType.InvitationImpl.class);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
-        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getParent()).isEqualTo(testDriveProject);
+        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
         then(invitationResponse.getModel().get("loggedInUser")).isEqualTo(null);
 
         //user registered
@@ -177,7 +177,7 @@ public class InvitationsTest extends BaseTestCase {
         then(invitationResponse.getViewName()).isEqualTo("createNewProjectInvitationLanding.jsp");
         then(invitationResponse.getModel().get("invitation")).isInstanceOf(CreateNewProjectInvitationType.InvitationImpl.class);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
-        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getParent()).isEqualTo(testDriveProject);
+        then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
         then((invitationResponse.getModel().get("loggedInUser"))).isEqualTo(user);
         then((invitationResponse.getModel().get("proceedUrl"))).isEqualTo(InvitationsProceedController.PATH);
 
@@ -298,10 +298,13 @@ public class InvitationsTest extends BaseTestCase {
         projectAdmin.addRole(projectScope(testDriveProject.getProjectId()), adminRole);
         login(projectAdmin);
 
-        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&invitationType=newProjectInvitation");
+        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&projectId=" + testDriveProject.getExternalId() + "&invitationType=newProjectInvitation");
         ModelAndView modelAndView = invitationsAdminController.handleRequestInternal(request, response);
-        then(((List<SProject>) modelAndView.getModel().get("projects"))).containsOnly(testDriveProject);
         then(((List<Role>) modelAndView.getModel().get("roles"))).containsOnly(adminRole, developerRole).doesNotContain(systemAdminRole);
+
+        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&projectId=_Root&invitationType=newProjectInvitation");
+        invitationsAdminController.handleRequestInternal(request, response);
+        then(response.getStatus()).isEqualTo(403);
 
         try {
             createInvitationToCreateProject(adminRole.getId(), "_Root", "{username} project", true); //can't invite to roo
@@ -316,7 +319,7 @@ public class InvitationsTest extends BaseTestCase {
         oleg.addRole(projectScope(testDriveProject.getProjectId()), role);
         login(oleg);
 
-        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&invitationType=newProjectInvitation");
+        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&invitationType=newProjectInvitation&projectId=" + testDriveProject.getProjectId());
         invitationsAdminController.handleRequestInternal(request, response);
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
 
@@ -336,12 +339,12 @@ public class InvitationsTest extends BaseTestCase {
         login(oleg);
 
         //try to open edit page
-        newRequest(HttpMethod.GET, "/admin/invitations.html?editInvitation=1&token=" + token);
+        newRequest(HttpMethod.GET, "/admin/invitations.html?editInvitation=1&projectId=_Root&token=" + token);
         invitationsAdminController.handleRequestInternal(request, response);
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
 
         //try to submit edit
-        newRequest(HttpMethod.POST, "/admin/invitations.html?editInvitation=1&token=" + token);
+        newRequest(HttpMethod.POST, "/admin/invitations.html?editInvitation=1&projectId=_Root&token=" + token);
         invitationsAdminController.handleRequestInternal(request, response);
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
 
@@ -382,7 +385,7 @@ public class InvitationsTest extends BaseTestCase {
         newRequest(HttpMethod.POST, "/admin/invitations.html?createInvitation=1");
         request.addParameter("name", "Create Project Invitation");
         request.addParameter("invitationType", createNewProjectInvitationType.getId());
-        request.addParameter("parentProject", parentExtId);
+        request.addParameter("projectId", parentExtId);
         request.addParameter("role", role);
         request.addParameter("multiuser", multiuser + "");
         request.addParameter("newProjectName", newProjectName);
@@ -399,7 +402,7 @@ public class InvitationsTest extends BaseTestCase {
         newRequest(HttpMethod.POST, "/admin/invitations.html?createInvitation=1");
         request.addParameter("invitationType", joinProjectInvitationType.getId());
         request.addParameter("name", "Join Project Invitation");
-        request.addParameter("project", projectExtId);
+        request.addParameter("projectId", projectExtId);
         request.addParameter("role", role);
         request.addParameter("multiuser", multiuser + "");
         invitationsAdminController.handleRequestInternal(request, response);

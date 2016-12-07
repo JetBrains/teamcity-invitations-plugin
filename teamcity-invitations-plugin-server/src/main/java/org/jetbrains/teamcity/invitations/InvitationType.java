@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +27,10 @@ public interface InvitationType<T extends Invitation> {
     ModelAndView getEditPropertiesView(@Nullable T invitation);
 
     @NotNull
-    T createNewInvitation(HttpServletRequest request, String token);
+    T createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token);
 
     @NotNull
     T readFrom(@NotNull Element element);
 
-    boolean isAvailableFor(AuthorityHolder authorityHolder);
+    boolean isAvailableFor(AuthorityHolder authorityHolder, @NotNull SProject project);
 }

@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.users.SUser;
 import org.jdom.Element;
@@ -16,6 +17,9 @@ public interface Invitation {
 
     @NotNull
     String getToken();
+
+    @NotNull
+    SProject getProject();
 
     @NotNull
     ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response);

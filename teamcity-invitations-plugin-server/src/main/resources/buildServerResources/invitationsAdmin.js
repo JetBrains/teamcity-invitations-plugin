@@ -32,9 +32,9 @@ BS.CreateInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractM
         return false;
     },
 
-    reloadInvitationType: function () {
+    reloadInvitationType: function (projectId) {
         var chooser = $j("#invitationType").get(0);
-        this.doReloadInvitationType(chooser.selectedIndex != 0, "invitationType=" + encodeURIComponent(chooser.value) + "&addInvitation=1", false);
+        this.doReloadInvitationType(chooser.selectedIndex != 0, "invitationType=" + encodeURIComponent(chooser.value) + "&addInvitation=1&projectId=" + projectId, false);
     },
 
     doReloadInvitationType: function (typeIsSelected, params, show) {
@@ -92,7 +92,7 @@ BS.EditInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractMod
         return $('editInvitationsFormProgress');
     },
 
-    open: function (token) {
+    open: function (token, projectId) {
         var that = this;
         var dialog = $j(that.getContainer());
         var submitButton = dialog.find(".submitButton");
@@ -100,7 +100,7 @@ BS.EditInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractMod
 
         that.showCentered();
         var progress = submitButton.siblings(".progressRing").show();
-        dialog.find(".content").load(window['base_uri'] + "/admin/invitations.html", "token=" + encodeURIComponent(token) + "&editInvitation=1", function () {
+        dialog.find(".content").load(window['base_uri'] + "/admin/invitations.html", "token=" + encodeURIComponent(token) + "&editInvitation=1&projectId=" + projectId, function () {
             progress.hide();
             submitButton.prop("disabled", false);
             that.recenterDialog();
