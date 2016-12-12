@@ -41,7 +41,7 @@ public class InvitationsStorage {
 
     @Nullable
     public synchronized Invitation getInvitation(@NotNull String token) {
-        for (SProject project : teamCityCore.getActiveProjects()) {
+        for (SProject project : teamCityCore.getActiveProjectsAsSystem()) {
             for (SProjectFeatureDescriptor feature : project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE)) {
                 if (feature.getParameters().get("token").equals(token)) {
                     return fromProjectFeature(project, feature);
@@ -53,7 +53,7 @@ public class InvitationsStorage {
 
     @NotNull
     public synchronized List<Invitation> getInvitations() {
-        return teamCityCore.getActiveProjects().stream()
+        return teamCityCore.getActiveProjectsAsSystem().stream()
                 .flatMap(project -> project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)))
                 .collect(toList());
     }

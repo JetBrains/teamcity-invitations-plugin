@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
@@ -95,8 +96,13 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public List<SProject> getActiveProjects() {
-        return projectManager.getActiveProjects();
+    public List<SProject> getActiveProjectsAsSystem() {
+        try {
+            return securityContext.runAsSystem(projectManager::getActiveProjects);
+        } catch (Throwable throwable) {
+            ExceptionUtil.rethrowAsRuntimeException(throwable);
+            return Collections.emptyList();
+        }
     }
 
     @Override

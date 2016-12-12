@@ -88,7 +88,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public List<SProject> getActiveProjects() {
+    public List<SProject> getActiveProjectsAsSystem() {
         return new ArrayList<>(projects);
     }
 

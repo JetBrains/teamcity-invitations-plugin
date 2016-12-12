@@ -40,7 +40,7 @@ public interface TeamCityCoreFacade {
     SProject findProjectByExtId(String projectExtId);
 
     @NotNull
-    List<SProject> getActiveProjects();
+    List<SProject> getActiveProjectsAsSystem();
 
     void persist(@NotNull SProject project, @NotNull String description);
 
