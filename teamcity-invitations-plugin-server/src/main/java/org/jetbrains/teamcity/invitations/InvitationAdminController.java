@@ -75,7 +75,7 @@ public class InvitationAdminController extends BaseFormXmlController {
                         + " in the project " + project.describe(false));
             }
 
-            ModelAndView view = invitationType.get().getEditPropertiesView(null);
+            ModelAndView view = invitationType.get().getEditPropertiesView(project, null);
             view.addObject("project", project);
             return view;
         }
@@ -90,7 +90,7 @@ public class InvitationAdminController extends BaseFormXmlController {
                 throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitation " + found.getToken());
             }
 
-            ModelAndView editPropertiesView = found.getType().getEditPropertiesView(found);
+            ModelAndView editPropertiesView = found.getType().getEditPropertiesView(project, found);
             editPropertiesView.addObject("token", token);
             editPropertiesView.addObject("project", project);
             return editPropertiesView;

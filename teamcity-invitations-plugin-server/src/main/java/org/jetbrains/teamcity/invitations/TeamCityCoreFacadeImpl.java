@@ -1,5 +1,7 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.groups.SUserGroup;
+import jetbrains.buildServer.groups.UserGroupManager;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.serverSide.auth.RoleScope;
@@ -12,6 +14,7 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
@@ -19,18 +22,18 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final ProjectManager projectManager;
     private final ProjectIdentifiersManager projectIdentifiersManager;
     private final SecurityContextEx securityContext;
-    private final ServerPaths serverPaths;
+    private final UserGroupManager userGroupManager;
     private final PluginDescriptor pluginDescriptor;
     private final UserModel userModel;
     private final ConfigActionFactory myConfigActionFactory;
 
     public TeamCityCoreFacadeImpl(RolesManager rolesManager, ProjectManager projectManager, ProjectIdentifiersManager projectIdentifiersManager, SecurityContextEx securityContext,
-                                  ServerPaths serverPaths, PluginDescriptor pluginDescriptor, UserModel userModel, ConfigActionFactory myConfigActionFactory) {
+                                  UserGroupManager userGroupManager, PluginDescriptor pluginDescriptor, UserModel userModel, ConfigActionFactory myConfigActionFactory) {
         this.rolesManager = rolesManager;
         this.projectManager = projectManager;
         this.projectIdentifiersManager = projectIdentifiersManager;
         this.securityContext = securityContext;
-        this.serverPaths = serverPaths;
+        this.userGroupManager = userGroupManager;
         this.pluginDescriptor = pluginDescriptor;
         this.userModel = userModel;
         this.myConfigActionFactory = myConfigActionFactory;
@@ -79,6 +82,17 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         }
     }
 
+    @Override
+    public void assignToGroup(@NotNull SUser user, @NotNull SUserGroup group) {
+        try {
+            securityContext.runAsSystem(() -> {
+                group.addUser(user);
+            });
+        } catch (Throwable throwable) {
+            ExceptionUtil.rethrowAsRuntimeException(throwable);
+        }
+    }
+
     @NotNull
     @Override
     public List<SProject> getActiveProjects() {
@@ -94,6 +108,18 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public List<Role> getAvailableRoles() {
         return rolesManager.getAvailableRoles();
+    }
+
+    @NotNull
+    @Override
+    public Collection<SUserGroup> getAvailableGroups() {
+        return userGroupManager.getUserGroups();
+    }
+
+    @Nullable
+    @Override
+    public SUserGroup findGroup(String groupKey) {
+        return userGroupManager.findUserGroupByKey(groupKey);
     }
 
     @Nullable

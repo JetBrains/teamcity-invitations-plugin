@@ -60,7 +60,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
 
     @NotNull
     @Override
-    public ModelAndView getEditPropertiesView(@Nullable InvitationImpl invitation) {
+    public ModelAndView getEditPropertiesView(@NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());

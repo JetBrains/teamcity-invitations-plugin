@@ -24,7 +24,7 @@ public interface InvitationType<T extends Invitation> {
      * @param invitation null if we it's create new invitation view, not null if edit existing invitation
      */
     @NotNull
-    ModelAndView getEditPropertiesView(@Nullable T invitation);
+    ModelAndView getEditPropertiesView(@NotNull SProject project, @Nullable T invitation);
 
     @NotNull
     T createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token);

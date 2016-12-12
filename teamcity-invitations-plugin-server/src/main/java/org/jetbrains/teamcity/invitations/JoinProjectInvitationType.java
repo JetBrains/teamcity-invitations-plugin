@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
@@ -14,6 +15,8 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
@@ -46,13 +49,36 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
     @NotNull
     @Override
-    public ModelAndView getEditPropertiesView(@Nullable InvitationImpl invitation) {
+    public ModelAndView getEditPropertiesView(@NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
-        modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
+        List<Role> availableRoles = core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList());
+        modelAndView.getModel().put("roles", availableRoles);
+        List<SUserGroup> availableGroups = core.getAvailableGroups().stream()
+                .filter(group -> group.getPermissionsGrantedForProject(project.getProjectId()).contains(Permission.VIEW_PROJECT))
+                .collect(toList());
+        modelAndView.getModel().put("groups", availableGroups);
+
         modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
-        modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_DEVELOPER" : invitation.roleId);
+
+        String preselectedRole = null;
+        String preselectedGroup = null;
+
+        if (invitation != null) {
+            preselectedGroup = invitation.groupKey;
+            preselectedRole = invitation.roleId;
+        } else {
+            preselectedRole = availableRoles.stream()
+                    .filter(role -> role.getPermissions().contains(Permission.RUN_BUILD))
+                    .sorted(Comparator.comparing(role -> role.getPermissions().toList().size()))
+                    .findFirst()
+                    .map(Role::getId)
+                    .orElse(availableRoles.get(0).getId());
+        }
+
+        modelAndView.getModel().put("roleId", preselectedRole);
+        modelAndView.getModel().put("groupKey", preselectedGroup);
         return modelAndView;
     }
 
@@ -60,14 +86,15 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @Override
     public InvitationImpl createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token) {
         String name = request.getParameter("name");
-        String roleId = request.getParameter("role");
+        String roleId = Boolean.parseBoolean(request.getParameter("addRole")) ? request.getParameter("role") : null;
+        String groupKey = Boolean.parseBoolean(request.getParameter("addToGroup")) ? request.getParameter("group") : null;
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return createNewInvitation(SessionUser.getUser(request), name, token, project.getExternalId(), roleId, multiuser);
+        return createNewInvitation(SessionUser.getUser(request), name, token, project.getExternalId(), roleId, groupKey, multiuser);
     }
 
     @NotNull
-    public InvitationImpl createNewInvitation(SUser inviter, String name, String token, String projectExtId, String roleId, boolean multiuser) {
-        return new InvitationImpl(inviter, name, token, projectExtId, roleId, multiuser);
+    public InvitationImpl createNewInvitation(SUser inviter, String name, String token, String projectExtId, String roleId, String groupKey, boolean multiuser) {
+        return new InvitationImpl(inviter, name, token, projectExtId, roleId, groupKey, multiuser);
     }
 
     @NotNull
@@ -90,12 +117,19 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
         @NotNull
         private final String projectExtId;
-        @NotNull
+        @Nullable
         private final String roleId;
+        @Nullable
+        private final String groupKey;
 
-        InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull String projectExtId, @NotNull String roleId, boolean multi) {
+        InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull String projectExtId, @Nullable String roleId,
+                       @Nullable String groupKey, boolean multi) {
             super(name, token, multi, JoinProjectInvitationType.this, currentUser.getId());
+            if (groupKey == null && roleId == null) {
+                throw new IllegalArgumentException("Role or group must be specified");
+            }
             this.roleId = roleId;
+            this.groupKey = groupKey;
             this.projectExtId = projectExtId;
         }
 
@@ -103,6 +137,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
             super(params, JoinProjectInvitationType.this);
             this.projectExtId = project.getExternalId();
             this.roleId = params.get("roleId");
+            this.groupKey = params.get("groupKey");
         }
 
         @NotNull
@@ -115,7 +150,8 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         @Override
         public Map<String, String> asMap() {
             Map<String, String> result = super.asMap();
-            result.put("roleId", roleId);
+            if (roleId != null) result.put("roleId", roleId);
+            if (groupKey != null) result.put("groupKey", groupKey);
             return result;
         }
 
@@ -128,8 +164,9 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             try {
                 Role role = getRole();
-                if (role == null) {
-                    throw new InvitationException("Failed to proceed invitation with a non-existing role " + roleId);
+                SUserGroup group = getGroup();
+                if (role == null && group == null) {
+                    throw new InvitationException("Failed to proceed invitation with a non-existing role '" + roleId + "' and group '" + groupKey + "'");
                 }
 
                 SProject project = getProject();
@@ -137,11 +174,15 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
                     throw new InvitationException("Failed to proceed invitation with a non-existing project " + projectExtId);
                 }
 
-                core.addRoleAsSystem(user, role, project);
-                Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
-                        "User got the role " + role.describe(false) + " in the project " + project.describe(false));
+                if (role != null) core.addRoleAsSystem(user, role, project);
+                if (group != null) core.assignToGroup(user, group);
 
-                if (role.getPermissions().contains(Permission.EDIT_PROJECT)) {
+                Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
+                        (role != null ? ("User got the role " + role.describe(false) + " in the project " + project.describe(false)) : "") +
+                        (group != null ? ("User assigned to the group " + group.describe(false)) : "")
+                );
+
+                if (user.isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT)) {
                     return new ModelAndView(new RedirectView("/editProject.html?projectId=" + project.getExternalId(), true));
                 }
                 return new ModelAndView(new RedirectView("/project.html?projectId=" + project.getExternalId(), true));
@@ -153,7 +194,12 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
         @Nullable
         public Role getRole() {
-            return JoinProjectInvitationType.this.core.findRoleById(roleId);
+            return roleId != null ? JoinProjectInvitationType.this.core.findRoleById(roleId) : null;
+        }
+
+        @Nullable
+        public SUserGroup getGroup() {
+            return groupKey != null ? JoinProjectInvitationType.this.core.findGroup(groupKey) : null;
         }
 
         @NotNull

@@ -8,6 +8,7 @@ import jetbrains.buildServer.RootUrlHolder;
 import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.controllers.AuthorizationInterceptor;
 import jetbrains.buildServer.controllers.BaseController;
+import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
@@ -17,6 +18,7 @@ import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -66,7 +68,7 @@ public class InvitationsTest extends BaseTestCase {
     @BeforeMethod
     public void setUp() throws Exception {
         super.setUp();
-        core = new FakeTeamCityCoreFacade(createTempDir());
+        core = new FakeTeamCityCoreFacade();
         systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()), false);
         adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT), true);
         developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD), true);
@@ -144,9 +146,9 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     @Test
-    public void invite_user_to_join_the_project() throws Exception {
+    public void invite_user_to_join_the_project_using_direct_role() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToJoinProject("PROJECT_DEVELOPER", "TestDriveProjectId", true).getToken();
+        String token = createInvitationToJoinProject("PROJECT_DEVELOPER", null, "TestDriveProjectId", true).getToken();
 
         //user go to invitation url
         logout();
@@ -163,6 +165,30 @@ public class InvitationsTest extends BaseTestCase {
         ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
         then(user.getRolesWithScope(projectScope("TestDriveProjectId"))).extracting(Role::getId).contains("PROJECT_DEVELOPER");
+    }
+
+    @Test
+    public void invite_user_to_join_the_project_using_group() throws Exception {
+        login(systemAdmin);
+        SUserGroup developers = core.createGroup("developers");
+        developers.addRole(projectScope(testDriveProject.getProjectId()), developerRole);
+        String token = createInvitationToJoinProject(null, "developers", "TestDriveProjectId", true).getToken();
+
+        //user go to invitation url
+        logout();
+        ModelAndView invitationResponse = goToInvitationUrl(token);
+        then(invitationResponse.getViewName()).isEqualTo("joinProjectInvitationLanding.jsp");
+        then(invitationResponse.getModel().get("invitation")).isInstanceOf(JoinProjectInvitationType.InvitationImpl.class);
+        then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
+        then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
+        then(invitationResponse.getModel().get("loggedInUser")).isEqualTo(null);
+
+        //user registered
+        SUser user = core.createUser("oleg");
+        login(user);
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
+        then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
+        then(core.getGroupUsers(developers)).contains(user);
     }
 
     @Test
@@ -211,7 +237,7 @@ public class InvitationsTest extends BaseTestCase {
     public void should_survive_server_restart() throws Exception {
         login(systemAdmin);
         String token1 = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
-        String token2 = createInvitationToJoinProject("PROJECT_DEVELOPER", "_Root", false).getToken();
+        String token2 = createInvitationToJoinProject("PROJECT_DEVELOPER", null, "_Root", false).getToken();
         Map<String, String> beforeRestartEl1 = invitations.getInvitation(token1).asMap();
         Map<String, String> beforeRestartEl2 = invitations.getInvitation(token2).asMap();
 
@@ -394,12 +420,19 @@ public class InvitationsTest extends BaseTestCase {
         return invitations.getInvitation(token);
     }
 
-    private Invitation createInvitationToJoinProject(String role, String projectExtId, boolean multiuser) throws Exception {
+    private Invitation createInvitationToJoinProject(@Nullable String role, @Nullable String group, String projectExtId, boolean multiuser) throws Exception {
         newRequest(HttpMethod.POST, "/admin/invitations.html?createInvitation=1");
         request.addParameter("invitationType", joinProjectInvitationType.getId());
         request.addParameter("name", "Join Project Invitation");
         request.addParameter("projectId", projectExtId);
-        request.addParameter("role", role);
+        if (role != null) {
+            request.addParameter("addRole", "true");
+            request.addParameter("role", role);
+        }
+        if (group != null) {
+            request.addParameter("addToGroup", "true");
+            request.addParameter("group", group);
+        }
         request.addParameter("multiuser", multiuser + "");
         invitationsAdminController.handleRequestInternal(request, response);
         Element resp = FileUtil.parseDocument(new StringReader(response.getContentAsString()), false);

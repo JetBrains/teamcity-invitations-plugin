@@ -4,6 +4,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -21,9 +22,10 @@ public class InvitationsFacadeApi {
         this.invitationsLandingController = invitationsLandingController;
     }
 
-    public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull String projectExtId, @NotNull String roleId, boolean multiuser) {
+    public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull String projectExtId, @Nullable String roleId,
+                                                  @Nullable String groupKey, boolean multiuser) {
         String token = StringUtil.generateUniqueHash();
-        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, projectExtId, roleId, multiuser);
+        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, projectExtId, roleId, groupKey, multiuser);
         return invitationsStorage.addInvitation(token, created);
     }
 

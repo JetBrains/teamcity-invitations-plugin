@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
@@ -11,8 +12,9 @@ import jetbrains.buildServer.util.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static java.util.stream.Collectors.toList;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,11 +26,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     private final Map<String, Role> roles = new HashMap<>();
     private final List<SProject> projects = new ArrayList<>();
     private final List<SUser> users = new ArrayList<>();
-    private final File pluginDataDir;
-
-    public FakeTeamCityCoreFacade(File pluginDataDir) {
-        this.pluginDataDir = pluginDataDir;
-    }
+    private final ConcurrentMap<SUserGroup, List<SUser>> groups = new ConcurrentHashMap<>();
 
     @Nullable
     @Override
@@ -83,6 +81,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         user.addRole(RoleScope.projectScope(project.getProjectId()), role);
     }
 
+    @Override
+    public void assignToGroup(@NotNull SUser user, @NotNull SUserGroup group) {
+        groups.computeIfAbsent(group, g -> new ArrayList<>()).add(user);
+    }
+
     @NotNull
     @Override
     public List<SProject> getActiveProjects() {
@@ -98,6 +101,18 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     @Override
     public List<Role> getAvailableRoles() {
         return new ArrayList<>(roles.values());
+    }
+
+    @NotNull
+    @Override
+    public Collection<SUserGroup> getAvailableGroups() {
+        return groups.keySet();
+    }
+
+    @Nullable
+    @Override
+    public SUserGroup findGroup(String groupKey) {
+        return groups.keySet().stream().filter(g -> g.getKey().equals(groupKey)).findFirst().orElse(null);
     }
 
     @Nullable
@@ -129,10 +144,30 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     SUser createUser(String username) {
-        Collection<RoleEntry> roles = Collections.synchronizedSet(new HashSet<>());
         SUser user = mock(SUser.class);
         when(user.getId()).thenReturn(users.size() + 1L);
         when(user.getUsername()).thenReturn(username);
+        setupRolesMocks(user);
+        users.add(user);
+        return user;
+    }
+
+    @NotNull
+    SUserGroup createGroup(String groupKey) {
+        SUserGroup group = mock(SUserGroup.class);
+        when(group.getKey()).thenReturn(groupKey);
+        setupRolesMocks(group);
+        groups.put(group, new ArrayList<>());
+        return group;
+    }
+
+    List<SUser> getGroupUsers(SUserGroup group) {
+        return groups.get(group);
+    }
+
+    private <T extends RolesHolder & AuthorityHolder> void setupRolesMocks(T user) {
+        Collection<RoleEntry> roles = Collections.synchronizedSet(new HashSet<>());
+
         when(user.getRoles()).thenReturn(roles);
 
         when(user.getRolesWithScope(any(RoleScope.class))).thenAnswer(invocation ->
@@ -155,17 +190,12 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         when(user.isPermissionGrantedForAnyProject(any(Permission.class))).thenAnswer(invocation -> {
             Permission permission = invocation.getArgument(0);
             return roles.stream().
-                    filter(entry -> entry.getRole().getPermissions().contains(permission)).
-                    findAny().
-                    isPresent();
+                    anyMatch(entry -> entry.getRole().getPermissions().contains(permission));
         });
 
         doAnswer(invocation -> {
             roles.add(new RoleEntryImpl(invocation.getArgument(0), invocation.getArgument(1)));
             return null;
         }).when(user).addRole(any(RoleScope.class), any(Role.class));
-
-        users.add(user);
-        return user;
     }
 }
