@@ -42,7 +42,7 @@ public class InvitationsStorage {
     @Nullable
     public synchronized Invitation getInvitation(@NotNull String token) {
         for (SProject project : teamCityCore.getActiveProjectsAsSystem()) {
-            for (SProjectFeatureDescriptor feature : project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE)) {
+            for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
                 if (feature.getParameters().get("token").equals(token)) {
                     return fromProjectFeature(project, feature);
                 }
@@ -54,12 +54,12 @@ public class InvitationsStorage {
     @NotNull
     public synchronized List<Invitation> getInvitations() {
         return teamCityCore.getActiveProjectsAsSystem().stream()
-                .flatMap(project -> project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)))
+                .flatMap(project -> project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)))
                 .collect(toList());
     }
 
     public synchronized boolean removeInvitation(@NotNull SProject project, @NotNull String token) {
-        Optional<SProjectFeatureDescriptor> featureDescriptor = project.getAvailableFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
+        Optional<SProjectFeatureDescriptor> featureDescriptor = project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
                 .filter(feature -> feature.getParameters().get("token").equals(token))
                 .findFirst();
 
