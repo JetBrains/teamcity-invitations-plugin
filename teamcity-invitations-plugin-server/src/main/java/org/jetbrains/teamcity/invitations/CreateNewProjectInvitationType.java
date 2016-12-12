@@ -132,18 +132,13 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         @NotNull
         public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             try {
-                SProject parent = getProject();
-                if (parent == null) {
-                    throw new InvitationException("Failed to proceed invitation with a non-existing project " + parentExtId);
-                }
-
                 SProject createdProject = null;
                 String baseName = newProjectName.replace("{username}", user.getUsername());
                 String projectName = baseName;
                 int i = 1;
                 while (createdProject == null) {
                     try {
-                        createdProject = core.createProjectAsSystem(parent.getExternalId(), projectName);
+                        createdProject = core.createProjectAsSystem(parentExtId, projectName);
                     } catch (DuplicateProjectNameException e) {
                         projectName = baseName + i++;
                     }
