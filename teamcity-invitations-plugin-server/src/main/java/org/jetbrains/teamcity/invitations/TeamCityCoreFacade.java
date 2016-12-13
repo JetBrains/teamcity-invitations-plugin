@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface TeamCityCoreFacade {
 
@@ -28,21 +29,23 @@ public interface TeamCityCoreFacade {
     @Nullable
     SUser getUser(long userId);
 
-    void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
+    void addRole(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
 
     void assignToGroup(@NotNull SUser user, @NotNull SUserGroup group);
 
     //PROJECTS
     @NotNull
-    SProject createProjectAsSystem(@Nullable String parentExtId, @NotNull String name);
+    SProject createProject(@Nullable String parentExtId, @NotNull String name);
 
     @Nullable
     SProject findProjectByExtId(String projectExtId);
 
     @NotNull
-    List<SProject> getActiveProjectsAsSystem();
+    List<SProject> getActiveProjects();
 
     void persist(@NotNull SProject project, @NotNull String description);
+
+    <T> T runAsSystem(Supplier<T> action);
 
     //Plugins
     @NotNull

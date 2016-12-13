@@ -30,6 +30,7 @@ public interface Invitation {
     @NotNull
     InvitationType getType();
 
+    @NotNull
     Map<String, String> asMap();
 
     boolean isReusable();

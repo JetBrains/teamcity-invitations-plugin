@@ -41,21 +41,21 @@ public class InvitationsStorage {
 
     @Nullable
     public synchronized Invitation getInvitation(@NotNull String token) {
-        for (SProject project : teamCityCore.getActiveProjectsAsSystem()) {
-            for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
-                if (feature.getParameters().get("token").equals(token)) {
-                    return fromProjectFeature(project, feature);
+        return teamCityCore.runAsSystem(() -> {
+            for (SProject project : teamCityCore.getActiveProjects()) {
+                for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
+                    if (feature.getParameters().get("token").equals(token)) {
+                        return fromProjectFeature(project, feature);
+                    }
                 }
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     @NotNull
-    public synchronized List<Invitation> getInvitations() {
-        return teamCityCore.getActiveProjectsAsSystem().stream()
-                .flatMap(project -> project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)))
-                .collect(toList());
+    public synchronized List<Invitation> getInvitations(@NotNull SProject project) {
+        return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)).collect(toList());
     }
 
     public synchronized boolean removeInvitation(@NotNull SProject project, @NotNull String token) {

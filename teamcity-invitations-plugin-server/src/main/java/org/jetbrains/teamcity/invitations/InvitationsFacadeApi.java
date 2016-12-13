@@ -22,18 +22,17 @@ public class InvitationsFacadeApi {
         this.invitationsLandingController = invitationsLandingController;
     }
 
-    public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull String projectExtId, @Nullable String roleId,
+    public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull SProject project, @Nullable String roleId,
                                                   @Nullable String groupKey, boolean multiuser) {
         String token = StringUtil.generateUniqueHash();
-        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, projectExtId, roleId, groupKey, multiuser);
+        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, project, roleId, groupKey, multiuser);
         return invitationsStorage.addInvitation(token, created);
     }
 
     @NotNull
     public List<Invitation> getJoinProjectInvitations(@NotNull SProject project) {
-        return invitationsStorage.getInvitations().stream()
+        return invitationsStorage.getInvitations(project).stream()
                 .filter(invitation -> invitation.getType().equals(joinProjectInvitationType))
-                .filter(invitation -> project.equals(((JoinProjectInvitationType.InvitationImpl) invitation).getProject()))
                 .collect(toList());
     }
 

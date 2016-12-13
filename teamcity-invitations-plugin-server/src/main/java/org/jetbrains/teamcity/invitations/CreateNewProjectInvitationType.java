@@ -38,7 +38,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     @NotNull
     @Override
     public String getDescription() {
-        return "Invite user to create a project";
+        return "Invite user to create a sub-project";
     }
 
     @NotNull
@@ -53,14 +53,16 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     }
 
     @Override
-    public boolean isAvailableFor(AuthorityHolder authorityHolder, @NotNull SProject project) {
-        return authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
-                authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CREATE_SUB_PROJECT);
+    public boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project) {
+        return core.runAsSystem(() ->
+                authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
+                        authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CREATE_SUB_PROJECT)
+        );
     }
 
     @NotNull
     @Override
-    public ModelAndView getEditPropertiesView(@NotNull SProject project, @Nullable InvitationImpl invitation) {
+    public ModelAndView getEditPropertiesView(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
@@ -78,7 +80,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         String newProjectName = request.getParameter("newProjectName");
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
         SUser currentUser = SessionUser.getUser(request);
-        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, project.getExternalId(), roleId, newProjectName, multiuser);
+        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, project, roleId, newProjectName, multiuser);
         if (!invitation.isAvailableFor(currentUser)) {
             throw new AccessDeniedException(currentUser, "You don't have permissions to create the invitation");
         }
@@ -87,23 +89,19 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
 
     public final class InvitationImpl extends AbstractInvitation {
         @NotNull
-        private final String parentExtId;
-        @NotNull
         private final String roleId;
         @NotNull
         private final String newProjectName;
 
-        InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull String parentExtId, @NotNull String roleId,
+        InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull SProject project, @NotNull String roleId,
                        @NotNull String newProjectName, boolean multi) {
-            super(name, token, multi, CreateNewProjectInvitationType.this, currentUser.getId());
+            super(project, name, token, multi, CreateNewProjectInvitationType.this, currentUser.getId());
             this.roleId = roleId;
-            this.parentExtId = parentExtId;
             this.newProjectName = newProjectName;
         }
 
         InvitationImpl(@NotNull Map<String, String> params, @NotNull SProject project) {
-            super(params, CreateNewProjectInvitationType.this);
-            this.parentExtId = project.getExternalId();
+            super(params, project, CreateNewProjectInvitationType.this);
             this.roleId = params.get("roleId");
             this.newProjectName = params.get("newProjectName");
         }
@@ -132,35 +130,34 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         @NotNull
         public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             try {
-                SProject createdProject = null;
-                String baseName = newProjectName.replace("{username}", user.getUsername());
-                String projectName = baseName;
-                int i = 1;
-                while (createdProject == null) {
-                    try {
-                        createdProject = core.createProjectAsSystem(parentExtId, projectName);
-                    } catch (DuplicateProjectNameException e) {
-                        projectName = baseName + i++;
+                SProject created = core.runAsSystem(() -> {
+                    SProject createdProject = null;
+                    String baseName = newProjectName.replace("{username}", user.getUsername());
+                    String projectName = baseName;
+                    int i = 1;
+                    while (createdProject == null) {
+                        try {
+                            createdProject = core.createProject(getProject().getExternalId(), projectName);
+                        } catch (DuplicateProjectNameException e) {
+                            projectName = baseName + i++;
+                        }
                     }
-                }
 
-                Role role = core.findRoleById(this.roleId);
-                if (role == null) {
-                    throw new InvitationException("Failed to proceed invitation with a non-existing role " + roleId);
-                }
-                core.addRoleAsSystem(user, role, createdProject);
-                Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
-                        "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
-                return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateConfigurationPageUrl(createdProject.getExternalId()), true));
+                    Role role = core.findRoleById(this.roleId);
+                    if (role == null) {
+                        throw new InvitationException("Failed to proceed invitation with a non-existing role " + roleId);
+                    }
+                    core.addRole(user, role, createdProject);
+                    Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
+                            "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
+                    return createdProject;
+                });
+
+                return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateConfigurationPageUrl(created.getExternalId()), true));
             } catch (Exception e) {
                 Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
                 return new ModelAndView(new RedirectView("/", true));
             }
-        }
-
-        @NotNull
-        public SProject getProject() {
-            return CreateNewProjectInvitationType.this.core.findProjectByExtId(parentExtId);
         }
 
         @Nullable

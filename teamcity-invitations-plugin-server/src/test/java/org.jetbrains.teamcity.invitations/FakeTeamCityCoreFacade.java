@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,7 +37,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public SProject createProjectAsSystem(@Nullable String parentExtId, @NotNull String name) {
+    public SProject createProject(@Nullable String parentExtId, @NotNull String name) {
         if (projects.stream().anyMatch(p -> p.getName().equals(name))) {
             throw new DuplicateProjectNameException("Already exists");
         }
@@ -54,7 +55,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
             return descriptor;
         });
 
-        when(project.getAvailableFeaturesOfType(anyString())).thenAnswer(invocation -> features.get(invocation.getArgument(0)));
+        when(project.getOwnFeaturesOfType(anyString())).thenAnswer(invocation -> features.get(invocation.getArgument(0)));
 
         when(project.removeFeature(anyString())).thenAnswer(invocation -> {
             List<SProjectFeatureDescriptor> toRemove = features.values().stream()
@@ -77,7 +78,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     }
 
     @Override
-    public void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
+    public void addRole(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
         user.addRole(RoleScope.projectScope(project.getProjectId()), role);
     }
 
@@ -88,13 +89,18 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public List<SProject> getActiveProjectsAsSystem() {
+    public List<SProject> getActiveProjects() {
         return new ArrayList<>(projects);
     }
 
     @Override
     public void persist(@NotNull SProject project, @NotNull String description) {
 
+    }
+
+    @Override
+    public <T> T runAsSystem(Supplier<T> action) {
+        return action.get();
     }
 
     @NotNull

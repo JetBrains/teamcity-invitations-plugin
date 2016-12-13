@@ -73,8 +73,8 @@ public class InvitationsTest extends BaseTestCase {
         adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT), true);
         developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD), true);
 
-        core.createProjectAsSystem(null, "_Root");
-        testDriveProject = core.createProjectAsSystem("_Root", "TestDriveProjectId");
+        core.createProject(null, "_Root");
+        testDriveProject = core.createProject("_Root", "TestDriveProjectId");
         securityContext = new SecurityContextImpl();
         createNewProjectInvitationType = new CreateNewProjectInvitationType(core);
         joinProjectInvitationType = new JoinProjectInvitationType(core);
@@ -219,7 +219,7 @@ public class InvitationsTest extends BaseTestCase {
     public void project_with_such_name_already_exists() throws Exception {
         login(systemAdmin);
         String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
-        core.createProjectAsSystem("TestDriveProjectId", "oleg project");
+        core.createProject("TestDriveProjectId", "oleg project");
 
         //user go to invitation url
         logout();
@@ -417,6 +417,7 @@ public class InvitationsTest extends BaseTestCase {
         }
         Element resp = FileUtil.parseDocument(new StringReader(response.getContentAsString()), false);
         String token = resp.getAttributeValue("token");
+
         return invitations.getInvitation(token);
     }
 

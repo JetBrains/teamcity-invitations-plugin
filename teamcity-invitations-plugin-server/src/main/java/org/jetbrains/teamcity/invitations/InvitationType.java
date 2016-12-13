@@ -24,7 +24,7 @@ public interface InvitationType<T extends Invitation> {
      * @param invitation null if we it's create new invitation view, not null if edit existing invitation
      */
     @NotNull
-    ModelAndView getEditPropertiesView(@NotNull SProject project, @Nullable T invitation);
+    ModelAndView getEditPropertiesView(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project, @Nullable T invitation);
 
     @NotNull
     T createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token);
@@ -32,5 +32,5 @@ public interface InvitationType<T extends Invitation> {
     @NotNull
     T readFrom(@NotNull Map<String, String> params, @NotNull SProject project);
 
-    boolean isAvailableFor(AuthorityHolder authorityHolder, @NotNull SProject project);
+    boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project);
 }

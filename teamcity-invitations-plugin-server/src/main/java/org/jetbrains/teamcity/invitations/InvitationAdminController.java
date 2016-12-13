@@ -75,7 +75,7 @@ public class InvitationAdminController extends BaseFormXmlController {
                         + " in the project " + project.describe(false));
             }
 
-            ModelAndView view = invitationType.get().getEditPropertiesView(project, null);
+            ModelAndView view = invitationType.get().getEditPropertiesView(SessionUser.getUser(request), project, null);
             view.addObject("project", project);
             return view;
         }
@@ -90,7 +90,7 @@ public class InvitationAdminController extends BaseFormXmlController {
                 throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitation " + found.getToken());
             }
 
-            ModelAndView editPropertiesView = found.getType().getEditPropertiesView(project, found);
+            ModelAndView editPropertiesView = found.getType().getEditPropertiesView(SessionUser.getUser(request), project, found);
             editPropertiesView.addObject("token", token);
             editPropertiesView.addObject("project", project);
             return editPropertiesView;
@@ -164,9 +164,8 @@ public class InvitationAdminController extends BaseFormXmlController {
         @Override
         public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
             model.put("project", getProject(request));
-            model.put("invitations", invitations.getInvitations().stream()
+            model.put("invitations", invitations.getInvitations(getProject(request)).stream()
                     .filter(i -> i.isAvailableFor(SessionUser.getUser(request)))
-                    .filter(i -> i.getProject().equals(getProject(request)))
                     .collect(toList()));
             model.put("invitationTypes", invitationTypes.stream()
                     .filter(invitationType -> invitationType.isAvailableFor(SessionUser.getUser(request), getProject(request)))

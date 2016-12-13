@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     private final RolesManager rolesManager;
@@ -48,22 +48,15 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public SProject createProjectAsSystem(@Nullable String parentExtId, @NotNull String name) {
-        try {
-            return securityContext.runAsSystem(() -> {
-                SProject parent = projectManager.findProjectByExternalId(parentExtId);
-                if (parent == null) {
-                    throw new ProjectNotFoundException("Unable to create project for user: parent project with external id = " + parentExtId + " not found");
-                }
-                String projectExternalId = projectIdentifiersManager.generateNewExternalId(parentExtId, name, null);
-                SProject project = parent.createProject(projectExternalId, name);
-                project.persist();
-                return project;
-            });
-        } catch (Throwable throwable) {
-            ExceptionUtil.rethrowAsRuntimeException(throwable);
-            return null;
+    public SProject createProject(@Nullable String parentExtId, @NotNull String name) {
+        SProject parent = projectManager.findProjectByExternalId(parentExtId);
+        if (parent == null) {
+            throw new ProjectNotFoundException("Unable to create project for user: parent project with external id = " + parentExtId + " not found");
         }
+        String projectExternalId = projectIdentifiersManager.generateNewExternalId(parentExtId, name, null);
+        SProject project = parent.createProject(projectExternalId, name);
+        project.persist();
+        return project;
     }
 
     @Nullable
@@ -73,36 +66,19 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     }
 
     @Override
-    public void addRoleAsSystem(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
-        try {
-            securityContext.runAsSystem(() -> {
-                user.addRole(RoleScope.projectScope(project.getProjectId()), role);
-            });
-        } catch (Throwable throwable) {
-            ExceptionUtil.rethrowAsRuntimeException(throwable);
-        }
+    public void addRole(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
+        user.addRole(RoleScope.projectScope(project.getProjectId()), role);
     }
 
     @Override
     public void assignToGroup(@NotNull SUser user, @NotNull SUserGroup group) {
-        try {
-            securityContext.runAsSystem(() -> {
-                group.addUser(user);
-            });
-        } catch (Throwable throwable) {
-            ExceptionUtil.rethrowAsRuntimeException(throwable);
-        }
+        group.addUser(user);
     }
 
     @NotNull
     @Override
-    public List<SProject> getActiveProjectsAsSystem() {
-        try {
-            return securityContext.runAsSystem(projectManager::getActiveProjects);
-        } catch (Throwable throwable) {
-            ExceptionUtil.rethrowAsRuntimeException(throwable);
-            return Collections.emptyList();
-        }
+    public List<SProject> getActiveProjects() {
+        return projectManager.getActiveProjects();
     }
 
     @Override
@@ -132,6 +108,16 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public SUser getUser(long userId) {
         return userModel.findUserById(userId);
+    }
+
+    @Override
+    public <T> T runAsSystem(Supplier<T> action) {
+        try {
+            return securityContext.runAsSystem(action::get);
+        } catch (Throwable throwable) {
+            ExceptionUtil.rethrowAsRuntimeException(throwable);
+            return null;
+        }
     }
 
     @NotNull
