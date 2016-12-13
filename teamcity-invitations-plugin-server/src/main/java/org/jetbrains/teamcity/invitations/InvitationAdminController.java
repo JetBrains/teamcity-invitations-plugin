@@ -178,6 +178,20 @@ public class InvitationAdminController extends BaseFormXmlController {
         public boolean isAvailable(@NotNull HttpServletRequest request) {
             return super.isAvailable(request) && invitationTypes.stream().anyMatch(type -> type.isAvailableFor(SessionUser.getUser(request), getProject(request)));
         }
+
+        @NotNull
+        @Override
+        public String getTabTitle(@NotNull final HttpServletRequest request) {
+            SProject project = getProject(request);
+            String tabTitle = super.getTabTitle(request);
+            if (project != null) {
+                int invitationsCount = invitations.getInvitationsCount(project);
+                if (invitationsCount > 0) {
+                    tabTitle += " (" + invitationsCount + ")";
+                }
+            }
+            return tabTitle;
+        }
     }
 
 

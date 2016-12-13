@@ -58,6 +58,10 @@ public class InvitationsStorage {
         return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)).collect(toList());
     }
 
+    public synchronized int getInvitationsCount(@NotNull SProject project) {
+        return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).size();
+    }
+
     public synchronized boolean removeInvitation(@NotNull SProject project, @NotNull String token) {
         Optional<SProjectFeatureDescriptor> featureDescriptor = project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
                 .filter(feature -> feature.getParameters().get("token").equals(token))
