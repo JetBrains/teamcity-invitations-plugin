@@ -95,19 +95,18 @@
 
     <bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
         <bs:messages key="<%=InvitationAdminController.MESSAGES_KEY%>"/>
-
         <div class="invitationsList">
             <c:if test="${not empty invitations}">
-                <table id="invitationsTable" class="parametersTable">
+                <l:tableWithHighlighting id="invitationsTable" className="parametersTable" highlightImmediately="true">
                     <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Reusable</th>
-                        <th>URL</th>
-                        <th>Actions</th>
+                        <th>Invitation</th>
+                        <th>Parameters Description</th>
+                        <th colspan="3">URL</th>
                     </tr>
                     <c:forEach items="${invitations}" var="invitation">
                         <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
+                        <c:set value="BS.EditInvitationDialog.open('${invitation.token}', '${projectExternalId}');"
+                               var="onclick"/>
                         <tr>
                             <td class="highlight">
                                 <c:out value="${invitation.name}"/>
@@ -117,24 +116,21 @@
                                 <jsp:include page="${invitation.type.descriptionViewPath}"/>
                             </td>
                             <td class="highlight">
-                                <c:if test="${!invitation.reusable}">No</c:if>
-                                <c:if test="${invitation.reusable}">Yes</c:if>
-                            </td>
-                            <td class="highlight">
-                        <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
-                              data-clipboard-target="#token_${invitation.token}"></span>
+                                <span class="clipboard-btn tc-icon icon16 tc-icon_copy" data-clipboard-action="copy"
+                                      data-clipboard-target="#token_${invitation.token}"></span>
                                 <span id="token_${invitation.token}"><c:out
                                         value="${invitationRootUrl}?token=${invitation.token}"/></span>
                             </td>
+                            <td class="edit highlight" onclick="${onclick}">
+                                <a href="#">Edit</a>
+                            </td>
                             <td class="edit">
-                                <a href="#"
-                                   onclick="BS.EditInvitationDialog.open('${invitation.token}', '${projectExternalId}');">Edit</a><br/>
                                 <a href="#"
                                    onclick="BS.Invitations.deleteInvitation('${invitation.token}', '${projectExternalId}'); return false">Delete</a>
                             </td>
                         </tr>
                     </c:forEach>
-                </table>
+                </l:tableWithHighlighting>
             </c:if>
         </div>
     </bs:refreshable>

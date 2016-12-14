@@ -217,7 +217,8 @@ public class InvitationAdminController extends BaseFormXmlController {
             try {
                 Invitation invitation = createFromRequest(StringUtil.generateUniqueHash(), request);
                 ajaxResponse.setAttribute("token", invitation.getToken());
-                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' created.");
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' created. " +
+                        "Send the following link to the user: " + invitationsController.getInvitationsPath() + invitation.getToken());
             } catch (AccessDeniedException e) {
                 throw e;
             } catch (Exception e) {

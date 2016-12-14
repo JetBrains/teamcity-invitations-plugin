@@ -143,7 +143,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
                         }
                     }
 
-                    Role role = core.findRoleById(this.roleId);
+                    Role role = getRole();
                     if (role == null) {
                         throw new InvitationException("Failed to proceed invitation with a non-existing role " + roleId);
                     }
@@ -163,6 +163,11 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         @Nullable
         public SUser getUser() {
             return CreateNewProjectInvitationType.this.core.getUser(createdByUserId);
+        }
+
+        @Nullable
+        public Role getRole() {
+            return CreateNewProjectInvitationType.this.core.findRoleById(roleId);
         }
     }
 }
