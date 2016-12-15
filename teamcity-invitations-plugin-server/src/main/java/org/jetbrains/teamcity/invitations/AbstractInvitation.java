@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.agent.Constants;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractInvitation implements Invitation {
+    public static final String TOKEN_PARAM_NAME = Constants.SECURE_PROPERTY_PREFIX + "token";
     protected final String token;
     protected final boolean multi;
     protected final long createdByUserId;
@@ -29,7 +31,7 @@ public abstract class AbstractInvitation implements Invitation {
 
     protected AbstractInvitation(Map<String, String> params, SProject project, InvitationType type) {
         this.name = params.get("name");
-        this.token = params.get("token");
+        this.token = params.get(TOKEN_PARAM_NAME);
         this.multi = Boolean.valueOf(params.get("multi"));
         this.createdByUserId = Long.parseLong(params.get("createdByUserId"));
         this.type = type;
@@ -73,7 +75,7 @@ public abstract class AbstractInvitation implements Invitation {
         result.put("name", name);
         result.put("multi", multi + "");
         result.put("createdByUserId", createdByUserId + "");
-        result.put("token", token);
+        result.put(Constants.SECURE_PROPERTY_PREFIX + "token", token);
         return result;
     }
 

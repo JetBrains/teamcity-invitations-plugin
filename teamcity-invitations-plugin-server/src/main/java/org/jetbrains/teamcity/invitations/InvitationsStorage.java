@@ -19,6 +19,7 @@ import java.util.Optional;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.jetbrains.teamcity.invitations.AbstractInvitation.TOKEN_PARAM_NAME;
 
 @ThreadSafe
 public class InvitationsStorage {
@@ -76,7 +77,7 @@ public class InvitationsStorage {
 
     public boolean removeInvitation(@NotNull SProject project, @NotNull String token) {
         Optional<SProjectFeatureDescriptor> featureDescriptor = project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
-                .filter(feature -> feature.getParameters().get("token").equals(token))
+                .filter(feature -> feature.getParameters().get(TOKEN_PARAM_NAME).equals(token))
                 .findFirst();
 
         if (featureDescriptor.isPresent()) {
@@ -95,7 +96,7 @@ public class InvitationsStorage {
                 myInvitationByTokenCache = new HashMap<>();
                 for (SProject project : teamCityCore.getActiveProjects()) {
                     for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
-                        myInvitationByTokenCache.put(feature.getParameters().get("token"), fromProjectFeature(project, feature));
+                        myInvitationByTokenCache.put(feature.getParameters().get(TOKEN_PARAM_NAME), fromProjectFeature(project, feature));
                     }
                 }
             }
