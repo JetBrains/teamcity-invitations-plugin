@@ -1,19 +1,24 @@
 package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.ProjectsModelListener;
+import jetbrains.buildServer.serverSide.ProjectsModelListenerAdapter;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
+import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 @ThreadSafe
 public class InvitationsStorage {
@@ -24,45 +29,52 @@ public class InvitationsStorage {
     private final TeamCityCoreFacade teamCityCore;
     private final Map<String, InvitationType> invitationTypes;
 
+    @GuardedBy("this")
+    private Map<String, Invitation> myInvitationByTokenCache;
+
     public InvitationsStorage(@NotNull TeamCityCoreFacade teamCityCore,
-                              @NotNull List<InvitationType> invitationTypes) {
+                              @NotNull List<InvitationType> invitationTypes,
+                              @NotNull EventDispatcher<ProjectsModelListener> events) {
         this.teamCityCore = teamCityCore;
-        this.invitationTypes = invitationTypes.stream().collect(Collectors.toMap(InvitationType::getId, identity()));
+        this.invitationTypes = invitationTypes.stream().collect(toMap(InvitationType::getId, identity()));
+        events.addListener(new ProjectsModelListenerAdapter() {
+            @Override
+            public void projectFeatureAdded(@NotNull SProject project, @NotNull SProjectFeatureDescriptor projectFeature) {
+                resetCache();
+            }
+
+            @Override
+            public void projectFeatureRemoved(@NotNull SProject project, @NotNull SProjectFeatureDescriptor projectFeature) {
+                resetCache();
+            }
+
+            @Override
+            public void projectFeatureChanged(@NotNull SProject project, @NotNull SProjectFeatureDescriptor before, @NotNull SProjectFeatureDescriptor after) {
+                resetCache();
+            }
+        });
     }
 
-    public synchronized Invitation addInvitation(@NotNull String token, @NotNull Invitation invitation) {
+    public Invitation addInvitation(@NotNull String token, @NotNull Invitation invitation) {
         Map<String, String> params = invitation.asMap();
         params.put(INVITATION_TYPE, invitation.getType().getId());
         invitation.getProject().addFeature(PROJECT_FEATURE_TYPE, params);
         teamCityCore.persist(invitation.getProject(), "Invitation added");
         Loggers.SERVER.info("User invitation with token " + token + " created in the project " + invitation.getProject().describe(false));
+        getInvitation(token);//populate cache
         return invitation;
     }
 
-    @Nullable
-    public synchronized Invitation getInvitation(@NotNull String token) {
-        return teamCityCore.runAsSystem(() -> {
-            for (SProject project : teamCityCore.getActiveProjects()) {
-                for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
-                    if (feature.getParameters().get("token").equals(token)) {
-                        return fromProjectFeature(project, feature);
-                    }
-                }
-            }
-            return null;
-        });
-    }
-
     @NotNull
-    public synchronized List<Invitation> getInvitations(@NotNull SProject project) {
+    public List<Invitation> getInvitations(@NotNull SProject project) {
         return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)).collect(toList());
     }
 
-    public synchronized int getInvitationsCount(@NotNull SProject project) {
+    public int getInvitationsCount(@NotNull SProject project) {
         return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).size();
     }
 
-    public synchronized boolean removeInvitation(@NotNull SProject project, @NotNull String token) {
+    public boolean removeInvitation(@NotNull SProject project, @NotNull String token) {
         Optional<SProjectFeatureDescriptor> featureDescriptor = project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
                 .filter(feature -> feature.getParameters().get("token").equals(token))
                 .findFirst();
@@ -74,6 +86,25 @@ public class InvitationsStorage {
         } else {
             return false;
         }
+    }
+
+    @Nullable
+    public Invitation getInvitation(@NotNull String token) {
+        synchronized (this) {
+            if (myInvitationByTokenCache == null) {
+                myInvitationByTokenCache = new HashMap<>();
+                for (SProject project : teamCityCore.getActiveProjects()) {
+                    for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
+                        myInvitationByTokenCache.put(feature.getParameters().get("token"), fromProjectFeature(project, feature));
+                    }
+                }
+            }
+            return myInvitationByTokenCache.get(token);
+        }
+    }
+
+    private synchronized void resetCache() {
+        myInvitationByTokenCache = null;
     }
 
     private Invitation fromProjectFeature(SProject project, SProjectFeatureDescriptor feature) {

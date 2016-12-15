@@ -9,10 +9,13 @@ import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.controllers.AuthorizationInterceptor;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.groups.SUserGroup;
+import jetbrains.buildServer.serverSide.ProjectsModelListener;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.ServerSideEventDispatcher;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.util.EventDispatcher;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.SessionUser;
@@ -64,18 +67,20 @@ public class InvitationsTest extends BaseTestCase {
     private Role developerRole;
     private Role systemAdminRole;
     private SUser systemAdmin;
+    private EventDispatcher<ProjectsModelListener> events;
 
     @BeforeMethod
     public void setUp() throws Exception {
         super.setUp();
-        core = new FakeTeamCityCoreFacade();
+        securityContext = new SecurityContextImpl();
+        events = ServerSideEventDispatcher.create(securityContext, ProjectsModelListener.class);
+        core = new FakeTeamCityCoreFacade(events);
         systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()), false);
         adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT), true);
         developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD), true);
 
         core.createProject(null, "_Root");
         testDriveProject = core.createProject("_Root", "TestDriveProjectId");
-        securityContext = new SecurityContextImpl();
         createNewProjectInvitationType = new CreateNewProjectInvitationType(core);
         joinProjectInvitationType = new JoinProjectInvitationType(core);
         invitations = createInvitationStorage();
@@ -118,7 +123,7 @@ public class InvitationsTest extends BaseTestCase {
 
     @NotNull
     private InvitationsStorage createInvitationStorage() {
-        return new InvitationsStorage(core, asList(createNewProjectInvitationType, joinProjectInvitationType));
+        return new InvitationsStorage(core, asList(createNewProjectInvitationType, joinProjectInvitationType), events);
     }
 
     @Test

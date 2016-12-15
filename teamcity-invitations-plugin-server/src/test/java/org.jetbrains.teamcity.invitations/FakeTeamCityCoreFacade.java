@@ -2,12 +2,14 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
+import jetbrains.buildServer.serverSide.ProjectsModelListener;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.ProjectFeatureDescriptorImpl;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.users.impl.RoleEntryImpl;
+import jetbrains.buildServer.util.EventDispatcher;
 import jetbrains.buildServer.util.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,11 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     private final List<SProject> projects = new ArrayList<>();
     private final List<SUser> users = new ArrayList<>();
     private final ConcurrentMap<SUserGroup, List<SUser>> groups = new ConcurrentHashMap<>();
+    private EventDispatcher<ProjectsModelListener> events;
+
+    public FakeTeamCityCoreFacade(EventDispatcher<ProjectsModelListener> events) {
+        this.events = events;
+    }
 
     @Nullable
     @Override
@@ -52,6 +59,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         when(project.addFeature(anyString(), anyMap())).thenAnswer(invocation -> {
             ProjectFeatureDescriptorImpl descriptor = new ProjectFeatureDescriptorImpl(features.size() + "", invocation.getArgument(0), invocation.getArgument(1), project);
             features.putValue(invocation.getArgument(0), descriptor);
+            events.getMulticaster().projectFeatureAdded(project, descriptor);
             return descriptor;
         });
 
@@ -64,6 +72,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
                     .collect(toList());
             for (SProjectFeatureDescriptor featureDescriptor : toRemove) {
                 features.removeValue(featureDescriptor);
+                events.getMulticaster().projectFeatureRemoved(project, featureDescriptor);
             }
             return null;
         });
