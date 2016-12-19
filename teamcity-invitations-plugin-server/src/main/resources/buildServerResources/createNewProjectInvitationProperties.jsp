@@ -41,4 +41,10 @@
         <label for="multiuser">Allow invitation to be used multiple times.</label>
     </div>
 
+    <div class="spacing"></div>
+    <div>
+        <label for="welcomeText">Welcome text on the landing page:</label>
+        <forms:textField name="welcomeText" style="width: 40em;" value="${welcomeText}" expandable="true"/>
+    </div>
+
 </div>

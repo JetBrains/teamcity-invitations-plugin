@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.CreateNewProjectInvitationType.InvitationImpl"--%>
 <%@ include file="/include-internal.jsp" %>
 <c:set var="title" value="Invitation to create Project"/>
@@ -19,8 +20,15 @@
     <bs:_loginPageDecoration id="loginPage" title="${title}">
       <p id="formNote">
         <p>
-            <c:out value="${invitation.user.descriptiveName}"/> invites you to join TeamCity and create a project
-            under <c:out value="${invitation.project.fullName}"/>.
+            <c:choose>
+                <c:when test="${fn:length(welcomeText) > 0}">
+                    <c:out value="${welcomeText}"/>
+                </c:when>
+                <c:otherwise>
+                    <c:out value="${invitation.user.descriptiveName}"/> invites you to join TeamCity and create a project
+                    under <c:out value="${invitation.project.fullName}"/>.
+                </c:otherwise>
+            </c:choose>
         </p>
         <c:choose>
              <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>

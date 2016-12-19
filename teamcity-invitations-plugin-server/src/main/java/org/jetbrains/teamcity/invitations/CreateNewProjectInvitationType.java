@@ -9,6 +9,7 @@ import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_ADMIN" : invitation.roleId);
         modelAndView.getModel().put("newProjectName", invitation == null ? "{username} project" : invitation.newProjectName);
+        modelAndView.getModel().put("welcomeText", invitation == null ? "" : invitation.welcomeText);
         return modelAndView;
     }
 
@@ -78,9 +80,10 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         String name = request.getParameter("name");
         String roleId = request.getParameter("role");
         String newProjectName = request.getParameter("newProjectName");
+        String welcomeText = StringUtil.emptyIfNull(request.getParameter("welcomeText"));
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
         SUser currentUser = SessionUser.getUser(request);
-        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, project, roleId, newProjectName, multiuser);
+        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, project, roleId, newProjectName, multiuser, welcomeText);
         if (!invitation.isAvailableFor(currentUser)) {
             throw new AccessDeniedException(currentUser, "You don't have permissions to create the invitation");
         }
@@ -94,8 +97,8 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         private final String newProjectName;
 
         InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull SProject project, @NotNull String roleId,
-                       @NotNull String newProjectName, boolean multi) {
-            super(project, name, token, multi, CreateNewProjectInvitationType.this, currentUser.getId());
+                       @NotNull String newProjectName, boolean multi, @NotNull String welcomeText) {
+            super(project, name, token, multi, CreateNewProjectInvitationType.this, currentUser.getId(), welcomeText);
             this.roleId = roleId;
             this.newProjectName = newProjectName;
         }

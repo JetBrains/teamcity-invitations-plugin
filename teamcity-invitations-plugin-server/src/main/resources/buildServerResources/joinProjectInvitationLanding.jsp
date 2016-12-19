@@ -19,8 +19,16 @@
     <bs:_loginPageDecoration id="loginPage" title="${title}">
       <p id="formNote">
          <p>
-             <c:out value="${invitation.user.descriptiveName}"/> invites you to join the <c:out
-                 value="${invitation.project.fullName}"/> project.
+
+            <c:choose>
+                <c:when test="${fn:length(welcomeText) > 0}">
+                    <c:out value="${welcomeText}"/>
+                </c:when>
+                <c:otherwise>
+                    <c:out value="${invitation.user.descriptiveName}"/> invites you to join the <c:out
+                        value="${invitation.project.fullName}"/> project.
+                </c:otherwise>
+            </c:choose>
          </p>
         <c:choose>
           <c:when test="${loggedInUser == null}">

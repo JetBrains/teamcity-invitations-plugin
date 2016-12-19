@@ -8,6 +8,7 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.serverSide.impl.auth.ServerAuthUtil;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,13 +92,15 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         String name = request.getParameter("name");
         String roleId = Boolean.parseBoolean(request.getParameter("addRole")) ? request.getParameter("role") : null;
         String groupKey = Boolean.parseBoolean(request.getParameter("addToGroup")) ? request.getParameter("group") : null;
+        String welcomeText = StringUtil.emptyIfNull(request.getParameter("welcomeText"));
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
-        return createNewInvitation(SessionUser.getUser(request), name, token, project, roleId, groupKey, multiuser);
+        return createNewInvitation(SessionUser.getUser(request), name, token, project, roleId, groupKey, multiuser, welcomeText);
     }
 
     @NotNull
-    public InvitationImpl createNewInvitation(SUser inviter, String name, String token, SProject project, String roleId, String groupKey, boolean multiuser) {
-        return new InvitationImpl(inviter, name, token, project, roleId, groupKey, multiuser);
+    public InvitationImpl createNewInvitation(SUser inviter, String name, String token, SProject project, String roleId,
+                                              String groupKey, boolean multiuser, String welcomeText) {
+        return new InvitationImpl(inviter, name, token, project, roleId, groupKey, multiuser, welcomeText);
     }
 
     @NotNull
@@ -120,8 +123,8 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         private final String groupKey;
 
         InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull SProject project, @Nullable String roleId,
-                       @Nullable String groupKey, boolean multi) {
-            super(project, name, token, multi, JoinProjectInvitationType.this, currentUser.getId());
+                       @Nullable String groupKey, boolean multi, @Nullable String welcomeText) {
+            super(project, name, token, multi, JoinProjectInvitationType.this, currentUser.getId(), welcomeText);
             if (groupKey == null && roleId == null) {
                 throw new IllegalArgumentException("Role or group must be specified");
             }

@@ -17,16 +17,19 @@ public abstract class AbstractInvitation implements Invitation {
     protected final boolean multi;
     protected final long createdByUserId;
     protected final SProject project;
+    protected final String welcomeText;
     private final InvitationType type;
     private final String name;
 
-    protected AbstractInvitation(@NotNull SProject project, String name, @NotNull String token, boolean multi, InvitationType type, long createdByUserId) {
+    protected AbstractInvitation(@NotNull SProject project, String name, @NotNull String token, boolean multi, InvitationType type, long createdByUserId,
+                                 @NotNull String welcomeText) {
         this.token = token;
         this.multi = multi;
         this.type = type;
         this.name = name;
         this.createdByUserId = createdByUserId;
         this.project = project;
+        this.welcomeText = welcomeText;
     }
 
     protected AbstractInvitation(Map<String, String> params, SProject project, InvitationType type) {
@@ -34,6 +37,7 @@ public abstract class AbstractInvitation implements Invitation {
         this.token = params.get(TOKEN_PARAM_NAME);
         this.multi = Boolean.valueOf(params.get("multi"));
         this.createdByUserId = Long.parseLong(params.get("createdByUserId"));
+        this.welcomeText = params.get("welcomeText");
         this.type = type;
         this.project = project;
     }
@@ -57,6 +61,7 @@ public abstract class AbstractInvitation implements Invitation {
         modelAndView.addObject("loggedInUser", SessionUser.getUser(request));
         modelAndView.addObject("proceedUrl", InvitationsProceedController.PATH);
         modelAndView.addObject("invitation", this);
+        modelAndView.addObject("welcomeText", welcomeText);
         return modelAndView;
     }
 
@@ -75,6 +80,7 @@ public abstract class AbstractInvitation implements Invitation {
         result.put("name", name);
         result.put("multi", multi + "");
         result.put("createdByUserId", createdByUserId + "");
+        result.put("welcomeText", welcomeText);
         result.put(Constants.SECURE_PROPERTY_PREFIX + "token", token);
         return result;
     }
