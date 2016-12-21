@@ -116,7 +116,9 @@
                                var="onclick"/>
                         <tr>
                             <td class="highlight">
-                                <c:out value="${invitation.name}"/>
+                                <c:if test="${invitation.type.description != invitation.name}"><em>(<c:out
+                                        value='${invitation.type.description}'/>)</em> </c:if><c:out
+                                    value='${invitation.name}'/>
                             </td>
                             <td class="highlight">
                                 <c:set value="${invitation}" scope="request" var="invitation"/>

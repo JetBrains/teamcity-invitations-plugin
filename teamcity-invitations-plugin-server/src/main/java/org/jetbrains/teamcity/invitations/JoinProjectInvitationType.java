@@ -40,7 +40,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @NotNull
     @Override
     public String getDescription() {
-        return "Join the project";
+        return "Join project";
     }
 
     @NotNull
@@ -53,7 +53,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @Override
     public ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
-        modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
+        modelAndView.getModel().put("name", invitation == null ? getDescription() : invitation.getName());
         List<Role> availableRoles = core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList());
         modelAndView.getModel().put("roles", availableRoles);
 
