@@ -7,8 +7,10 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.ProjectFeatureDescriptorImpl;
+import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.users.impl.RoleEntryImpl;
+import jetbrains.buildServer.users.impl.UserEx;
 import jetbrains.buildServer.util.EventDispatcher;
 import jetbrains.buildServer.util.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +32,13 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     private final List<SProject> projects = new ArrayList<>();
     private final List<SUser> users = new ArrayList<>();
     private final ConcurrentMap<SUserGroup, List<SUser>> groups = new ConcurrentHashMap<>();
+    private SecurityContextImpl securityContext;
     private EventDispatcher<ProjectsModelListener> events;
 
-    public FakeTeamCityCoreFacade(EventDispatcher<ProjectsModelListener> events) {
+    public FakeTeamCityCoreFacade(SecurityContextImpl securityContext, EventDispatcher<ProjectsModelListener> events) {
+        this.securityContext = securityContext;
         this.events = events;
+        doCreateProject(null, "_Root");
     }
 
     @Nullable
@@ -44,15 +49,31 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     @Override
-    public SProject createProject(@Nullable String parentExtId, @NotNull String name) {
+    public SProject createProject(@NotNull String parentExtId, @NotNull String name) {
         if (projects.stream().anyMatch(p -> p.getName().equals(name))) {
             throw new DuplicateProjectNameException("Already exists");
         }
+        SProject parent = projects.stream().filter(p -> p.getExternalId().equals(parentExtId)).findFirst().orElse(null);
+        if (parent == null) {
+            throw new IllegalArgumentException("No project with " + parentExtId + " found");
+        }
+        if (!securityContext.getAuthorityHolder().isPermissionGrantedForProject(parent.getProjectId(), Permission.CREATE_SUB_PROJECT)) {
+            throw new AccessDeniedException(securityContext.getAuthorityHolder(), "You can't create project under " + parentExtId);
+        }
+
+        SProject project = doCreateProject(parentExtId, name);
+        events.getMulticaster().projectCreated(project.getProjectId(), ((SUser) securityContext.getAuthorityHolder()));
+        return project;
+    }
+
+    @NotNull
+    private SProject doCreateProject(@Nullable String parentExtId, @NotNull String name) {
         SProject project = mock(SProject.class);
         when(project.getExternalId()).thenReturn(name);
         when(project.getProjectId()).thenReturn(name);
         when(project.getName()).thenReturn(name);
         when(project.getParentProjectExternalId()).thenReturn(parentExtId);
+        when(project.getParentProjectId()).thenReturn(parentExtId);
 
         MultiMap<String, SProjectFeatureDescriptor> features = new MultiMap<>();
 
@@ -86,9 +107,15 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         return projects.stream().filter(pr -> pr.getExternalId().equals(projectExtId)).findFirst().orElse(null);
     }
 
+    @Nullable
     @Override
-    public void addRole(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
-        user.addRole(RoleScope.projectScope(project.getProjectId()), role);
+    public SProject findProjectByIntId(String projectIntId) {
+        return projects.stream().filter(pr -> pr.getProjectId().equals(projectIntId)).findFirst().orElse(null);
+    }
+
+    @Override
+    public void addRole(@NotNull SUser user, @NotNull Role role, @NotNull String project) {
+        user.addRole(RoleScope.projectScope(project), role);
     }
 
     @Override
@@ -159,9 +186,10 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     SUser createUser(String username) {
-        SUser user = mock(SUser.class);
+        SUser user = mock(UserEx.class);
         when(user.getId()).thenReturn(users.size() + 1L);
         when(user.getUsername()).thenReturn(username);
+        when(user.describe(anyBoolean())).thenReturn(username);
         setupRolesMocks(user);
         users.add(user);
         return user;

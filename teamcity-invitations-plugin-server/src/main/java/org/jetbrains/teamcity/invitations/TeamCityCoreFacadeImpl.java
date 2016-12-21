@@ -65,9 +65,15 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         return projectManager.findProjectByExternalId(projectExtId);
     }
 
+    @Nullable
     @Override
-    public void addRole(@NotNull SUser user, @NotNull Role role, @NotNull SProject project) {
-        user.addRole(RoleScope.projectScope(project.getProjectId()), role);
+    public SProject findProjectByIntId(String projectIntId) {
+        return projectManager.findProjectById(projectIntId);
+    }
+
+    @Override
+    public void addRole(@NotNull SUser user, @NotNull Role role, @NotNull String project) {
+        user.addRole(RoleScope.projectScope(project), role);
     }
 
     @Override

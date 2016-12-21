@@ -170,7 +170,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
                         throw new InvitationException("Failed to proceed invitation with a non-existing role '" + roleId + "' and group '" + groupKey + "'");
                     }
 
-                    if (role != null) core.addRole(user, role, project);
+                    if (role != null) core.addRole(user, role, project.getProjectId());
                     if (group != null) core.assignToGroup(user, group);
 
                     Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +

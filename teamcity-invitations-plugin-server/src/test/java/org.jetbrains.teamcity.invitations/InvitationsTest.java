@@ -74,19 +74,19 @@ public class InvitationsTest extends BaseTestCase {
         super.setUp();
         securityContext = new SecurityContextImpl();
         events = ServerSideEventDispatcher.create(securityContext, ProjectsModelListener.class);
-        core = new FakeTeamCityCoreFacade(events);
+        core = new FakeTeamCityCoreFacade(securityContext, events);
         systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()), false);
         adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT), true);
         developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD), true);
 
-        core.createProject(null, "_Root");
-        testDriveProject = core.createProject("_Root", "TestDriveProjectId");
-        createNewProjectInvitationType = new CreateNewProjectInvitationType(core);
-        joinProjectInvitationType = new JoinProjectInvitationType(core);
-        invitations = createInvitationStorage();
-
         systemAdmin = core.createUser("admin");
         systemAdmin.addRole(RoleScope.globalScope(), systemAdminRole);
+
+        login(systemAdmin);
+        testDriveProject = core.createProject("_Root", "TestDriveProjectId");
+        createNewProjectInvitationType = new CreateNewProjectInvitationType(core, events);
+        joinProjectInvitationType = new JoinProjectInvitationType(core);
+        invitations = createInvitationStorage();
 
         WebControllerManager webControllerManager = createWebControllerManager();
 
@@ -129,7 +129,7 @@ public class InvitationsTest extends BaseTestCase {
     @Test
     public void invite_user_to_create_a_project() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
 
         //user go to invitation url
         logout();
@@ -145,9 +145,21 @@ public class InvitationsTest extends BaseTestCase {
         login(user);
         ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
-        then(core.getProject("oleg project")).isNotNull();
-        then(core.getProject("oleg project").getParentProjectExternalId()).isEqualTo("TestDriveProjectId");
-        then(user.getRolesWithScope(projectScope("oleg project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
+        then(((RedirectView) afterRegistrationMAW.getView()).getUrl()).endsWith("/admin/createObjectMenu.html?showMode=createProjectMenu&projectId=TestDriveProjectId");
+
+        newRequest(HttpMethod.GET, ((RedirectView) afterRegistrationMAW.getView()).getUrl());
+        core.createProject("TestDriveProjectId", "New Project");
+        then(user.getRolesWithScope(projectScope("New Project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
+
+        //try to create one more project under parent
+        newRequest(HttpMethod.GET, ((RedirectView) afterRegistrationMAW.getView()).getUrl());
+        try {
+            core.createProject("TestDriveProjectId", "New Project 2");
+            fail("AccessDeniedException expected");
+        } catch (AccessDeniedException e) {
+            //ok
+        }
+
     }
 
     @Test
@@ -199,7 +211,7 @@ public class InvitationsTest extends BaseTestCase {
     @Test
     public void process_invitation_when_user_already_logged_in() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
 
         //logged in user go to invitation url
         SUser user = core.createUser("oleg");
@@ -214,34 +226,16 @@ public class InvitationsTest extends BaseTestCase {
 
         //user registered
         ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
-        then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
-        then(core.getProject("oleg project")).isNotNull();
-        then(core.getProject("oleg project").getParentProjectExternalId()).isEqualTo("TestDriveProjectId");
-        then(user.getRolesWithScope(projectScope("oleg project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
-    }
+        then(((RedirectView) afterRegistrationMAW.getView()).getUrl()).endsWith("/admin/createObjectMenu.html?showMode=createProjectMenu&projectId=TestDriveProjectId");
 
-    @Test
-    public void project_with_such_name_already_exists() throws Exception {
-        login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+        newRequest(HttpMethod.GET, ((RedirectView) afterRegistrationMAW.getView()).getUrl());
         core.createProject("TestDriveProjectId", "oleg project");
-
-        //user go to invitation url
-        logout();
-        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
-
-        //user registered
-        SUser user = core.createUser("oleg");
-        login(user);
-        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
-        then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
-        then(core.getProject("oleg project1")).isNotNull();
-        then(user.getRolesWithScope(projectScope("oleg project1"))).extracting(Role::getId).contains("PROJECT_ADMIN");
+        then(user.getRolesWithScope(projectScope("oleg project"))).extracting(Role::getId).contains("PROJECT_ADMIN");
     }
 
     public void should_survive_server_restart() throws Exception {
         login(systemAdmin);
-        String token1 = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+        String token1 = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
         String token2 = createInvitationToJoinProject("PROJECT_DEVELOPER", null, "_Root", false).getToken();
         Map<String, String> beforeRestartEl1 = invitations.getInvitation(token1).asMap();
         Map<String, String> beforeRestartEl2 = invitations.getInvitation(token2).asMap();
@@ -259,7 +253,7 @@ public class InvitationsTest extends BaseTestCase {
 
     public void remove_invitation() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
         invitations.removeInvitation(testDriveProject, token);
 
         then(invitations.getInvitation(token)).isNull();
@@ -272,7 +266,7 @@ public class InvitationsTest extends BaseTestCase {
 
     public void invitation_removed_during_user_registration() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
 
         //user go to invitation url
         logout();
@@ -288,19 +282,23 @@ public class InvitationsTest extends BaseTestCase {
 
     public void multiple_user_invitation_can_be_used_several_times() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", true).getToken();
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", true).getToken();
 
         //first
         logout();
         assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
         login(core.createUser("oleg"));
         goToAfterRegistrationUrl();
+        newRequest(HttpMethod.GET, "/");
+        core.createProject("TestDriveProjectId", "oleg project");
 
         //second
         logout();
         assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
         login(core.createUser("ivan"));
         goToAfterRegistrationUrl();
+        newRequest(HttpMethod.GET, "/");
+        core.createProject("TestDriveProjectId", "ivan project");
 
         then(core.getProject("oleg project")).isNotNull();
         then(core.getProject("ivan project")).isNotNull();
@@ -308,7 +306,7 @@ public class InvitationsTest extends BaseTestCase {
 
     public void single_user_invitation_can_be_used_once() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", "{username} project", false).getToken();
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "TestDriveProjectId", false).getToken();
 
         //first
         logout();
@@ -334,7 +332,7 @@ public class InvitationsTest extends BaseTestCase {
         then(response.getStatus()).isEqualTo(403);
 
         try {
-            createInvitationToCreateProject(adminRole.getId(), "_Root", "{username} project", true); //can't invite to roo
+            createInvitationToCreateProject(adminRole.getId(), "_Root", true); //can't invite to roo
             fail("Access denied expected");
         } catch (AccessDeniedException ignored) {
         }
@@ -351,7 +349,7 @@ public class InvitationsTest extends BaseTestCase {
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
 
         try {
-            createInvitationToCreateProject(adminRole.getId(), testDriveProject.getExternalId(), "{username} project", true);
+            createInvitationToCreateProject(adminRole.getId(), testDriveProject.getExternalId(), true);
             fail("Access denied expected");
         } catch (AccessDeniedException ignored) {
         }
@@ -359,7 +357,7 @@ public class InvitationsTest extends BaseTestCase {
 
     public void user_cant_edit_invitation_without_necessary_permission() throws Exception {
         login(systemAdmin);
-        String token = createInvitationToCreateProject("PROJECT_ADMIN", "_Root", "{username} project", false).getToken();
+        String token = createInvitationToCreateProject("PROJECT_ADMIN", "_Root", false).getToken();
 
         SUser oleg = core.createUser("oleg");
         oleg.addRole(projectScope(testDriveProject.getProjectId()), adminRole);
@@ -406,16 +404,16 @@ public class InvitationsTest extends BaseTestCase {
         response = new MockHttpServletResponse();
         ActionMessages messages = ActionMessages.getMessages(request);
         if (messages != null) messages.clearMessages();
+        if (SessionUser.getUser(request) != null) securityContext.setAuthorityHolder(SessionUser.getUser(request));
     }
 
-    private Invitation createInvitationToCreateProject(String role, String parentExtId, String newProjectName, boolean multiuser) throws Exception {
+    private Invitation createInvitationToCreateProject(String role, String parentExtId, boolean multiuser) throws Exception {
         newRequest(HttpMethod.POST, "/admin/invitations.html?createInvitation=1");
         request.addParameter("name", "Create Project Invitation");
         request.addParameter("invitationType", createNewProjectInvitationType.getId());
         request.addParameter("projectId", parentExtId);
         request.addParameter("role", role);
         request.addParameter("multiuser", multiuser + "");
-        request.addParameter("newProjectName", newProjectName);
         invitationsAdminController.handleRequestInternal(request, response);
         if (ActionMessages.getMessages(request) != null && ActionMessages.getMessages(request).getMessage("accessDenied") != null) {
             throw new AccessDeniedException(securityContext.getAuthorityHolder(), ActionMessages.getMessages(request).getMessage("accessDenied"));
@@ -449,12 +447,12 @@ public class InvitationsTest extends BaseTestCase {
     private void login(SUser user) {
         logout();
         securityContext.setAuthorityHolder(user);
-        SessionUser.setUser(request, user);
+        if (request != null) SessionUser.setUser(request, user);
     }
 
     private void logout() {
         securityContext.clearContext();
-        if (SessionUser.getUser(request) != null) SessionUser.removeUser(request);
+        if (request != null && SessionUser.getUser(request) != null) SessionUser.removeUser(request);
     }
 }
 

@@ -29,16 +29,19 @@ public interface TeamCityCoreFacade {
     @Nullable
     SUser getUser(long userId);
 
-    void addRole(@NotNull SUser user, @NotNull Role role, @NotNull SProject project);
+    void addRole(@NotNull SUser user, @NotNull Role role, @NotNull String projectId);
 
     void assignToGroup(@NotNull SUser user, @NotNull SUserGroup group);
 
     //PROJECTS
     @NotNull
-    SProject createProject(@Nullable String parentExtId, @NotNull String name);
+    SProject createProject(@NotNull String parentExtId, @NotNull String name);
 
     @Nullable
     SProject findProjectByExtId(String projectExtId);
+
+    @Nullable
+    SProject findProjectByIntId(String projectIntId);
 
     @NotNull
     List<SProject> getActiveProjects();

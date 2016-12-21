@@ -1,7 +1,8 @@
 package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.serverSide.DuplicateProjectNameException;
+import jetbrains.buildServer.serverSide.ProjectsModelListener;
+import jetbrains.buildServer.serverSide.ProjectsModelListenerAdapter;
 import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
@@ -9,6 +10,8 @@ import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.users.impl.UserEx;
+import jetbrains.buildServer.util.EventDispatcher;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jetbrains.annotations.NotNull;
@@ -18,16 +21,39 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.stream.Collectors.toList;
 
 public class CreateNewProjectInvitationType implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
+
     @NotNull
     private final TeamCityCoreFacade core;
 
-    public CreateNewProjectInvitationType(@NotNull TeamCityCoreFacade core) {
+    @NotNull
+    private final List<ProcessingInvitation> myProcessingInvitations = new CopyOnWriteArrayList<>();
+
+    public CreateNewProjectInvitationType(@NotNull TeamCityCoreFacade core,
+                                          @NotNull EventDispatcher<ProjectsModelListener> events) {
         this.core = core;
+        events.addListener(new ProjectsModelListenerAdapter() {
+            @Override
+            public void projectCreated(@NotNull String projectId, @Nullable SUser user) {
+                SProject created = core.findProjectByIntId(projectId);
+                if (created != null && user != null) {
+                    Optional<ProcessingInvitation> processingInvitation = myProcessingInvitations.stream().filter(i -> i.isOurProjectCreation(created, user)).findFirst();
+                    if (processingInvitation.isPresent()) {
+                        core.addRole(user, processingInvitation.get().invitation.getRole(), projectId);
+                        processingInvitation.get().dispose();
+                        myProcessingInvitations.removeIf(i -> i.isOurProjectCreation(created, user));
+                        Loggers.SERVER.info("Project " + created.describe(false) + " created by the invitation '" + processingInvitation.get().invitation.token + "'. ");
+                    }
+                }
+            }
+        });
     }
 
     @NotNull
@@ -69,7 +95,6 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_ADMIN" : invitation.roleId);
-        modelAndView.getModel().put("newProjectName", invitation == null ? "{username} project" : invitation.newProjectName);
         modelAndView.getModel().put("welcomeText", invitation == null ? "" : invitation.welcomeText);
         return modelAndView;
     }
@@ -79,34 +104,52 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     public InvitationImpl createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token) {
         String name = request.getParameter("name");
         String roleId = request.getParameter("role");
-        String newProjectName = request.getParameter("newProjectName");
         String welcomeText = StringUtil.emptyIfNull(request.getParameter("welcomeText"));
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
         SUser currentUser = SessionUser.getUser(request);
-        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, project, roleId, newProjectName, multiuser, welcomeText);
+        InvitationImpl invitation = new InvitationImpl(currentUser, name, token, project, roleId, multiuser, welcomeText);
         if (!invitation.isAvailableFor(currentUser)) {
             throw new AccessDeniedException(currentUser, "You don't have permissions to create the invitation");
         }
         return invitation;
     }
 
+    private static final class ProcessingInvitation {
+        @NotNull
+        private final SUser user;
+        @NotNull
+        private final InvitationImpl invitation;
+        @NotNull
+        private final Runnable disposeAction;
+
+        private ProcessingInvitation(@NotNull SUser user, @NotNull InvitationImpl invitation, @NotNull Runnable disposeAction) {
+            this.user = user;
+            this.invitation = invitation;
+            this.disposeAction = disposeAction;
+        }
+
+        public boolean isOurProjectCreation(@NotNull SProject created, @NotNull SUser creator) {
+            return creator.getId() == this.user.getId() && invitation.getProject().getProjectId().equals(created.getParentProjectId());
+        }
+
+        public void dispose() {
+            disposeAction.run();
+        }
+    }
+
     public final class InvitationImpl extends AbstractInvitation {
         @NotNull
         private final String roleId;
-        @NotNull
-        private final String newProjectName;
 
         InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull SProject project, @NotNull String roleId,
-                       @NotNull String newProjectName, boolean multi, @NotNull String welcomeText) {
+                       boolean multi, @NotNull String welcomeText) {
             super(project, name, token, multi, CreateNewProjectInvitationType.this, currentUser.getId(), welcomeText);
             this.roleId = roleId;
-            this.newProjectName = newProjectName;
         }
 
         InvitationImpl(@NotNull Map<String, String> params, @NotNull SProject project) {
             super(params, project, CreateNewProjectInvitationType.this);
             this.roleId = params.get("roleId");
-            this.newProjectName = params.get("newProjectName");
         }
 
         @NotNull
@@ -120,7 +163,6 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         public Map<String, String> asMap() {
             Map<String, String> result = super.asMap();
             result.put("roleId", roleId);
-            result.put("newProjectName", newProjectName);
             return result;
         }
 
@@ -132,35 +174,13 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
 
         @NotNull
         public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
-            try {
-                SProject created = core.runAsSystem(() -> {
-                    SProject createdProject = null;
-                    String baseName = newProjectName.replace("{username}", user.getUsername());
-                    String projectName = baseName;
-                    int i = 1;
-                    while (createdProject == null) {
-                        try {
-                            createdProject = core.createProject(getProject().getExternalId(), projectName);
-                        } catch (DuplicateProjectNameException e) {
-                            projectName = baseName + i++;
-                        }
-                    }
-
-                    Role role = getRole();
-                    if (role == null) {
-                        throw new InvitationException("Failed to proceed invitation with a non-existing role " + roleId);
-                    }
-                    core.addRole(user, role, createdProject);
-                    Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
-                            "Project " + createdProject.describe(false) + " created, user got the role " + role.describe(false));
-                    return createdProject;
-                });
-
-                return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateConfigurationPageUrl(created.getExternalId()), true));
-            } catch (Exception e) {
-                Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
-                return new ModelAndView(new RedirectView("/", true));
-            }
+            UserEx originalUser = (UserEx) SessionUser.getUser(request);
+            org.jetbrains.teamcity.invitations.AdditionalPermissionsUserWrapper wrappedUser = new AdditionalPermissionsUserWrapper(originalUser, getProject().getProjectId(),
+                    Permission.CREATE_SUB_PROJECT, Permission.VIEW_PROJECT);
+            SessionUser.setUser(request, wrappedUser);
+            myProcessingInvitations.add(new ProcessingInvitation(originalUser, this, wrappedUser::disable));
+            Loggers.SERVER.info("User " + user.describe(false) + " accepted the invitation '" + token + "'. ");
+            return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateProjectPageUrl(project.getExternalId()), true));
         }
 
         @Nullable
@@ -172,5 +192,6 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         public Role getRole() {
             return CreateNewProjectInvitationType.this.core.findRoleById(roleId);
         }
+
     }
 }

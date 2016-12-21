@@ -17,11 +17,6 @@
     <div><forms:textField name="name" value="${name}"/></div>
 
     <div class="spacing"></div>
-    <div><label for="newProjectName">Created project name pattern: <l:star/></label></div>
-    <div><forms:textField name="newProjectName" value="${newProjectName}"/></div>
-    <span class="greyNote">The name of the project that will be created. {username} placeholder will be replaced with the username of the registered user.</span>
-
-    <div class="spacing"></div>
 
     <div>
         <label for="role">Give user a role in the created project: <l:star/></label>
