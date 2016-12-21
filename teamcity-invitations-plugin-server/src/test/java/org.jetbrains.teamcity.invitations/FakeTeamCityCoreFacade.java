@@ -12,6 +12,7 @@ import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.users.impl.RoleEntryImpl;
 import jetbrains.buildServer.users.impl.UserEx;
 import jetbrains.buildServer.util.EventDispatcher;
+import jetbrains.buildServer.util.ExceptionUtil;
 import jetbrains.buildServer.util.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,39 +105,64 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
     @Nullable
     @Override
     public SProject findProjectByExtId(String projectExtId) {
-        return projects.stream().filter(pr -> pr.getExternalId().equals(projectExtId)).findFirst().orElse(null);
+        SProject found = projects.stream().filter(pr -> pr.getExternalId().equals(projectExtId)).findFirst().orElse(null);
+        if (found != null) {
+            if (!securityContext.getAuthorityHolder().isPermissionGrantedForProject(found.getProjectId(), Permission.CREATE_SUB_PROJECT)) {
+                throw new AccessDeniedException(securityContext.getAuthorityHolder(), "You can't create project under " + found.getProjectId());
+            }
+        }
+        return found;
     }
 
     @Nullable
     @Override
     public SProject findProjectByIntId(String projectIntId) {
-        return projects.stream().filter(pr -> pr.getProjectId().equals(projectIntId)).findFirst().orElse(null);
+        SProject found = projects.stream().filter(pr -> pr.getProjectId().equals(projectIntId)).findFirst().orElse(null);
+        if (found != null) {
+            if (!securityContext.getAuthorityHolder().isPermissionGrantedForProject(found.getProjectId(), Permission.CREATE_SUB_PROJECT)) {
+                throw new AccessDeniedException(securityContext.getAuthorityHolder(), "You can't create project under " + found.getProjectId());
+            }
+        }
+        return found;
     }
 
     @Override
     public void addRole(@NotNull SUser user, @NotNull Role role, @NotNull String project) {
+        if (!securityContext.getAuthorityHolder().isPermissionGrantedForProject(project, Permission.CHANGE_USER_ROLES_IN_PROJECT)) {
+            throw new AccessDeniedException(securityContext.getAuthorityHolder(), "You can't assign roles in the project " + project);
+        }
         user.addRole(RoleScope.projectScope(project), role);
     }
 
     @Override
     public void assignToGroup(@NotNull SUser user, @NotNull SUserGroup group) {
+        if (!securityContext.getAuthorityHolder().isPermissionGrantedGlobally(Permission.ASSIGN_USERS_ADD_SUBGROUPS)) {
+            throw new AccessDeniedException(securityContext.getAuthorityHolder(), "You can't add users to groups");
+        }
         groups.computeIfAbsent(group, g -> new ArrayList<>()).add(user);
     }
 
     @NotNull
     @Override
     public List<SProject> getActiveProjects() {
-        return new ArrayList<>(projects);
+        return projects.stream().filter(p -> securityContext.getAuthorityHolder().isPermissionGrantedForProject(p.getProjectId(), Permission.VIEW_PROJECT)).collect(toList());
     }
 
     @Override
     public void persist(@NotNull SProject project, @NotNull String description) {
-
+        if (!securityContext.getAuthorityHolder().isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT)) {
+            throw new AccessDeniedException(securityContext.getAuthorityHolder(), "You can't edit project " + project.getProjectId());
+        }
     }
 
     @Override
     public <T> T runAsSystem(Supplier<T> action) {
-        return action.get();
+        try {
+            return securityContext.runAsSystem(action::get);
+        } catch (Throwable throwable) {
+            ExceptionUtil.rethrowAsRuntimeException(throwable);
+            return null;
+        }
     }
 
     @NotNull

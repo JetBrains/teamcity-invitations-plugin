@@ -25,13 +25,17 @@ public class InvitationsLandingController extends BaseController {
     private final InvitationsStorage invitations;
 
     @NotNull
+    private final TeamCityCoreFacade core;
+
+    @NotNull
     private final RootUrlHolder rootUrlHolder;
 
     public InvitationsLandingController(@NotNull WebControllerManager webControllerManager,
                                         @NotNull InvitationsStorage invitations,
                                         @NotNull AuthorizationInterceptor authorizationInterceptor,
-                                        @NotNull RootUrlHolder rootUrlHolder) {
+                                        @NotNull TeamCityCoreFacade core, @NotNull RootUrlHolder rootUrlHolder) {
         this.invitations = invitations;
+        this.core = core;
         this.rootUrlHolder = rootUrlHolder;
         webControllerManager.registerController(INVITATIONS_PATH, this);
         authorizationInterceptor.addPathNotRequiringAuth(INVITATIONS_PATH);
@@ -41,7 +45,7 @@ public class InvitationsLandingController extends BaseController {
     @Override
     protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
         String token = request.getParameter(TOKEN_URL_PARAM);
-        Invitation invitation = invitations.getInvitation(token);
+        Invitation invitation = core.runAsSystem(() -> invitations.getInvitation(token));
         if (invitation == null) {
             Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
             return new ModelAndView(new RedirectView("/"));

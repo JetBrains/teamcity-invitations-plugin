@@ -21,9 +21,14 @@ public class InvitationsProceedController extends BaseController {
     @NotNull
     private final InvitationsStorage invitations;
 
+    @NotNull
+    private final TeamCityCoreFacade core;
+
     public InvitationsProceedController(@NotNull WebControllerManager webControllerManager,
-                                        @NotNull InvitationsStorage invitations) {
+                                        @NotNull InvitationsStorage invitations,
+                                        @NotNull TeamCityCoreFacade core) {
         this.invitations = invitations;
+        this.core = core;
         webControllerManager.registerController(PATH, this);
     }
 
@@ -33,7 +38,7 @@ public class InvitationsProceedController extends BaseController {
         Object tokenObj = request.getSession().getAttribute(INVITATION_TOKEN_SESSION_ATTR);
         if (tokenObj != null && tokenObj instanceof String) {
             String token = (String) tokenObj;
-            Invitation invitation = invitations.getInvitation(token);
+            Invitation invitation = core.runAsSystem(() -> invitations.getInvitation(token));
             if (invitation == null) {
                 Loggers.SERVER.warn("User accepted the invitation with token " + token + " but invitation doesn't exist anymore");
                 return new ModelAndView(new RedirectView("/"));
@@ -41,7 +46,7 @@ public class InvitationsProceedController extends BaseController {
             ModelAndView result = invitation.invitationAccepted(SessionUser.getUser(request), request, response);
             if (!invitation.isReusable()) {
                 Loggers.SERVER.info("Single user invitation " + token + " was used by user " + SessionUser.getUser(request).describe(false));
-                invitations.removeInvitation(invitation.getProject(), token);
+                core.runAsSystem(() -> invitations.removeInvitation(invitation.getProject(), token));
             }
             return result;
         } else {
