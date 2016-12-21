@@ -63,7 +63,6 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
                 .collect(toList());
         modelAndView.getModel().put("groups", availableGroups);
 
-        modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
 
         String preselectedRole = null;
