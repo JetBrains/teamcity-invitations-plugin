@@ -40,7 +40,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @NotNull
     @Override
     public String getDescription() {
-        return "Invite user to join a project";
+        return "Join the project";
     }
 
     @NotNull
@@ -83,6 +83,9 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
         modelAndView.getModel().put("roleId", preselectedRole);
         modelAndView.getModel().put("groupKey", preselectedGroup);
+        modelAndView.getModel().put("welcomeText", invitation == null ?
+                authorityHolder.getAssociatedUser().getDescriptiveName() + " invites you to join the " + project.getFullName() + " project" :
+                invitation.welcomeText);
         return modelAndView;
     }
 
@@ -90,8 +93,8 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
     @Override
     public InvitationImpl createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token) {
         String name = request.getParameter("name");
-        String roleId = Boolean.parseBoolean(request.getParameter("addRole")) ? request.getParameter("role") : null;
-        String groupKey = Boolean.parseBoolean(request.getParameter("addToGroup")) ? request.getParameter("group") : null;
+        String roleId = !StringUtil.isEmptyOrSpaces(request.getParameter("role")) ? request.getParameter("role") : null;
+        String groupKey = !StringUtil.isEmptyOrSpaces(request.getParameter("group")) ? request.getParameter("group") : null;
         String welcomeText = StringUtil.emptyIfNull(request.getParameter("welcomeText"));
         boolean multiuser = Boolean.parseBoolean(request.getParameter("multiuser"));
         return createNewInvitation(SessionUser.getUser(request), name, token, project, roleId, groupKey, multiuser, welcomeText);
@@ -141,7 +144,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         @NotNull
         @Override
         protected String getLandingPage() {
-            return core.getPluginResourcesPath("joinProjectInvitationLanding.jsp");
+            return core.getPluginResourcesPath("invitationLanding.jsp");
         }
 
         @NotNull

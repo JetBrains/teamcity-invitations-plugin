@@ -134,7 +134,7 @@ public class InvitationsTest extends BaseTestCase {
         //user go to invitation url
         logout();
         ModelAndView invitationResponse = goToInvitationUrl(token);
-        then(invitationResponse.getViewName()).isEqualTo("createNewProjectInvitationLanding.jsp");
+        then(invitationResponse.getViewName()).isEqualTo("invitationLanding.jsp");
         then(invitationResponse.getModel().get("invitation")).isInstanceOf(CreateNewProjectInvitationType.InvitationImpl.class);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
@@ -170,7 +170,7 @@ public class InvitationsTest extends BaseTestCase {
         //user go to invitation url
         logout();
         ModelAndView invitationResponse = goToInvitationUrl(token);
-        then(invitationResponse.getViewName()).isEqualTo("joinProjectInvitationLanding.jsp");
+        then(invitationResponse.getViewName()).isEqualTo("invitationLanding.jsp");
         then(invitationResponse.getModel().get("invitation")).isInstanceOf(JoinProjectInvitationType.InvitationImpl.class);
         then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
         then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
@@ -194,7 +194,7 @@ public class InvitationsTest extends BaseTestCase {
         //user go to invitation url
         logout();
         ModelAndView invitationResponse = goToInvitationUrl(token);
-        then(invitationResponse.getViewName()).isEqualTo("joinProjectInvitationLanding.jsp");
+        then(invitationResponse.getViewName()).isEqualTo("invitationLanding.jsp");
         then(invitationResponse.getModel().get("invitation")).isInstanceOf(JoinProjectInvitationType.InvitationImpl.class);
         then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
         then(((JoinProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
@@ -217,7 +217,7 @@ public class InvitationsTest extends BaseTestCase {
         SUser user = core.createUser("oleg");
         login(user);
         ModelAndView invitationResponse = goToInvitationUrl(token);
-        then(invitationResponse.getViewName()).isEqualTo("createNewProjectInvitationLanding.jsp");
+        then(invitationResponse.getViewName()).isEqualTo("invitationLanding.jsp");
         then(invitationResponse.getModel().get("invitation")).isInstanceOf(CreateNewProjectInvitationType.InvitationImpl.class);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
@@ -286,7 +286,7 @@ public class InvitationsTest extends BaseTestCase {
 
         //first
         logout();
-        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
+        assertViewName(goToInvitationUrl(token), "invitationLanding.jsp");
         login(core.createUser("oleg"));
         goToAfterRegistrationUrl();
         newRequest(HttpMethod.GET, "/");
@@ -294,7 +294,7 @@ public class InvitationsTest extends BaseTestCase {
 
         //second
         logout();
-        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
+        assertViewName(goToInvitationUrl(token), "invitationLanding.jsp");
         login(core.createUser("ivan"));
         goToAfterRegistrationUrl();
         newRequest(HttpMethod.GET, "/");
@@ -310,7 +310,7 @@ public class InvitationsTest extends BaseTestCase {
 
         //first
         logout();
-        assertViewName(goToInvitationUrl(token), "createNewProjectInvitationLanding.jsp");
+        assertViewName(goToInvitationUrl(token), "invitationLanding.jsp");
         login(core.createUser("oleg"));
         goToAfterRegistrationUrl();
 

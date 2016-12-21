@@ -25,6 +25,7 @@ BS.CreateInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractM
     },
 
     open: function () {
+        $j(BS.EditInvitationDialog.getContainer()).find(".content").html('');
         var chooser = $j("#invitationType").get(0);
         chooser.selectedIndex = 0;
         chooser.value = chooser.options[0].value;
@@ -93,6 +94,7 @@ BS.EditInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractMod
     },
 
     open: function (token, projectId) {
+        $j(BS.CreateInvitationDialog.getContainer()).find(".content").html('');
         var that = this;
         var dialog = $j(that.getContainer());
         var submitButton = dialog.find(".submitButton");
@@ -105,7 +107,6 @@ BS.EditInvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractMod
             submitButton.prop("disabled", false);
             that.recenterDialog();
         });
-
     }
 }));
 

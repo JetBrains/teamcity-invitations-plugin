@@ -4,42 +4,45 @@
 
 <input type="hidden" name="invitationType" value="newProjectInvitation"/>
 <input type="hidden" name="projectId" value="${project.externalId}"/>
+<input type="hidden" name="token" id="token" value="${token}"/>
 
-<div>
-    <span class="greyNote">
-        Invite user to create a <c:out value="${project.fullName}"/> sub-project.
-    </span>
+<table class="runnerFormTable" style="width: 99%;">
+    <tr>
+        <td><label for="name">Display name:</label><l:star/></td>
+        <td>
+            <forms:textField name="name" value="${name}" className="longField"/>
+            <span class="smallNote">Provide some name to distinguish this invitation from others.</span>
+        </td>
+    </tr>
 
-    <input type="hidden" name="token" id="token" value="${token}"/>
+    <tr>
+        <td><label for="role">Role:</label><l:star/></td>
+        <td>
+            <forms:select id="role" name="role" enableFilter="true" className="longField">
+                <c:forEach items="${roles}" var="role">
+                    <%--@elvariable id="role" type="jetbrains.buildServer.serverSide.auth.Role"--%>
+                    <forms:option value="${role.id}" title="${role.name}" selected="${role.id eq roleId}">
+                        <c:out value="${role.name}"/>
+                    </forms:option>
+                </c:forEach>
+            </forms:select>
+        </td>
+    </tr>
 
-    <div class="spacing"></div>
-    <div><label for="name">Invitation name: <l:star/></label></div>
-    <div><forms:textField name="name" value="${name}"/></div>
+    <tr>
+        <td><label for="welcomeText">Welcome Text:</label><l:star/></td>
+        <td>
+            <forms:textField name="welcomeText" value="${welcomeText}" expandable="true"/>
+            <span class="smallNote">Text that will be shown on the landing page</span>
+        </td>
+    </tr>
 
-    <div class="spacing"></div>
+    <tr>
+        <td><label for="multiuser">Reusable:</label></td>
+        <td>
+            <forms:checkbox name="multiuser" checked="${multiuser}"/>
+            <span class="smallNote">Allow invitation to be used multiple times.</span>
+        </td>
+    </tr>
 
-    <div>
-        <label for="role">Give user a role in the created project: <l:star/></label>
-        <forms:select id="role" name="role" enableFilter="true" className="textField">
-            <c:forEach items="${roles}" var="role">
-                <%--@elvariable id="role" type="jetbrains.buildServer.serverSide.auth.Role"--%>
-                <forms:option value="${role.id}" title="${role.name}" selected="${role.id eq roleId}">
-                    <c:out value="${role.name}"/>
-                </forms:option>
-            </c:forEach>
-        </forms:select>
-    </div>
-
-    <div class="spacing"></div>
-    <div>
-        <forms:checkbox name="multiuser" checked="${multiuser}"/>
-        <label for="multiuser">Allow invitation to be used multiple times.</label>
-    </div>
-
-    <div class="spacing"></div>
-    <div>
-        <label for="welcomeText">Welcome text on the landing page:</label>
-        <forms:textField name="welcomeText" style="width: 40em;" value="${welcomeText}" expandable="true"/>
-    </div>
-
-</div>
+</table>

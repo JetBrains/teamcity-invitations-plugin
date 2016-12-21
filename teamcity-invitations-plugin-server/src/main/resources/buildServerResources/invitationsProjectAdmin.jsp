@@ -44,24 +44,31 @@
                 action="#"
                 closeCommand="BS.CreateInvitationDialog.close();"
                 saveCommand="BS.CreateInvitationDialog.submit();">
-    <div id="invitationTypeChooser">
-        <label for="invitationType">Create invitation:</label>
-        <forms:select id="invitationType" name="invitationType" enableFilter="true"
-                      onchange="BS.CreateInvitationDialog.reloadInvitationType('${projectExternalId}');"
-                      className="longField">
-            <forms:option value="">-- Select invitation type --</forms:option>
-            <c:forEach var="type" items="${invitationTypes}">
-                <%--@elvariable id="type" type="org.jetbrains.teamcity.invitations.InvitationType"--%>
-                <forms:option value="${type.id}"><c:out value="${type.description}"/></forms:option>
-            </c:forEach>
-        </forms:select>
-        <forms:saving id="loadInvitationTypeProgress" className="progressRingInline"/>
-    </div>
+    <table id="invitationTypeChooser" class="runnerFormTable" style="width: 99%;">
+        <tr>
+            <td>
+                <label for="invitationType">Invitation type: </label>
+            </td>
+            <td>
+                <forms:select id="invitationType" name="invitationType" enableFilter="true"
+                              onchange="BS.CreateInvitationDialog.reloadInvitationType('${projectExternalId}');"
+                              className="longField">
+                    <forms:option value="">-- Select invitation type --</forms:option>
+                    <c:forEach var="type" items="${invitationTypes}">
+                        <%--@elvariable id="type" type="org.jetbrains.teamcity.invitations.InvitationType"--%>
+                        <forms:option value="${type.id}"><c:out value="${type.description}"/></forms:option>
+                    </c:forEach>
+                </forms:select>
+                <forms:saving id="loadInvitationTypeProgress" className="progressRingInline"/>
+            </td>
+        </tr>
+
+    </table>
 
     <div class="content"></div>
 
     <div class="popupSaveButtonsBlock">
-        <forms:submit label="Add" onclick="return BS.CreateInvitationDialog.submit();"/>
+        <forms:submit label="Save" onclick="return BS.CreateInvitationDialog.submit();"/>
         <forms:cancel onclick="return BS.CreateInvitationDialog.close();"/>
         <forms:saving id="addInvitationFormProgress"/>
     </div>

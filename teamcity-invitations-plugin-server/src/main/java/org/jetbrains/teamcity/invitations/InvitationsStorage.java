@@ -75,7 +75,7 @@ public class InvitationsStorage {
         return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).size();
     }
 
-    public boolean removeInvitation(@NotNull SProject project, @NotNull String token) {
+    public Invitation removeInvitation(@NotNull SProject project, @NotNull String token) {
         Optional<SProjectFeatureDescriptor> featureDescriptor = project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
                 .filter(feature -> feature.getParameters().get(TOKEN_PARAM_NAME).equals(token))
                 .findFirst();
@@ -83,9 +83,9 @@ public class InvitationsStorage {
         if (featureDescriptor.isPresent()) {
             project.removeFeature(featureDescriptor.get().getId());
             teamCityCore.persist(project, "Invitation removed");
-            return true;
+            return fromProjectFeature(project, featureDescriptor.get());
         } else {
-            return false;
+            return null;
         }
     }
 

@@ -283,9 +283,9 @@ public class InvitationAdminController extends BaseFormXmlController {
                 return;
             }
 
-            boolean deleted = invitations.removeInvitation(project, token);
-            if (deleted) {
-                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' removed.");
+            Invitation deleted = invitations.removeInvitation(project, token);
+            if (deleted != null) {
+                ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + deleted.getName() + "' removed.");
             } else {
                 ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' doesn't exist.");
             }

@@ -65,7 +65,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     @NotNull
     @Override
     public String getDescription() {
-        return "Invite user to create a sub-project";
+        return "Create a sub-project";
     }
 
     @NotNull
@@ -92,10 +92,13 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     public ModelAndView getEditPropertiesView(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
-        modelAndView.getModel().put("name", invitation == null ? "New Project Invitation" : invitation.getName());
+        modelAndView.getModel().put("name", invitation == null ? "Create sub-project" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_ADMIN" : invitation.roleId);
-        modelAndView.getModel().put("welcomeText", invitation == null ? "" : invitation.welcomeText);
+        modelAndView.getModel().put("welcomeText", invitation == null ?
+                authorityHolder.getAssociatedUser().getDescriptiveName() + " invites you to join TeamCity and create a project under " + project.getFullName() :
+                invitation.welcomeText);
+
         return modelAndView;
     }
 
@@ -155,7 +158,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         @NotNull
         @Override
         protected String getLandingPage() {
-            return core.getPluginResourcesPath("createNewProjectInvitationLanding.jsp");
+            return core.getPluginResourcesPath("invitationLanding.jsp");
         }
 
         @NotNull
