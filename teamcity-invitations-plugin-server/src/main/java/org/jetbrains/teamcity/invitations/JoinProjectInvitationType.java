@@ -51,7 +51,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
     @NotNull
     @Override
-    public ModelAndView getEditPropertiesView(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project, @Nullable InvitationImpl invitation) {
+    public ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("name", invitation == null ? "Join Project Invitation" : invitation.getName());
         List<Role> availableRoles = core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList());
@@ -59,7 +59,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
 
         List<SUserGroup> availableGroups = core.getAvailableGroups().stream()
                 .filter(group -> group.getPermissionsGrantedForProject(project.getProjectId()).contains(Permission.VIEW_PROJECT))
-                .filter(group -> ServerAuthUtil.canAddToRemoveFromGroup(authorityHolder, group))
+                .filter(group -> ServerAuthUtil.canAddToRemoveFromGroup(user, group))
                 .collect(toList());
         modelAndView.getModel().put("groups", availableGroups);
 
@@ -84,7 +84,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         modelAndView.getModel().put("roleId", preselectedRole);
         modelAndView.getModel().put("groupKey", preselectedGroup);
         modelAndView.getModel().put("welcomeText", invitation == null ?
-                authorityHolder.getAssociatedUser().getDescriptiveName() + " invites you to join the " + project.getFullName() + " project" :
+                user.getDescriptiveName() + " invites you to join the " + project.getFullName() + " project" :
                 invitation.welcomeText);
         return modelAndView;
     }

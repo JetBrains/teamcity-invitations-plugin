@@ -2,6 +2,7 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
+import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
@@ -24,7 +25,7 @@ public interface InvitationType<T extends Invitation> {
      * @param invitation null if we it's create new invitation view, not null if edit existing invitation
      */
     @NotNull
-    ModelAndView getEditPropertiesView(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project, @Nullable T invitation);
+    ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable T invitation);
 
     @NotNull
     T createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token);

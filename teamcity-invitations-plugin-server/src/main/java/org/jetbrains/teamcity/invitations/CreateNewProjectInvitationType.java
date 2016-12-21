@@ -89,14 +89,14 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
 
     @NotNull
     @Override
-    public ModelAndView getEditPropertiesView(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project, @Nullable InvitationImpl invitation) {
+    public ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
         modelAndView.getModel().put("name", invitation == null ? "Create sub-project" : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
         modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_ADMIN" : invitation.roleId);
         modelAndView.getModel().put("welcomeText", invitation == null ?
-                authorityHolder.getAssociatedUser().getDescriptiveName() + " invites you to join TeamCity and create a project under " + project.getFullName() :
+                user.getDescriptiveName() + " invites you to join TeamCity and create a project under " + project.getFullName() :
                 invitation.welcomeText);
 
         return modelAndView;
