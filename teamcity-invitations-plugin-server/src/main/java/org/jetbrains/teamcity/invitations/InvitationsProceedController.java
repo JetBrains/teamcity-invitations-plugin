@@ -38,7 +38,7 @@ public class InvitationsProceedController extends BaseController {
                 Loggers.SERVER.warn("User accepted the invitation with token " + token + " but invitation doesn't exist anymore");
                 return new ModelAndView(new RedirectView("/"));
             }
-            ModelAndView result = invitation.userRegistered(SessionUser.getUser(request), request, response);
+            ModelAndView result = invitation.invitationAccepted(SessionUser.getUser(request), request, response);
             if (!invitation.isReusable()) {
                 Loggers.SERVER.info("Single user invitation " + token + " was used by user " + SessionUser.getUser(request).describe(false));
                 invitations.removeInvitation(invitation.getProject(), token);

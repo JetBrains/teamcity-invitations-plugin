@@ -173,7 +173,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
         }
 
         @NotNull
-        public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
+        public ModelAndView invitationAccepted(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             UserEx originalUser = (UserEx) SessionUser.getUser(request);
             org.jetbrains.teamcity.invitations.AdditionalPermissionsUserWrapper wrappedUser = new AdditionalPermissionsUserWrapper(originalUser, getProject().getProjectId(),
                     Permission.CREATE_SUB_PROJECT, Permission.VIEW_PROJECT);

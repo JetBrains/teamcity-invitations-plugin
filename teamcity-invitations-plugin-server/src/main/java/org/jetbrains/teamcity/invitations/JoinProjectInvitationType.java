@@ -161,7 +161,7 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
         }
 
         @NotNull
-        public ModelAndView userRegistered(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
+        public ModelAndView invitationAccepted(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             try {
                 SProject created = core.runAsSystem(() -> {
                     Role role = getRole();
