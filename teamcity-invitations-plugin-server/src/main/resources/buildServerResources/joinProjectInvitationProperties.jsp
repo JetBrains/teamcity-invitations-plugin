@@ -1,11 +1,20 @@
+<%@ page import="jetbrains.buildServer.serverSide.auth.Permission" %>
 <%@ include file="/include-internal.jsp" %>
 <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
 <input type="hidden" name="projectId" value="${project.externalId}"/>
 <input type="hidden" name="invitationType" value="existingProjectInvitation"/>
 <input type="hidden" name="token" id="token" value="${token}"/>
-
+<%@ taglib prefix="roles" tagdir="/WEB-INF/tags/roles" %>
 
 <table class="runnerFormTable" style="width: 99%;">
+    <tr class="greyNote">
+        <td colspan="2">
+            <span class="greyNote">
+                Invite user to join the <c:out value="${project.name}"/> project.
+            </span>
+        </td>
+    </tr>
+
     <%@ include file="fragments/displayNameParam.jspf" %>
 
     <tr>
@@ -20,7 +29,13 @@
                     </forms:option>
                 </c:forEach>
             </forms:select>
-            <span class="smallNote">Give user a role in the selected project</span>
+
+            <span class="smallNote">
+                Select a role that will be given to the invited user.<br/>
+                <jsp:include page="fragments/rolesPopup.jsp">
+                    <jsp:param name="roles" value="${roles}"/>
+                </jsp:include>
+            </span>
             <span class="roleOrGroupError error" style="display: none;"></span>
         </td>
     </tr>
@@ -37,7 +52,11 @@
                     </forms:option>
                 </c:forEach>
             </forms:select>
-            <span class="smallNote">Add user to the usergroup</span>
+            <span class="smallNote">
+                Select a usergroup where invited user will be added. <br/>
+                Groups containing '<%=Permission.VIEW_PROJECT.getName()%>' permission are listed.
+            </span>
+
             <span class="roleOrGroupError error" style="display: none;"></span>
         </td>
     </tr>

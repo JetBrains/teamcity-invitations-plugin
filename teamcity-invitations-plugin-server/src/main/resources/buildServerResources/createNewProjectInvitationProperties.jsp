@@ -30,7 +30,10 @@
             </forms:select>
             <span class="smallNote">
                 Select a role that will be given to the invited user.<br/>
-                Roles with '<%=Permission.EDIT_PROJECT.getName()%>' permission are listed.
+                Roles with '<%=Permission.EDIT_PROJECT.getName()%>' permission are listed.<br/>
+                <jsp:include page="fragments/rolesPopup.jsp">
+                    <jsp:param name="roles" value="${roles}"/>
+                </jsp:include>
             </span>
         </td>
     </tr>
