@@ -13,53 +13,44 @@
         margin-top: 1em;
     }
 
-    #invitationsTable td,
-    #invitationsTable th {
-        padding: 0.6em 1em;
-    }
-
-    #invitationsTable .edit {
-        vertical-align: top;
-        width: 6%;
-        padding-left: 0.5em;
-        padding-right: 0.5em;
-        white-space: nowrap;
-    }
-
     .textField {
         width: 100%;
     }
 
-    .content {
-        margin-top: 0.5em;
+    #invitationFormDialog {
+        width: 45em;
     }
 
-    div .spacing {
-        margin-top: 1em;
+    table.runnerFormTable td:first-child {
+        width: 10em;
     }
+
 </style>
 
-<bs:modalDialog formId="createInvitationForm"
+<bs:modalDialog formId="invitationForm"
                 title="Create Invitation"
                 action="#"
-                closeCommand="BS.CreateInvitationDialog.close();"
-                saveCommand="BS.CreateInvitationDialog.submit();">
+                closeCommand="BS.InvitationDialog.close();"
+                saveCommand="BS.InvitationDialog.submit();">
     <table id="invitationTypeChooser" class="runnerFormTable" style="width: 99%;">
         <tr>
             <td>
                 <label for="invitationType">Invitation type: </label>
             </td>
             <td>
-                <forms:select id="invitationType" name="invitationType" enableFilter="true"
-                              onchange="BS.CreateInvitationDialog.reloadInvitationType('${projectExternalId}');"
-                              className="longField">
-                    <forms:option value="">-- Select invitation type --</forms:option>
-                    <c:forEach var="type" items="${invitationTypes}">
-                        <%--@elvariable id="type" type="org.jetbrains.teamcity.invitations.InvitationType"--%>
-                        <forms:option value="${type.id}"><c:out value="${type.description}"/></forms:option>
-                    </c:forEach>
-                </forms:select>
-                <forms:saving id="loadInvitationTypeProgress" className="progressRingInline"/>
+                <div id="invitationTypeContainer">
+                    <forms:select name="invitationTypeSelect" enableFilter="true"
+                                  onchange="BS.InvitationDialog.invitationTypeChanged(this, '${projectExternalId}');"
+                                  className="longField">
+                        <forms:option value="">-- Select invitation type --</forms:option>
+                        <c:forEach var="type" items="${invitationTypes}">
+                            <%--@elvariable id="type" type="org.jetbrains.teamcity.invitations.InvitationType"--%>
+                            <forms:option value="${type.id}"><c:out value="${type.description}"/></forms:option>
+                        </c:forEach>
+                    </forms:select>
+                    <forms:saving id="loadInvitationTypeProgress" className="progressRingInline"/>
+                </div>
+                <span id="readOnlyInvitationType"></span>
             </td>
         </tr>
 
@@ -68,26 +59,13 @@
     <div class="content"></div>
 
     <div class="popupSaveButtonsBlock">
-        <forms:submit label="Save" onclick="return BS.CreateInvitationDialog.submit();"/>
-        <forms:cancel onclick="return BS.CreateInvitationDialog.close();"/>
-        <forms:saving id="addInvitationFormProgress"/>
-    </div>
-</bs:modalDialog>
-
-<bs:modalDialog formId="editInvitationForm"
-                title="Edit invitation"
-                closeCommand="BS.EditInvitationDialog.close();"
-                action="#"
-                saveCommand="BS.EditInvitationDialog.submit();">
-
-    <forms:saving id="loadInvitationProgress" className="progressRingInline"/>
-
-    <div class="content"></div>
-
-    <div class="popupSaveButtonsBlock">
-        <forms:submit id="createInvitationSumbit" label="Save"/>
-        <forms:cancel onclick="BS.EditInvitationDialog.close();"/>
-        <forms:saving id="editInvitationsFormProgress"/>
+        <forms:submit label="Save" onclick="return BS.InvitationDialog.submit();"/>
+        <forms:cancel onclick="return BS.InvitationDialog.close();"/>
+        <forms:saving id="invitationFormProgress"/>
+        <input type="hidden" name="token" value=""/>
+        <input type="hidden" name="invitationType" value=""/>
+        <input type="hidden" name="projectId" value="${projectExternalId}"/>
+        <input type="hidden" name="saveInvitation" value="true"/>
     </div>
 </bs:modalDialog>
 
@@ -96,15 +74,18 @@
     <bs:smallNote>
         Create an invitation link and send it to anyone you want to invite to this project.
     </bs:smallNote>
-    <div>
-        <forms:addButton onclick="BS.CreateInvitationDialog.open();">Create invitation...</forms:addButton>
-    </div>
+    <c:if test="${not project.readOnly}">
+        <div>
+            <forms:addButton
+                    onclick="BS.InvitationDialog.openAddDialog('${projectExternalId}');">Create invitation...</forms:addButton>
+        </div>
+    </c:if>
 
     <bs:refreshable containerId="invitationsList" pageUrl="${pageUrl}">
         <bs:messages key="<%=InvitationAdminController.MESSAGES_KEY%>"/>
         <div class="invitationsList">
             <c:if test="${not empty invitations}">
-                <l:tableWithHighlighting id="invitationsTable" className="parametersTable" highlightImmediately="true">
+                <l:tableWithHighlighting className="parametersTable" highlightImmediately="true">
                     <tr>
                         <th>Invitation</th>
                         <th>Parameters Description</th>
@@ -112,7 +93,7 @@
                     </tr>
                     <c:forEach items="${invitations}" var="invitation">
                         <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
-                        <c:set value="BS.EditInvitationDialog.open('${invitation.token}', '${projectExternalId}');"
+                        <c:set value="BS.InvitationDialog.openEditDialog('${invitation.token}', '${invitation.type.description}', '${invitation.type.id}', '${projectExternalId}');"
                                var="onclick"/>
                         <tr>
                             <td class="highlight">

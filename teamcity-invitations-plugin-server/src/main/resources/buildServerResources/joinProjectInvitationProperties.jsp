@@ -1,9 +1,6 @@
 <%@ page import="jetbrains.buildServer.serverSide.auth.Permission" %>
 <%@ include file="/include-internal.jsp" %>
 <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
-<input type="hidden" name="projectId" value="${project.externalId}"/>
-<input type="hidden" name="invitationType" value="existingProjectInvitation"/>
-<input type="hidden" name="token" id="token" value="${token}"/>
 <%@ taglib prefix="roles" tagdir="/WEB-INF/tags/roles" %>
 
 <table class="runnerFormTable" style="width: 99%;">

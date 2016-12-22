@@ -2,6 +2,6 @@
     <td><label for="welcomeText">Welcome Text:</label><l:star/></td>
     <td>
         <forms:textField name="welcomeText" value="${welcomeText}" expandable="true"/>
-        <span class="smallNote">Provide welcome text that will be shown on the landing page.</span>
+        <span class="smallNote">Provide the text that will be shown on the landing page.</span>
     </td>
 </tr>
