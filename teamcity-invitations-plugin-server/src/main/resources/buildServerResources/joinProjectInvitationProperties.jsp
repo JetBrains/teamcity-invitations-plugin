@@ -6,13 +6,7 @@
 
 
 <table class="runnerFormTable" style="width: 99%;">
-    <tr>
-        <td><label for="name">Display name:</label><l:star/></td>
-        <td>
-            <forms:textField name="name" value="${name}" className="longField"/>
-            <span class="smallNote">Provide some name to distinguish this invitation from others.</span>
-        </td>
-    </tr>
+    <%@ include file="fragments/displayNameParam.jspf" %>
 
     <tr>
         <td><label for="role">Role:</label></td>
@@ -48,21 +42,8 @@
         </td>
     </tr>
 
-    <tr>
-        <td><label for="welcomeText">Welcome Text:</label><l:star/></td>
-        <td>
-            <forms:textField name="welcomeText" value="${welcomeText}" expandable="true"/>
-            <span class="smallNote">Welcome text that will be shown on the landing page</span>
-        </td>
-    </tr>
-
-    <tr>
-        <td><label for="multiuser">Reusable:</label></td>
-        <td>
-            <forms:checkbox name="multiuser" checked="${multiuser}"/>
-            <span class="smallNote">Allow invitation to be used multiple times.</span>
-        </td>
-    </tr>
+    <%@ include file="fragments/welcomeTextParam.jspf" %>
+    <%@ include file="fragments/reusableParam.jspf" %>
 
 </table>
 

@@ -94,7 +94,7 @@
 <div class="section noMargin">
     <h2 class="noBorder">Invitations</h2>
     <bs:smallNote>
-        This page allows to invite users to join the project.
+        Create an invitation link and send it to anyone you want to invite.
     </bs:smallNote>
     <div>
         <forms:addButton onclick="BS.CreateInvitationDialog.open();">Create invitation...</forms:addButton>

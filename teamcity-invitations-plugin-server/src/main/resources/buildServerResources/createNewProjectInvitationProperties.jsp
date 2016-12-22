@@ -1,3 +1,4 @@
+<%@ page import="jetbrains.buildServer.serverSide.auth.Permission" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include-internal.jsp" %>
 <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
@@ -7,13 +8,14 @@
 <input type="hidden" name="token" id="token" value="${token}"/>
 
 <table class="runnerFormTable" style="width: 99%;">
-    <tr>
-        <td><label for="name">Display name:</label><l:star/></td>
-        <td>
-            <forms:textField name="name" value="${name}" className="longField"/>
-            <span class="smallNote">Provide some name to distinguish this invitation from others.</span>
+    <tr class="greyNote">
+        <td colspan="2">
+            <span class="greyNote"> Invite user to create and administer a project under <c:out
+                    value="${project.name}"/> </span>
         </td>
     </tr>
+
+    <%@ include file="fragments/displayNameParam.jspf" %>
 
     <tr>
         <td><label for="role">Role:</label><l:star/></td>
@@ -26,23 +28,14 @@
                     </forms:option>
                 </c:forEach>
             </forms:select>
+            <span class="smallNote">
+                Select a role that will be given to the invited user.<br/>
+                Roles with '<%=Permission.EDIT_PROJECT.getName()%>' permission are listed.
+            </span>
         </td>
     </tr>
 
-    <tr>
-        <td><label for="welcomeText">Welcome Text:</label><l:star/></td>
-        <td>
-            <forms:textField name="welcomeText" value="${welcomeText}" expandable="true"/>
-            <span class="smallNote">Text that will be shown on the landing page</span>
-        </td>
-    </tr>
-
-    <tr>
-        <td><label for="multiuser">Reusable:</label></td>
-        <td>
-            <forms:checkbox name="multiuser" checked="${multiuser}"/>
-            <span class="smallNote">Allow invitation to be used multiple times.</span>
-        </td>
-    </tr>
+    <%@ include file="fragments/welcomeTextParam.jspf" %>
+    <%@ include file="fragments/reusableParam.jspf" %>
 
 </table>

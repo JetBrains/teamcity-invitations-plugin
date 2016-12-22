@@ -81,6 +81,10 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
 
     @Override
     public boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project) {
+        if (getRolesWithEditProjectPermission().isEmpty()) {
+            Loggers.SERVER.warn(getDescription() + " invitations are not available since there are no roles with " + Permission.EDIT_PROJECT + " permission.");
+            return false;
+        }
         return core.runAsSystem(() ->
                 authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
                         authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CREATE_SUB_PROJECT)
@@ -91,15 +95,25 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     @Override
     public ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
-        modelAndView.getModel().put("roles", core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList()));
+        List<Role> availableRoles = getRolesWithEditProjectPermission();
+        modelAndView.getModel().put("roles", availableRoles);
         modelAndView.getModel().put("name", invitation == null ? getDescription() : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
-        modelAndView.getModel().put("roleId", invitation == null ? "PROJECT_ADMIN" : invitation.roleId);
+        modelAndView.getModel().put("roleId", invitation == null ? (availableRoles.size() > 0 ? availableRoles.get(0) : null) : invitation.roleId);
         modelAndView.getModel().put("welcomeText", invitation == null ?
                 user.getDescriptiveName() + " invites you to join TeamCity and create a project under " + project.getFullName() :
                 invitation.welcomeText);
 
         return modelAndView;
+    }
+
+    @NotNull
+    private List<Role> getRolesWithEditProjectPermission() {
+        return core.getAvailableRoles().
+                stream().
+                filter(Role::isProjectAssociationSupported).
+                filter(role -> role.getPermissions().contains(Permission.EDIT_PROJECT)).
+                collect(toList());
     }
 
     @NotNull

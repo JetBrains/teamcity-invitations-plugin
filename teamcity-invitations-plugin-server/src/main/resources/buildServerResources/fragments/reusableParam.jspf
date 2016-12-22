@@ -1,0 +1,7 @@
+<tr>
+    <td><label for="multiuser">Reusable:</label><l:star/></td>
+    <td>
+        <forms:checkbox name="multiuser" checked="${multiuser}"/> Allow invitation to be used multiple times.
+        <span class="smallNote">Uncheck if the invitation should be removed once the first user accepts it.</span>
+    </td>
+</tr>

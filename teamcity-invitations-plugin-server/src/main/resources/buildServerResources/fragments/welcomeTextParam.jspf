@@ -1,0 +1,7 @@
+<tr>
+    <td><label for="welcomeText">Welcome Text:</label><l:star/></td>
+    <td>
+        <forms:textField name="welcomeText" value="${welcomeText}" expandable="true"/>
+        <span class="smallNote">Procide welcome text that will be shown on the landing page</span>
+    </td>
+</tr>
