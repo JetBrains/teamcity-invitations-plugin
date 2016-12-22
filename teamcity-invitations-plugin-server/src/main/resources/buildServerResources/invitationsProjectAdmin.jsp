@@ -94,7 +94,7 @@
 <div class="section noMargin">
     <h2 class="noBorder">Invitations</h2>
     <bs:smallNote>
-        Create an invitation link and send it to anyone you want to invite.
+        Create an invitation link and send it to anyone you want to invite to this project.
     </bs:smallNote>
     <div>
         <forms:addButton onclick="BS.CreateInvitationDialog.open();">Create invitation...</forms:addButton>

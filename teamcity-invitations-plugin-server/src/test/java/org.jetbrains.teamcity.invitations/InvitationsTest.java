@@ -76,7 +76,7 @@ public class InvitationsTest extends BaseTestCase {
         events = ServerSideEventDispatcher.create(securityContext, ProjectsModelListener.class);
         core = new FakeTeamCityCoreFacade(securityContext, events);
         systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()), false);
-        adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT), true);
+        adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT, Permission.EDIT_PROJECT), true);
         developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD), true);
 
         systemAdmin = core.createUser("admin");
@@ -325,7 +325,7 @@ public class InvitationsTest extends BaseTestCase {
 
         newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&projectId=" + testDriveProject.getExternalId() + "&invitationType=newProjectInvitation");
         ModelAndView modelAndView = invitationsAdminController.handleRequestInternal(request, response);
-        then(((List<Role>) modelAndView.getModel().get("roles"))).containsOnly(adminRole, developerRole).doesNotContain(systemAdminRole);
+        then(((List<Role>) modelAndView.getModel().get("roles"))).containsOnly(adminRole).doesNotContain(systemAdminRole);
 
         newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&projectId=_Root&invitationType=newProjectInvitation");
         invitationsAdminController.handleRequestInternal(request, response);
