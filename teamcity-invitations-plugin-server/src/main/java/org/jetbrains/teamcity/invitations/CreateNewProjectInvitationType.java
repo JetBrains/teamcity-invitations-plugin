@@ -65,7 +65,7 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
     @NotNull
     @Override
     public String getDescription() {
-        return "Create sub-project";
+        return "Create subproject";
     }
 
     @NotNull
