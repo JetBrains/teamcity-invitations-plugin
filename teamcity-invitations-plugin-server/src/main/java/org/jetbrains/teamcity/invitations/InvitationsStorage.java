@@ -56,13 +56,13 @@ public class InvitationsStorage {
         });
     }
 
-    public Invitation addInvitation(@NotNull String token, @NotNull Invitation invitation) {
+    public Invitation addInvitation(@NotNull Invitation invitation) {
         Map<String, String> params = invitation.asMap();
         params.put(INVITATION_TYPE, invitation.getType().getId());
         invitation.getProject().addFeature(PROJECT_FEATURE_TYPE, params);
         teamCityCore.persist(invitation.getProject(), "Invitation added");
-        Loggers.SERVER.info("User invitation with token " + token + " created in the project " + invitation.getProject().describe(false));
-        getInvitation(token);//populate cache
+        Loggers.SERVER.info("User invitation with token " + invitation.getToken() + " created in the project " + invitation.getProject().describe(false));
+        getInvitation(invitation.getToken());//populate cache
         return invitation;
     }
 

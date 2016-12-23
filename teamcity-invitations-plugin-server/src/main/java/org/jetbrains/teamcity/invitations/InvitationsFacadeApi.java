@@ -26,7 +26,7 @@ public class InvitationsFacadeApi {
                                                   @Nullable String groupKey, boolean multiuser) {
         String token = StringUtil.generateUniqueHash();
         JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, project, roleId, groupKey, multiuser, null);
-        return invitationsStorage.addInvitation(token, created);
+        return invitationsStorage.addInvitation(created);
     }
 
     @NotNull

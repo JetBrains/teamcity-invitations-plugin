@@ -113,16 +113,20 @@ public class InvitationAdminController extends BaseFormXmlController {
             if (request.getParameter("saveInvitation") != null) {
                 if (StringUtil.isEmptyOrSpaces(token)) {
                     //new
-                    Invitation invitation = createFromRequest(StringUtil.generateUniqueHash(), project, request);
-                    invitations.addInvitation(token, invitation);
+                    token = StringUtil.generateUniqueHash();
+                    Invitation invitation = createFromRequest(token, project, request);
+                    invitations.addInvitation(invitation);
                     xmlResponse.setAttribute("token", invitation.getToken());
-                    ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' created. " +
-                            "Send the following link to the user: " + invitationsController.getInvitationsPath() + invitation.getToken());
+                    xmlResponse.setAttribute("token", invitation.getToken());
+                    ActionMessages.getOrCreateMessages(request).addRawMessage(MESSAGES_KEY,
+                            "Invitation created. Copy and send the following link to the user you want to invite: " +
+                                    "<span id=\"justCreatedInvitation\">" + invitationsController.getInvitationsPath() + "?token=" + invitation.getToken() + "<span/> " +
+                                    "<span class=\"clipboard-btn tc-icon icon16 tc-icon_copy\" data-clipboard-action=\"copy\"data-clipboard-target=\"#justCreatedInvitation\"></span>");
                 } else {
                     //edit
                     Invitation invitation = createFromRequest(token, project, request);
                     invitations.removeInvitation(project, token);
-                    invitations.addInvitation(token, invitation);
+                    invitations.addInvitation(invitation);
                     ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' updated.");
                 }
 
