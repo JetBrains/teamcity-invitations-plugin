@@ -19,11 +19,10 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
 public class CreateNewProjectInvitationType extends AbstractInvitationType<CreateNewProjectInvitationType.InvitationImpl> implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
@@ -202,8 +201,14 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         @NotNull
         public ModelAndView invitationAccepted(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             UserEx originalUser = (UserEx) SessionUser.getUser(request);
-            org.jetbrains.teamcity.invitations.AdditionalPermissionsUserWrapper wrappedUser = new AdditionalPermissionsUserWrapper(originalUser, getProject().getProjectId(),
-                    Permission.CREATE_SUB_PROJECT, Permission.VIEW_PROJECT);
+
+            Map<String, List<Permission>> additionalPermissions = new HashMap<>();
+            getProject().getProjectPath().forEach(parent -> {
+                additionalPermissions.put(parent.getProjectId(), Collections.singletonList(Permission.VIEW_PROJECT));
+            });
+            additionalPermissions.put(project.getProjectId(), asList(Permission.CREATE_SUB_PROJECT, Permission.VIEW_PROJECT));
+
+            AdditionalPermissionsUserWrapper wrappedUser = new AdditionalPermissionsUserWrapper(originalUser, additionalPermissions);
             SessionUser.setUser(request, wrappedUser);
             myProcessingInvitations.add(new ProcessingInvitation(originalUser, this, wrappedUser::disable));
             return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateProjectPageUrl(project.getExternalId()), true));

@@ -22,17 +22,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AdditionalPermissionsUserWrapper implements UserEx {
     private final UserEx delegate;
+    private final Map<String, List<Permission>> additionalPermissions;
     private final AtomicBoolean enabled = new AtomicBoolean(true);
-    private final String projectId;
-    private final Set<Permission> additionalPermissions;
 
     public AdditionalPermissionsUserWrapper(@NotNull UserEx originalUser,
-                                            @NotNull String projectId,
-                                            @NotNull Permission... additionalPermissions) {
+                                            @NotNull Map<String, List<Permission>> additionalPermissions) {
         this.delegate = originalUser;
-        this.projectId = projectId;
-        this.additionalPermissions = new HashSet<>();
-        Collections.addAll(this.additionalPermissions, additionalPermissions);
+        this.additionalPermissions = Collections.unmodifiableMap(new HashMap<>(additionalPermissions));
     }
 
     public void disable() {
@@ -41,8 +37,11 @@ public class AdditionalPermissionsUserWrapper implements UserEx {
 
     @Override
     public boolean isPermissionGrantedForProject(@NotNull String projectId, @NotNull Permission permission) {
-        if (enabled.get() && this.projectId.equals(projectId) && additionalPermissions.contains(permission)) {
-            return true;
+        if (enabled.get()) {
+            List<Permission> projectPermissions = additionalPermissions.get(projectId);
+            if (projectPermissions != null && projectPermissions.contains(permission)) {
+                return true;
+            }
         }
 
         return delegate.isPermissionGrantedForProject(projectId, permission);
@@ -52,16 +51,19 @@ public class AdditionalPermissionsUserWrapper implements UserEx {
     public boolean isPermissionGrantedForAnyProject(@NotNull Permission permission) {
         if (!enabled.get()) return delegate.isPermissionGrantedForAnyProject(permission);
 
-        return delegate.isPermissionGrantedForAnyProject(permission) || additionalPermissions.contains(permission);
+        return delegate.isPermissionGrantedForAnyProject(permission) || additionalPermissions.values().stream().anyMatch(list -> list.contains(permission));
     }
 
     @NotNull
     @Override
     public Permissions getPermissionsGrantedForProject(@NotNull String projectId) {
-        if (enabled.get() && projectId.equals(this.projectId)) {
-            List<Permission> base = delegate.getPermissionsGrantedForProject(projectId).toList();
-            base.addAll(additionalPermissions);
-            return new Permissions(base);
+        if (enabled.get()) {
+            List<Permission> projectPermissions = additionalPermissions.get(projectId);
+            if (projectPermissions != null) {
+                List<Permission> base = delegate.getPermissionsGrantedForProject(projectId).toList();
+                base.addAll(projectPermissions);
+                return new Permissions(base);
+            }
         }
 
         return delegate.getPermissionsGrantedForProject(projectId);
