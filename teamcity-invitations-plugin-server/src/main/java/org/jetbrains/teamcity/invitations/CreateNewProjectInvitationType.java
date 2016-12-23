@@ -206,7 +206,6 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
                     Permission.CREATE_SUB_PROJECT, Permission.VIEW_PROJECT);
             SessionUser.setUser(request, wrappedUser);
             myProcessingInvitations.add(new ProcessingInvitation(originalUser, this, wrappedUser::disable));
-            Loggers.SERVER.info("User " + user.describe(false) + " accepted the invitation '" + token + "'. ");
             return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateProjectPageUrl(project.getExternalId()), true));
         }
 
@@ -220,5 +219,10 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
             return CreateNewProjectInvitationType.this.core.findRoleById(roleId);
         }
 
+        @NotNull
+        @Override
+        public String describe(boolean verbose) {
+            return "'create project under " + project.describe(false) + ", role: " + getRole().describe(false) + "'";
+        }
     }
 }

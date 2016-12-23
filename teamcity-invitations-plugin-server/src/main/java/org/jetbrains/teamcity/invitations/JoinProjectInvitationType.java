@@ -186,10 +186,6 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
                     if (role != null) core.addRole(user, role, project.getProjectId());
                     if (group != null) core.assignToGroup(user, group);
 
-                    Loggers.SERVER.info("User " + user.describe(false) + " registered on invitation '" + token + "'. " +
-                            (role != null ? ("User got the role " + role.describe(false) + " in the project " + project.describe(false)) : "") +
-                            (group != null ? ("User assigned to the group " + group.describe(false)) : "")
-                    );
                     return project;
                 });
 
@@ -217,6 +213,14 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         @Nullable
         public SUser getUser() {
             return JoinProjectInvitationType.this.core.getUser(createdByUserId);
+        }
+
+        @NotNull
+        @Override
+        public String describe(boolean verbose) {
+            return "'join " + project.describe(false) + ", " +
+                    "role: " + (getRole() != null ? getRole().describe(false) : " <empty>") +
+                    ", group: " + (getGroup() != null ? getGroup().describe(false) : " <empty>") + "'";
         }
     }
 }

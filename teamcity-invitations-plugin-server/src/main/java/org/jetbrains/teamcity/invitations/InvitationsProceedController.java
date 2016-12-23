@@ -2,6 +2,7 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import jetbrains.buildServer.web.util.SessionUser;
 import jetbrains.buildServer.web.util.WebUtil;
@@ -43,7 +44,9 @@ public class InvitationsProceedController extends BaseController {
                 Loggers.SERVER.warn("User accepted the invitation with token " + token + " but invitation doesn't exist anymore");
                 return new ModelAndView(new RedirectView("/"));
             }
-            ModelAndView result = invitation.invitationAccepted(SessionUser.getUser(request), request, response);
+            SUser user = SessionUser.getUser(request);
+            ModelAndView result = invitation.invitationAccepted(user, request, response);
+            Loggers.SERVER.info("User " + user.describe(false) + " accepted the invitation " + invitation.describe(true) + ".");
             if (!invitation.isReusable()) {
                 Loggers.SERVER.info("Single user invitation " + token + " was used by user " + SessionUser.getUser(request).describe(false));
                 core.runAsSystem(() -> invitations.removeInvitation(invitation.getProject(), token));
