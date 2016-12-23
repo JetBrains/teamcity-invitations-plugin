@@ -1,7 +1,9 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Permission;
@@ -23,7 +25,7 @@ import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 
-public class JoinProjectInvitationType implements InvitationType<JoinProjectInvitationType.InvitationImpl> {
+public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjectInvitationType.InvitationImpl> implements InvitationType<JoinProjectInvitationType.InvitationImpl> {
 
     private final TeamCityCoreFacade core;
 
@@ -86,6 +88,15 @@ public class JoinProjectInvitationType implements InvitationType<JoinProjectInvi
                 user.getDescriptiveName() + " invites you to join the " + project.getFullName() + " project" :
                 invitation.welcomeText);
         return modelAndView;
+    }
+
+    @Override
+    public void validate(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull ActionErrors errors) {
+        super.validate(request, project, errors);
+        if (StringUtil.isEmptyOrSpaces(request.getParameter("role")) && StringUtil.isEmptyOrSpaces(request.getParameter("group"))) {
+            errors.addError(new InvalidProperty("role", "Either the role or the group must be specified"));
+            errors.addError(new InvalidProperty("group", "Either the role or the group must be specified"));
+        }
     }
 
     @NotNull

@@ -33,7 +33,7 @@
                     <jsp:param name="roles" value="${roles}"/>
                 </jsp:include>
             </span>
-            <span class="roleOrGroupError error" style="display: none;"></span>
+            <span id="error_role" class="roleOrGroupError error" style="display: none;"></span>
         </td>
     </tr>
 
@@ -54,7 +54,7 @@
                 Groups containing '<%=Permission.VIEW_PROJECT.getName()%>' permission are listed.
             </span>
 
-            <span class="roleOrGroupError error" style="display: none;"></span>
+            <span id="error_group" class="roleOrGroupError error" style="display: none;"></span>
         </td>
     </tr>
 

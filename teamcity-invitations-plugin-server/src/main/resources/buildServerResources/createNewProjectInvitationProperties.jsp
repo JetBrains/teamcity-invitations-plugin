@@ -31,6 +31,7 @@
                     <jsp:param name="roles" value="${roles}"/>
                 </jsp:include>
             </span>
+            <span class="error" id="error_role"></span>
         </td>
     </tr>
 

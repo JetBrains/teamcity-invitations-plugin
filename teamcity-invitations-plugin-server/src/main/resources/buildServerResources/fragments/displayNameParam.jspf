@@ -3,5 +3,6 @@
     <td>
         <forms:textField name="name" value="${name}" className="longField"/>
         <span class="smallNote">Provide some name to distinguish this invitation from others.</span>
+        <span class="error" id="error_name"></span>
     </td>
 </tr>

@@ -1,10 +1,8 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.serverSide.ProjectsModelListener;
-import jetbrains.buildServer.serverSide.ProjectsModelListenerAdapter;
-import jetbrains.buildServer.serverSide.RelativeWebLinks;
-import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Permission;
@@ -28,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.stream.Collectors.toList;
 
-public class CreateNewProjectInvitationType implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
+public class CreateNewProjectInvitationType extends AbstractInvitationType<CreateNewProjectInvitationType.InvitationImpl> implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
 
     @NotNull
     private final TeamCityCoreFacade core;
@@ -114,6 +112,18 @@ public class CreateNewProjectInvitationType implements InvitationType<CreateNewP
                 filter(Role::isProjectAssociationSupported).
                 filter(role -> role.getPermissions().contains(Permission.EDIT_PROJECT)).
                 collect(toList());
+    }
+
+    @Override
+    public void validate(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull ActionErrors errors) {
+        super.validate(request, project, errors);
+        if (StringUtil.isEmptyOrSpaces(request.getParameter("role"))) {
+            errors.addError(new InvalidProperty("role", "Role must not be empty"));
+        }
+
+        if (getRolesWithEditProjectPermission().stream().noneMatch(role -> role.getId().equals(request.getParameter("role")))) {
+            errors.addError(new InvalidProperty("role", "Role must have '" + Permission.EDIT_PROJECT.getName() + "' permission"));
+        }
     }
 
     @NotNull

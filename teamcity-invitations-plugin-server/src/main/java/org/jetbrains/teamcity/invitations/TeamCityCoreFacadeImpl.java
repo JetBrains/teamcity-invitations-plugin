@@ -61,7 +61,7 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
 
     @Nullable
     @Override
-    public SProject findProjectByExtId(String projectExtId) {
+    public SProject findProjectByExtId(@Nullable String projectExtId) {
         return projectManager.findProjectByExternalId(projectExtId);
     }
 

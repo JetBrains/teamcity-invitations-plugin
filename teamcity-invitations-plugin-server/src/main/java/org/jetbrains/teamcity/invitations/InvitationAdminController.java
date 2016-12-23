@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.SimpleView;
@@ -7,6 +8,7 @@ import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
+import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -22,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
@@ -56,64 +57,77 @@ public class InvitationAdminController extends BaseFormXmlController {
 
     @Override
     protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
-        SProject project = getProject(request);
+        SUser currentUser = SessionUser.getUser(request);
+        SProject project = teamCityCoreFacade.findProjectByExtId(request.getParameter("projectId"));
         if (project == null) {
+            Loggers.SERVER.warn("Unrecognized invitation request (missing project): " + WebUtil.getRequestDump(request));
             return SimpleView.createTextView("Project not found");
         }
 
+        ModelAndView result;
         if (StringUtil.isEmptyOrSpaces(request.getParameter("token"))) {
-            Optional<InvitationType> invitationType = getInvitationType(request);
-            if (!invitationType.isPresent()) {
-                return null;
+            //return 'new invitation' view
+            InvitationType<?> invitationType = findInvitationType(request);
+            if (invitationType == null) {
+                Loggers.SERVER.warn("Unrecognized invitation request (missing type): " + WebUtil.getRequestDump(request));
+                return SimpleView.createTextView("Invitation type not found");
             }
 
-            if (!invitationType.get().isAvailableFor(SessionUser.getUser(request), project)) {
-                throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to create invitation of type '" + invitationType.get().getDescription() + "'"
+            if (!invitationType.isAvailableFor(currentUser, project)) {
+                throw new AccessDeniedException(currentUser, "You don't have permissions to create invitation of type '" + invitationType.getDescription() + "'"
                         + " in the project " + project.describe(false));
             }
 
-            ModelAndView view = invitationType.get().getEditPropertiesView(SessionUser.getUser(request), project, null);
-            view.addObject("project", project);
-            return view;
+            result = invitationType.getEditPropertiesView(currentUser, project, null);
         } else {
+            //return 'edit invitation' view
             String token = request.getParameter("token");
 
             Invitation found = invitations.getInvitation(token);
-            if (found == null) return null;
-
-            if (!found.isAvailableFor(SessionUser.getUser(request))) {
-                throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit invitation " + found.getToken());
+            if (found == null) {
+                Loggers.SERVER.warn("Unrecognized invitation request (not found invitation): " + WebUtil.getRequestDump(request));
+                return SimpleView.createTextView("Invitation not found");
             }
 
-            ModelAndView view = found.getType().getEditPropertiesView(SessionUser.getUser(request), project, found);
-            view.addObject("project", project);
-            return view;
+            if (!found.isAvailableFor(currentUser)) {
+                throw new AccessDeniedException(currentUser, "You don't have permissions to edit invitation " + found.getToken());
+            }
+
+            result = found.getType().getEditPropertiesView(currentUser, project, found);
         }
+
+        result.addObject("project", project);
+        return result;
     }
 
     @Override
     protected void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
-        SProject project = getProject(request);
-        if (project == null) {
-            ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation project is not specified or doesn't exist");
-            return;
-        }
-        String token = request.getParameter("token");
-
         try {
+            SProject project = teamCityCoreFacade.findProjectByExtId(request.getParameter("projectId"));
+            if (project == null) {
+                throw new ValidationException("projectId", "Project must be specified");
+            }
+
+            String token = request.getParameter("token");
+
             if (request.getParameter("saveInvitation") != null) {
                 if (StringUtil.isEmptyOrSpaces(token)) {
-                    Invitation invitation = createFromRequest(StringUtil.generateUniqueHash(), request);
+                    //new
+                    Invitation invitation = createFromRequest(StringUtil.generateUniqueHash(), project, request);
+                    invitations.addInvitation(token, invitation);
                     xmlResponse.setAttribute("token", invitation.getToken());
                     ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' created. " +
                             "Send the following link to the user: " + invitationsController.getInvitationsPath() + invitation.getToken());
                 } else {
+                    //edit
+                    Invitation invitation = createFromRequest(token, project, request);
                     invitations.removeInvitation(project, token);
-                    Invitation invitation = createFromRequest(token, request);
+                    invitations.addInvitation(token, invitation);
                     ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' updated.");
                 }
 
             } else if (request.getParameter("removeInvitation") != null && token != null) {
+                //delete
                 Invitation invitation = invitations.getInvitation(token);
                 if (invitation != null && !invitation.isAvailableFor(SessionUser.getUser(request))) {
                     throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to remove invitation " + token);
@@ -127,55 +141,29 @@ public class InvitationAdminController extends BaseFormXmlController {
             } else {
                 Loggers.SERVER.warn("Unrecognized invitation request: " + WebUtil.getRequestDump(request));
             }
-        } catch (InvitationException e) {
-            ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, e.getMessage());
+        } catch (ValidationException e) {
+            e.getActionErrors().serialize(xmlResponse);
         }
     }
 
     @NotNull
-    private Invitation createFromRequest(String token, HttpServletRequest request) {
-        Optional<InvitationType> invitationType = getInvitationType(request);
-        if (!invitationType.isPresent()) {
-            throw new InvitationException("Invitation type is not specified or doesn't exist");
-        }
-        SProject project = getProject(request);
-        if (project == null) {
-            throw new InvitationException("Invitation project is not specified or doesn't exist");
-        }
-        Invitation created = invitationType.get().createNewInvitation(request, project, token);
-        return invitations.addInvitation(token, created);
-    }
-
-    @NotNull
-    private Optional<InvitationType> getInvitationType(@NotNull HttpServletRequest request) {
-        String invitationType = request.getParameter("invitationType");
+    private Invitation createFromRequest(@NotNull String token, @NotNull SProject project, @NotNull HttpServletRequest request) throws ValidationException {
+        ActionErrors actionErrors = new ActionErrors();
+        InvitationType invitationType = findInvitationType(request);
         if (invitationType == null) {
-            Loggers.SERVER.warn("Unrecognized invitation type request: " + WebUtil.getRequestDump(request));
-            return Optional.empty();
+            throw new ValidationException("invitationType", "Invitation type must be specified");
+        }
+        invitationType.validate(request, project, actionErrors);
+        if (actionErrors.hasErrors()) {
+            throw new ValidationException(actionErrors);
         }
 
-        Optional<InvitationType> found = invitationTypes.stream().filter(type -> type.getId().equals(invitationType)).findFirst();
-        if (!found.isPresent()) {
-            Loggers.SERVER.warn("Unrecognized invitation type request: " + WebUtil.getRequestDump(request));
-            return Optional.empty();
-        }
-        return found;
+        return invitationType.createNewInvitation(request, project, token);
     }
 
     @Nullable
-    private SProject getProject(@NotNull HttpServletRequest request) {
-        String projectExtId = request.getParameter("projectId");
-        if (projectExtId == null) {
-            Loggers.SERVER.warn("Unrecognized invitation request (missing project id): " + WebUtil.getRequestDump(request));
-            return null;
-        }
-
-        SProject found = teamCityCoreFacade.findProjectByExtId(projectExtId);
-        if (found == null) {
-            Loggers.SERVER.warn("Unrecognized invitation request (not found project): " + WebUtil.getRequestDump(request));
-            return null;
-        }
-        return found;
+    private InvitationType findInvitationType(@NotNull HttpServletRequest request) {
+        return invitationTypes.stream().filter(type -> type.getId().equals(request.getParameter("invitationType"))).findFirst().orElse(null);
     }
 
     public class InvitationsProjectAdminPage extends EditProjectTab {

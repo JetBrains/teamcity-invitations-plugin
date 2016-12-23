@@ -38,7 +38,7 @@ public interface TeamCityCoreFacade {
     SProject createProject(@NotNull String parentExtId, @NotNull String name);
 
     @Nullable
-    SProject findProjectByExtId(String projectExtId);
+    SProject findProjectByExtId(@Nullable String projectExtId);
 
     @Nullable
     SProject findProjectByIntId(String projectIntId);

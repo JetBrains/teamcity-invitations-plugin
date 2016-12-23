@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.users.SUser;
@@ -26,6 +27,8 @@ public interface InvitationType<T extends Invitation> {
      */
     @NotNull
     ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable T invitation);
+
+    void validate(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull ActionErrors actionErrors);
 
     @NotNull
     T createNewInvitation(@NotNull HttpServletRequest request, @NotNull SProject project, @NotNull String token);

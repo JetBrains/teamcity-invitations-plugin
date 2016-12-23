@@ -13,13 +13,17 @@ BS.InvitationDialog = OO.extend(BS.AbstractWebForm, OO.extend(BS.AbstractModalDi
     },
 
     submit: function () {
-        var that = this;
-        BS.FormSaver.save(this, window['base_uri'] + "/admin/invitations.html", OO.extend(BS.SimpleListener, {
-            onCompleteSave: function (form) {
+        BS.FormSaver.save(this, window['base_uri'] + "/admin/invitations.html", OO.extend(BS.ErrorsAwareListener, {
+            onCompleteSave: function (form, responseXML, err) {
+                err = BS.XMLResponse.processErrors(responseXML, {}, BS.PluginPropertiesForm.propertiesErrorsHandler);
+
                 form.setSaving(false);
-                $('invitationsList').refresh();
-                that.enable();
-                BS.InvitationDialog.close();
+                form.enable();
+                if (!err) {
+                    $('invitationsList').refresh();
+                    form.enable();
+                    BS.InvitationDialog.close();
+                }
             }
         }));
         return false;

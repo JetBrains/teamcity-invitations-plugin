@@ -104,7 +104,8 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @Nullable
     @Override
-    public SProject findProjectByExtId(String projectExtId) {
+    public SProject findProjectByExtId(@Nullable String projectExtId) {
+        if (projectExtId == null) return null;
         SProject found = projects.stream().filter(pr -> pr.getExternalId().equals(projectExtId)).findFirst().orElse(null);
         if (found != null) {
             if (!securityContext.getAuthorityHolder().isPermissionGrantedForProject(found.getProjectId(), Permission.CREATE_SUB_PROJECT)) {
