@@ -28,10 +28,9 @@
             </forms:select>
 
             <span class="smallNote">
-                Select a role that will be given to the invited user.<br/>
-                <jsp:include page="fragments/rolesPopup.jsp">
-                    <jsp:param name="roles" value="${roles}"/>
-                </jsp:include>
+                Select a role that will be given to the invited user (<jsp:include page="fragments/rolesPopup.jsp">
+                <jsp:param name="roles" value="${roles}"/>
+            </jsp:include>)
             </span>
             <span id="error_role" class="roleOrGroupError error" style="display: none;"></span>
         </td>

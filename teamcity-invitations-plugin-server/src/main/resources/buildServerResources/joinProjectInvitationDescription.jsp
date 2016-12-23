@@ -17,7 +17,7 @@
     <c:choose>
         <c:when test="${invitation.group != null}">
             <a target="_blank"
-               href="/admin/editGroup.html?groupCode=roles#${invitation.group.key}">${invitation.group.name}</a>
+               href="/admin/editGroup.html?groupCode=${invitation.group.key}">${invitation.group.name}</a>
         </c:when>
         <c:otherwise>
             not specified
