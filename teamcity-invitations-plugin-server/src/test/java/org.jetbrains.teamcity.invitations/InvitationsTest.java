@@ -323,11 +323,11 @@ public class InvitationsTest extends BaseTestCase {
         projectAdmin.addRole(projectScope(testDriveProject.getProjectId()), adminRole);
         login(projectAdmin);
 
-        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&projectId=" + testDriveProject.getExternalId() + "&invitationType=newProjectInvitation");
+        newRequest(HttpMethod.GET, "/admin/invitations.html?saveInvitation=1&projectId=" + testDriveProject.getExternalId() + "&invitationType=newProjectInvitation");
         ModelAndView modelAndView = invitationsAdminController.handleRequestInternal(request, response);
         then(((List<Role>) modelAndView.getModel().get("roles"))).containsOnly(adminRole).doesNotContain(systemAdminRole);
 
-        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&projectId=_Root&invitationType=newProjectInvitation");
+        newRequest(HttpMethod.GET, "/admin/invitations.html?saveInvitation=1&projectId=_Root&invitationType=newProjectInvitation");
         invitationsAdminController.handleRequestInternal(request, response);
         then(response.getStatus()).isEqualTo(403);
 
@@ -344,7 +344,7 @@ public class InvitationsTest extends BaseTestCase {
         oleg.addRole(projectScope(testDriveProject.getProjectId()), role);
         login(oleg);
 
-        newRequest(HttpMethod.GET, "/admin/invitations.html?addInvitation=1&invitationType=newProjectInvitation&projectId=" + testDriveProject.getProjectId());
+        newRequest(HttpMethod.GET, "/admin/invitations.html?saveInvitation=true&invitationType=newProjectInvitation&projectId=" + testDriveProject.getProjectId());
         invitationsAdminController.handleRequestInternal(request, response);
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
 
@@ -364,17 +364,17 @@ public class InvitationsTest extends BaseTestCase {
         login(oleg);
 
         //try to open edit page
-        newRequest(HttpMethod.GET, "/admin/invitations.html?editInvitation=1&projectId=_Root&token=" + token);
+        newRequest(HttpMethod.GET, "/admin/invitations.html?saveInvitation=true&projectId=_Root&token=" + token);
         invitationsAdminController.handleRequestInternal(request, response);
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
 
         //try to submit edit
-        newRequest(HttpMethod.POST, "/admin/invitations.html?editInvitation=1&projectId=_Root&token=" + token);
+        newRequest(HttpMethod.POST, "/admin/invitations.html?saveInvitation=true&projectId=_Root&token=" + token);
         invitationsAdminController.handleRequestInternal(request, response);
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
 
         //try to remove
-        newRequest(HttpMethod.POST, "/admin/invitations.html?removeInvitation=" + token);
+        newRequest(HttpMethod.POST, "/admin/invitations.html?removeInvitation=true&projectId=_Root&token=" + token);
         invitationsAdminController.handleRequestInternal(request, response);
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
     }
@@ -408,12 +408,13 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     private Invitation createInvitationToCreateProject(String role, String parentExtId, boolean multiuser) throws Exception {
-        newRequest(HttpMethod.POST, "/admin/invitations.html?createInvitation=1");
+        newRequest(HttpMethod.POST, "/admin/invitations.html?saveInvitation=true");
         request.addParameter("name", "Create Project Invitation");
         request.addParameter("invitationType", createNewProjectInvitationType.getId());
         request.addParameter("projectId", parentExtId);
         request.addParameter("role", role);
         request.addParameter("multiuser", multiuser + "");
+        request.addParameter("welcomeText", "Hello");
         invitationsAdminController.handleRequestInternal(request, response);
         if (ActionMessages.getMessages(request) != null && ActionMessages.getMessages(request).getMessage("accessDenied") != null) {
             throw new AccessDeniedException(securityContext.getAuthorityHolder(), ActionMessages.getMessages(request).getMessage("accessDenied"));
@@ -425,7 +426,7 @@ public class InvitationsTest extends BaseTestCase {
     }
 
     private Invitation createInvitationToJoinProject(@Nullable String role, @Nullable String group, String projectExtId, boolean multiuser) throws Exception {
-        newRequest(HttpMethod.POST, "/admin/invitations.html?createInvitation=1");
+        newRequest(HttpMethod.POST, "/admin/invitations.html?saveInvitation=1");
         request.addParameter("invitationType", joinProjectInvitationType.getId());
         request.addParameter("name", "Join Project Invitation");
         request.addParameter("projectId", projectExtId);
@@ -438,6 +439,7 @@ public class InvitationsTest extends BaseTestCase {
             request.addParameter("group", group);
         }
         request.addParameter("multiuser", multiuser + "");
+        request.addParameter("welcomeText", "Hello");
         invitationsAdminController.handleRequestInternal(request, response);
         Element resp = FileUtil.parseDocument(new StringReader(response.getContentAsString()), false);
         String token = resp.getAttributeValue("token");
