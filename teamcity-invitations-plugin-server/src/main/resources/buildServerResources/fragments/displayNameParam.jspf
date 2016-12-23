@@ -2,7 +2,7 @@
     <td><label for="name">Display name:</label><l:star/></td>
     <td>
         <forms:textField name="name" value="${name}" className="longField"/>
-        <span class="smallNote">Provide some name (it will be shown as a title of invitation landing page)</span>
+        <span class="smallNote">Provide some name (it will be shown as a title on the invitation landing page)</span>
         <span class="error" id="error_name"></span>
     </td>
 </tr>
