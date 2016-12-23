@@ -62,6 +62,7 @@ public abstract class AbstractInvitation implements Invitation {
         modelAndView.addObject("proceedUrl", InvitationsProceedController.PATH);
         modelAndView.addObject("invitation", this);
         modelAndView.addObject("welcomeText", welcomeText);
+        modelAndView.addObject("title", getName());
         return modelAndView;
     }
 

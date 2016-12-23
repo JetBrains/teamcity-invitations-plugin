@@ -1,7 +1,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.JoinProjectInvitationType.InvitationImpl"--%>
 <%@ include file="/include-internal.jsp" %>
-<c:set var="title" value="Join project invitation"/>
 <bs:externalPage>
     <jsp:attribute name="page_title">${title}</jsp:attribute>
     <jsp:attribute name="head_include">
