@@ -501,4 +501,19 @@ public class AdditionalPermissionsUserWrapper implements UserEx {
     public boolean deleteProperty(@NotNull PropertyKey propertyKey) {
         return delegate.deleteProperty(propertyKey);
     }
+
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return delegate.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return delegate.toString();
+    }
 }
