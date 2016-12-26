@@ -46,9 +46,9 @@ public class InvitationsProceedController extends BaseController {
             }
             SUser user = SessionUser.getUser(request);
             ModelAndView result = invitation.invitationAccepted(user, request, response);
-            Loggers.SERVER.info("User " + user.describe(false) + " accepted the invitation " + invitation.describe(true) + ".");
+            Loggers.ACTIVITIES.info("User " + user.describe(false) + " accepted the invitation " + invitation.describe(true) + ".");
             if (!invitation.isReusable()) {
-                Loggers.SERVER.info("Single user invitation " + token + " was used by user " + SessionUser.getUser(request).describe(false));
+                Loggers.ACTIVITIES.info("Single user invitation " + token + " was used by user " + SessionUser.getUser(request).describe(false));
                 core.runAsSystem(() -> invitations.removeInvitation(invitation.getProject(), token));
             }
             return result;
