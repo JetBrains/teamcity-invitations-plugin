@@ -25,7 +25,7 @@ public class InvitationsFacadeApi {
     public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull SProject project, @Nullable String roleId,
                                                   @Nullable String groupKey, boolean multiuser) {
         String token = StringUtil.generateUniqueHash();
-        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, project, roleId, groupKey, multiuser, null);
+        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, project, roleId, groupKey, multiuser, JoinProjectInvitationType.getDefaultWelcomeText(inviter, project));
         return invitationsStorage.addInvitation(created);
     }
 
