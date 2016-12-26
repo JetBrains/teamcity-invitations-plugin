@@ -46,7 +46,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
                         core.addRole(user, processingInvitation.get().invitation.getRole(), projectId);
                         processingInvitation.get().dispose();
                         myProcessingInvitations.removeIf(i -> i.isOurProjectCreation(created, user));
-                        Loggers.ACTIVITIES.info("User creates " + created.describe(false) + " project " + created.describe(false) + " using the invitation " + processingInvitation.get().invitation.describe(false) + "");
+                        Loggers.ACTIVITIES.info("User " + user.describe(false) + " creates " + created.describe(false) + " project using the invitation " + processingInvitation.get().invitation.describe(false) + "");
                     }
                 }
             }

@@ -61,7 +61,7 @@ public class InvitationsStorage {
         params.put(INVITATION_TYPE, invitation.getType().getId());
         invitation.getProject().addFeature(PROJECT_FEATURE_TYPE, params);
         teamCityCore.persist(invitation.getProject(), "Invitation added");
-        Loggers.SERVER.info("User invitation with token " + invitation.getToken() + " created in the project " + invitation.getProject().describe(false));
+        Loggers.SERVER.info("Invitation " + invitation.describe(false) + " is created in the project " + invitation.getProject().describe(false));
         getInvitation(invitation.getToken());//populate cache
         return invitation;
     }
