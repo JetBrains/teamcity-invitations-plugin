@@ -192,6 +192,12 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
 
     @NotNull
     @Override
+    public AuthorityHolder getLoggedInUser() {
+        return securityContext.getAuthorityHolder();
+    }
+
+    @NotNull
+    @Override
     public String getPluginResourcesPath(@NotNull String path) {
         return path;
     }

@@ -2,6 +2,7 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,9 @@ public interface TeamCityCoreFacade {
 
     @Nullable
     SUser getUser(long userId);
+
+    @NotNull
+    AuthorityHolder getLoggedInUser();
 
     void addRole(@NotNull SUser user, @NotNull Role role, @NotNull String projectId);
 

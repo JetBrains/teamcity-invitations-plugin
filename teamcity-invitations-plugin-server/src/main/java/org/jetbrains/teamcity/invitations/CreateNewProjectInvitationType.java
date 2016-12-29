@@ -3,10 +3,8 @@ package org.jetbrains.teamcity.invitations;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
-import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
-import jetbrains.buildServer.serverSide.auth.Permission;
-import jetbrains.buildServer.serverSide.auth.Role;
+import jetbrains.buildServer.serverSide.auth.*;
+import jetbrains.buildServer.serverSide.impl.auth.ServerAuthUtil;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.users.impl.UserEx;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -78,12 +76,11 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
 
     @Override
     public boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project) {
-        if (getRolesWithEditProjectPermission().isEmpty()) {
-            Loggers.SERVER.warn(getDescription() + " invitations are not available since there are no roles with " + Permission.EDIT_PROJECT + " permission.");
+        if (getAvailableRoles(authorityHolder, project).isEmpty()) {
+            Loggers.SERVER.warn(getDescription() + " invitations are not available since there are no accesible roles with");
             return false;
         }
         return core.runAsSystem(() ->
-                authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT) &&
                         authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CREATE_SUB_PROJECT)
         );
     }
@@ -92,7 +89,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
     @Override
     public ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("createNewProjectInvitationProperties.jsp"));
-        List<Role> availableRoles = getRolesWithEditProjectPermission();
+        List<Role> availableRoles = getAvailableRoles(user, project);
         modelAndView.getModel().put("roles", availableRoles);
         modelAndView.getModel().put("name", invitation == null ? getDescription() : invitation.getName());
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
@@ -105,12 +102,17 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
     }
 
     @NotNull
-    private List<Role> getRolesWithEditProjectPermission() {
+    private List<Role> getAvailableRoles(@NotNull AuthorityHolder currentUser, @NotNull SProject project) {
         return core.getAvailableRoles().
                 stream().
                 filter(Role::isProjectAssociationSupported).
                 filter(role -> role.getPermissions().contains(Permission.EDIT_PROJECT)).
+                filter(role -> canAssignRole(currentUser, project, role)).
                 collect(toList());
+    }
+
+    private boolean canAssignRole(@NotNull AuthorityHolder currentUser, @NotNull SProject project, @NotNull Role role) {
+        return ServerAuthUtil.canChangeUserOrGroupRole(currentUser, RoleScope.projectScope(project.getProjectId()), role);
     }
 
     @Override
@@ -120,8 +122,8 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
             errors.addError(new InvalidProperty("role", "Role must not be empty"));
         }
 
-        if (getRolesWithEditProjectPermission().stream().noneMatch(role -> role.getId().equals(request.getParameter("role")))) {
-            errors.addError(new InvalidProperty("role", "Role must have '" + Permission.EDIT_PROJECT.getName() + "' permission"));
+        if (getAvailableRoles(core.getLoggedInUser(), project).stream().noneMatch(role -> role.getId().equals(request.getParameter("role")))) {
+            errors.addError(new InvalidProperty("role", "Role must is inaccessible"));
         }
     }
 
@@ -194,8 +196,9 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
 
         @Override
         public boolean isAvailableFor(@NotNull AuthorityHolder user) {
+            Role role = getRole();
             return user.isPermissionGrantedForProject(getProject().getProjectId(), Permission.CREATE_SUB_PROJECT) &&
-                    user.isPermissionGrantedForProject(getProject().getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT);
+                    role != null && canAssignRole(user, project, role);
         }
 
         @NotNull

@@ -3,6 +3,7 @@ package org.jetbrains.teamcity.invitations;
 import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.groups.UserGroupManager;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Role;
 import jetbrains.buildServer.serverSide.auth.RoleScope;
 import jetbrains.buildServer.serverSide.auth.RolesManager;
@@ -114,6 +115,12 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
     @Override
     public SUser getUser(long userId) {
         return userModel.findUserById(userId);
+    }
+
+    @NotNull
+    @Override
+    public AuthorityHolder getLoggedInUser() {
+        return securityContext.getAuthorityHolder();
     }
 
     @Override

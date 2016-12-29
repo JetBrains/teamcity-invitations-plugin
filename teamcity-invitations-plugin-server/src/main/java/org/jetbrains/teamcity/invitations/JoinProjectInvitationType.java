@@ -8,6 +8,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.Role;
+import jetbrains.buildServer.serverSide.auth.RoleScope;
 import jetbrains.buildServer.serverSide.impl.auth.ServerAuthUtil;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.StringUtil;
@@ -61,7 +62,8 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
     public ModelAndView getEditPropertiesView(@NotNull SUser user, @NotNull SProject project, @Nullable InvitationImpl invitation) {
         ModelAndView modelAndView = new ModelAndView(core.getPluginResourcesPath("joinProjectInvitationProperties.jsp"));
         modelAndView.getModel().put("name", invitation == null ? getDescription() : invitation.getName());
-        List<Role> availableRoles = core.getAvailableRoles().stream().filter(Role::isProjectAssociationSupported).collect(toList());
+
+        List<Role> availableRoles = getAvailableRoles(user, project);
         modelAndView.getModel().put("roles", availableRoles);
 
         List<SUserGroup> availableGroups = core.getAvailableGroups().stream()
@@ -91,6 +93,14 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         modelAndView.getModel().put("groupKey", preselectedGroup);
         modelAndView.getModel().put("welcomeText", invitation == null ? getDefaultWelcomeText(user, project) : invitation.welcomeText);
         return modelAndView;
+    }
+
+    @NotNull
+    private List<Role> getAvailableRoles(@NotNull AuthorityHolder currentUser, @NotNull SProject project) {
+        return core.getAvailableRoles().stream()
+                .filter(Role::isProjectAssociationSupported)
+                .filter(role -> ServerAuthUtil.canChangeUserOrGroupRole(currentUser, RoleScope.projectScope(project.getProjectId()), role))
+                .collect(toList());
     }
 
     @Override
@@ -127,9 +137,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
 
     @Override
     public boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project) {
-        return core.runAsSystem(() ->
-                authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT)
-        );
+        return !getAvailableRoles(authorityHolder, project).isEmpty();
     }
 
     public final class InvitationImpl extends AbstractInvitation {
@@ -139,7 +147,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         private final String groupKey;
 
         InvitationImpl(@NotNull SUser currentUser, @NotNull String name, @NotNull String token, @NotNull SProject project, @Nullable String roleId,
-                       @Nullable String groupKey, boolean multi, @Nullable String welcomeText) {
+                       @Nullable String groupKey, boolean multi, @NotNull String welcomeText) {
             super(project, name, token, multi, JoinProjectInvitationType.this, currentUser.getId(), welcomeText);
             if (groupKey == null && roleId == null) {
                 throw new IllegalArgumentException("Role or group must be specified");
@@ -172,7 +180,8 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         @Override
         public boolean isAvailableFor(@NotNull AuthorityHolder user) {
             SUserGroup group = getGroup();
-            return user.isPermissionGrantedForProject(project.getProjectId(), Permission.CHANGE_USER_ROLES_IN_PROJECT)
+            Role role = getRole();
+            return (role == null || ServerAuthUtil.canChangeUserOrGroupRole(user, RoleScope.projectScope(project.getProjectId()), role))
                     && (group == null || ServerAuthUtil.canAddToRemoveFromGroup(user, group));
         }
 
