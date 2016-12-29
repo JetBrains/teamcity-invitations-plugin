@@ -269,6 +269,20 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
                     anyMatch(entry -> entry.getRole().getPermissions().contains(permission));
         });
 
+        when(user.getPermissionsGrantedForProject(anyString())).thenAnswer(invocation -> {
+            String projectId = invocation.getArgument(0);
+            return new Permissions(roles.stream().
+                    filter(entry -> projectId.equals(entry.getScope().getProjectId())).
+                    flatMap(entry -> entry.getRole().getPermissions().toList().stream())
+                    .collect(toList()));
+        });
+
+        when(user.getGlobalPermissions()).thenAnswer(invocation ->
+                new Permissions(roles.stream().
+                        filter(entry -> entry.getScope().isGlobal()).
+                        flatMap(entry -> entry.getRole().getPermissions().toList().stream()).
+                        collect(toList())));
+
         doAnswer(invocation -> {
             roles.add(new RoleEntryImpl(invocation.getArgument(0), invocation.getArgument(1)));
             return null;

@@ -76,7 +76,7 @@ public class InvitationsTest extends BaseTestCase {
         events = ServerSideEventDispatcher.create(securityContext, ProjectsModelListener.class);
         core = new FakeTeamCityCoreFacade(securityContext, events);
         systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()), false);
-        adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT, Permission.EDIT_PROJECT), true);
+        adminRole = core.addRole("PROJECT_ADMIN", new Permissions(Permission.CREATE_SUB_PROJECT, Permission.CHANGE_USER_ROLES_IN_PROJECT, Permission.EDIT_PROJECT, Permission.ARCHIVE_PROJECT), true);
         developerRole = core.addRole("PROJECT_DEVELOPER", new Permissions(Permission.RUN_BUILD), true);
 
         systemAdmin = core.createUser("admin");
@@ -320,12 +320,16 @@ public class InvitationsTest extends BaseTestCase {
 
     public void user_cant_invite_project_admin_to_inaccessible_project() throws Exception {
         SUser projectAdmin = core.createUser("oleg");
-        projectAdmin.addRole(projectScope(testDriveProject.getProjectId()), adminRole);
+
+        List<Permission> adminPermissions = adminRole.getPermissions().toList();
+        adminPermissions.remove(Permission.ARCHIVE_PROJECT);
+        Role adminRole2 = core.addRole("PROJECT_ADMIN2", new Permissions(adminPermissions), true);//no ARCHIVE_PROJECT permission
+        projectAdmin.addRole(projectScope(testDriveProject.getProjectId()), adminRole2);
         login(projectAdmin);
 
         newRequest(HttpMethod.GET, "/admin/invitations.html?saveInvitation=1&projectId=" + testDriveProject.getExternalId() + "&invitationType=newProjectInvitation");
         ModelAndView modelAndView = invitationsAdminController.handleRequestInternal(request, response);
-        then(((List<Role>) modelAndView.getModel().get("roles"))).containsOnly(adminRole).doesNotContain(systemAdminRole);
+        then(((List<Role>) modelAndView.getModel().get("roles"))).containsOnly(adminRole2).doesNotContain(adminRole, systemAdminRole);
 
         newRequest(HttpMethod.GET, "/admin/invitations.html?saveInvitation=1&projectId=_Root&invitationType=newProjectInvitation");
         invitationsAdminController.handleRequestInternal(request, response);
@@ -350,8 +354,8 @@ public class InvitationsTest extends BaseTestCase {
 
         try {
             createInvitationToCreateProject(adminRole.getId(), testDriveProject.getExternalId(), true);
-            fail("Access denied expected");
-        } catch (AccessDeniedException ignored) {
+            fail("Exception expected");
+        } catch (ValidationException ignored) {
         }
     }
 
@@ -420,6 +424,9 @@ public class InvitationsTest extends BaseTestCase {
             throw new AccessDeniedException(securityContext.getAuthorityHolder(), ActionMessages.getMessages(request).getMessage("accessDenied"));
         }
         Element resp = FileUtil.parseDocument(new StringReader(response.getContentAsString()), false);
+        if (resp.getChild("errors") != null) {
+            throw new ValidationException(resp.getChild("errors").getChild("error").getAttributeValue("id"), resp.getChild("errors").getChild("error").getText());
+        }
         String token = resp.getAttributeValue("token");
 
         return invitations.getInvitation(token);
