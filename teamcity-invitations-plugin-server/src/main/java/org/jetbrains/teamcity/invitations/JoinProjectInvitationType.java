@@ -35,11 +35,6 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
     }
 
     @NotNull
-    public static String getDefaultWelcomeText(@NotNull SUser user, @NotNull SProject project) {
-        return user.getDescriptiveName() + " invites you to join the " + project.getFullName() + " project";
-    }
-
-    @NotNull
     @Override
     public String getId() {
         return "joinProjectInvitation";
@@ -88,7 +83,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
 
         modelAndView.getModel().put("roleId", preselectedRole);
         modelAndView.getModel().put("groupKey", preselectedGroup);
-        modelAndView.getModel().put("welcomeText", invitation == null ? getDefaultWelcomeText(user, project) : invitation.welcomeText);
+        modelAndView.getModel().put("welcomeText", invitation == null ? user.getDescriptiveName() + " invites you to join the " + project.getFullName() + " project" : invitation.welcomeText);
         return modelAndView;
     }
 

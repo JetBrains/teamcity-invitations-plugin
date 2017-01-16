@@ -22,10 +22,13 @@ public class InvitationsFacadeApi {
         this.invitationsLandingController = invitationsLandingController;
     }
 
-    public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull SProject project, @Nullable String roleId,
-                                                  @Nullable String groupKey, boolean multiuser) {
+    public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull SProject project,
+                                                  @Nullable String roleId,
+                                                  @Nullable String groupKey,
+                                                  @NotNull String welcomeText,
+                                                  boolean multiuser) {
         String token = StringUtil.generateUniqueHash();
-        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, project, roleId, groupKey, multiuser, JoinProjectInvitationType.getDefaultWelcomeText(inviter, project));
+        JoinProjectInvitationType.InvitationImpl created = joinProjectInvitationType.createNewInvitation(inviter, name, token, project, roleId, groupKey, multiuser, welcomeText);
         return invitationsStorage.addInvitation(created);
     }
 
@@ -34,6 +37,11 @@ public class InvitationsFacadeApi {
         return invitationsStorage.getInvitations(project).stream()
                 .filter(invitation -> invitation.getType().equals(joinProjectInvitationType))
                 .collect(toList());
+    }
+
+    @Nullable
+    public Invitation findInvitation(@NotNull String token) {
+        return invitationsStorage.getInvitation(token);
     }
 
     @NotNull
