@@ -77,7 +77,6 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
     @Override
     public boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project) {
         if (getAvailableRoles(authorityHolder, project).isEmpty()) {
-            Loggers.SERVER.warn(getDescription() + " invitations are not available since there are no accesible roles with");
             return false;
         }
         return core.runAsSystem(() ->

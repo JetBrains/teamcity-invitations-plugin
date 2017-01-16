@@ -66,10 +66,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         List<Role> availableRoles = getAvailableRoles(user, project);
         modelAndView.getModel().put("roles", availableRoles);
 
-        List<SUserGroup> availableGroups = core.getAvailableGroups().stream()
-                .filter(group -> group.getPermissionsGrantedForProject(project.getProjectId()).contains(Permission.VIEW_PROJECT))
-                .filter(group -> ServerAuthUtil.canAddToRemoveFromGroup(user, group))
-                .collect(toList());
+        List<SUserGroup> availableGroups = getAvailableGroups(user, project);
         modelAndView.getModel().put("groups", availableGroups);
 
         modelAndView.getModel().put("multiuser", invitation == null ? "true" : invitation.multi);
@@ -93,6 +90,14 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         modelAndView.getModel().put("groupKey", preselectedGroup);
         modelAndView.getModel().put("welcomeText", invitation == null ? getDefaultWelcomeText(user, project) : invitation.welcomeText);
         return modelAndView;
+    }
+
+    @NotNull
+    private List<SUserGroup> getAvailableGroups(@NotNull AuthorityHolder user, @NotNull SProject project) {
+        return core.getAvailableGroups().stream()
+                .filter(group -> group.getPermissionsGrantedForProject(project.getProjectId()).contains(Permission.VIEW_PROJECT))
+                .filter(group -> ServerAuthUtil.canAddToRemoveFromGroup(user, group))
+                .collect(toList());
     }
 
     @NotNull
@@ -137,7 +142,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
 
     @Override
     public boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project) {
-        return !getAvailableRoles(authorityHolder, project).isEmpty();
+        return !getAvailableRoles(authorityHolder, project).isEmpty() || !getAvailableGroups(authorityHolder, project).isEmpty();
     }
 
     public final class InvitationImpl extends AbstractInvitation {
@@ -181,8 +186,8 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         public boolean isAvailableFor(@NotNull AuthorityHolder user) {
             SUserGroup group = getGroup();
             Role role = getRole();
-            return (role == null || ServerAuthUtil.canChangeUserOrGroupRole(user, RoleScope.projectScope(project.getProjectId()), role))
-                    && (group == null || ServerAuthUtil.canAddToRemoveFromGroup(user, group));
+            return (role == null || getAvailableRoles(user, project).contains(role))
+                    && (group == null || getAvailableGroups(user, project).contains(group));
         }
 
         @NotNull
