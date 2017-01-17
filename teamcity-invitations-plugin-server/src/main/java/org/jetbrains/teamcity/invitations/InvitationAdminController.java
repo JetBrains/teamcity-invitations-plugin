@@ -30,6 +30,7 @@ import static java.util.stream.Collectors.toList;
 public class InvitationAdminController extends BaseFormXmlController {
 
     public static final String MESSAGES_KEY = "teamcity.invitations.plugin";
+    public static final String INVITATIONS_ADMIN_TAB_NAME = "invitations";
 
     @NotNull
     private final InvitationsStorage invitations;
@@ -173,7 +174,7 @@ public class InvitationAdminController extends BaseFormXmlController {
     public class InvitationsProjectAdminPage extends EditProjectTab {
 
         InvitationsProjectAdminPage(PagePlaces pagePlaces, PluginDescriptor pluginDescriptor) {
-            super(pagePlaces, "invitations", pluginDescriptor.getPluginResourcesPath("invitationsProjectAdmin.jsp"), "Invitations");
+            super(pagePlaces, INVITATIONS_ADMIN_TAB_NAME, pluginDescriptor.getPluginResourcesPath("invitationsProjectAdmin.jsp"), "Invitations");
         }
 
         @Override

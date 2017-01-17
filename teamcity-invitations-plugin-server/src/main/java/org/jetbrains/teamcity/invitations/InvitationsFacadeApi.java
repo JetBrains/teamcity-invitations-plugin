@@ -1,5 +1,6 @@
 package org.jetbrains.teamcity.invitations;
 
+import jetbrains.buildServer.serverSide.RelativeWebLinks;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.util.StringUtil;
@@ -42,6 +43,14 @@ public class InvitationsFacadeApi {
     @Nullable
     public Invitation findInvitation(@NotNull String token) {
         return invitationsStorage.getInvitation(token);
+    }
+
+    /**
+     * Returns relative link to invitations admin tab in the project
+     */
+    @NotNull
+    public String getInvitationAdminPage(@NotNull String projectExtId) {
+        return new RelativeWebLinks().getEditProjectPageUrl(projectExtId) + "&tab=" + InvitationAdminController.INVITATIONS_ADMIN_TAB_NAME;
     }
 
     @NotNull
