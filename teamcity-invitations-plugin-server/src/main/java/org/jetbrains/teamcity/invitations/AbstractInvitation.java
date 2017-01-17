@@ -59,7 +59,7 @@ public abstract class AbstractInvitation implements Invitation {
     public ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
         ModelAndView modelAndView = new ModelAndView(getLandingPage());
         modelAndView.addObject("loggedInUser", SessionUser.getUser(request));
-        modelAndView.addObject("proceedUrl", InvitationsProceedController.PATH);
+        modelAndView.addObject("proceedUrl", InvitationsProceedController.PATH + "?token=" + token);
         modelAndView.addObject("invitation", this);
         modelAndView.addObject("welcomeText", welcomeText);
         modelAndView.addObject("title", getName());

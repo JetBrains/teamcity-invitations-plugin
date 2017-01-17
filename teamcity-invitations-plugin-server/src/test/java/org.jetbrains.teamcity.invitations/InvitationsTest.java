@@ -93,7 +93,7 @@ public class InvitationsTest extends BaseTestCase {
         invitationsController = new InvitationsLandingController(webControllerManager, invitations, Mockito.mock(AuthorizationInterceptor.class),
                 core, Mockito.mock(RootUrlHolder.class));
 
-        invitationsProceedController = new InvitationsProceedController(webControllerManager, invitations, core);
+        invitationsProceedController = new InvitationsProceedController(webControllerManager, invitations, core, Mockito.mock(AuthorizationInterceptor.class));
 
         PluginDescriptor pluginDescriptor = Mockito.mock(PluginDescriptor.class);
         when(pluginDescriptor.getPluginResourcesPath(anyString())).thenReturn("fake.jsp");

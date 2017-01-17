@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 public class InvitationsLandingController extends BaseController {
     private static final String INVITATIONS_PATH = "/invitations.html";
 
-    private static final String INVITATION_TOKEN_SESSION_ATTR = "teamcity.invitation.token";
     private static final String TOKEN_URL_PARAM = "token";
 
     @NotNull
@@ -50,8 +49,8 @@ public class InvitationsLandingController extends BaseController {
             Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
             return new ModelAndView(new RedirectView("/"));
         }
-        request.getSession().setAttribute(INVITATION_TOKEN_SESSION_ATTR, token);
-        request.getSession().setAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL, InvitationsProceedController.PATH);
+        request.getSession().setAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL,
+                InvitationsProceedController.PATH + "?token=" + token);
         return invitation.processInvitationRequest(request, response);
     }
 
