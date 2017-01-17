@@ -21,36 +21,40 @@
 
     <bs:_loginPageDecoration id="loginPage" title="${title}">
       <p id="formNote">
-         <p>
-            <c:if test="${fn:length(welcomeText) > 0}">
-                <c:out value="${welcomeText}"/>
-            </c:if>
-         </p>
-        <c:choose>
-          <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.impl.UserEx"--%>
-          <c:when test="${loggedInUser == null}">
+        <c:if test="${!invitation.enabled}">
+            This invitation is currently disabled, try again later.
+        </c:if>
+        <c:if test="${invitation.enabled}">
             <p>
-                Please <a href="<c:url value='${proceedUrl}'/>">login or register</a> to accept the invitation.
+               <c:if test="${fn:length(welcomeText) > 0}">
+                   <c:out value="${welcomeText}"/>
+               </c:if>
             </p>
-          </c:when>
-          <c:when test="${loggedInUser != null && user:isGuestUser(loggedInUser)}">
-            <p>
-                You are logged in as a Guest user who can't accept invitations. <br/>
-                Please <a class="logout" href="#" onclick="BS.Invitations.logoutGuest(); return false">re-login or
-                register</a> to proceed.
-            </p>
-          </c:when>
-          <c:otherwise>
-            <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>
-            <p>
-                You are logged in as '<c:out value="${loggedInUser.descriptiveName}"/>'. <br/>
-                Please <a href="<c:url value='${proceedUrl}'/>">proceed</a> as a currently logged-in user to accept the
-                invitation.
-            </p>
-
-          </c:otherwise>
-        </c:choose>
-      </p>
+            <c:choose>
+              <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.impl.UserEx"--%>
+                <c:when test="${loggedInUser == null}">
+                <p>
+                    Please <a href="<c:url value='${proceedUrl}'/>">login or register</a> to accept the invitation.
+                </p>
+              </c:when>
+              <c:when test="${loggedInUser != null && user:isGuestUser(loggedInUser)}">
+                <p>
+                    You are logged in as a Guest user who can't accept invitations. <br/>
+                    Please <a class="logout" href="#" onclick="BS.Invitations.logoutGuest(); return false">re-login or
+                    register</a> to proceed.
+                </p>
+              </c:when>
+              <c:otherwise>
+                <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>
+                  <p>
+                      You are logged in as '<c:out value="${loggedInUser.descriptiveName}"/>'. <br/>
+                      Please <a href="<c:url value='${proceedUrl}'/>">proceed</a> as a currently logged-in user to
+                      accept the
+                      invitation.
+                  </p>
+              </c:otherwise>
+            </c:choose>
+       </c:if>
     </bs:_loginPageDecoration>
   </jsp:attribute>
 </bs:externalPage>

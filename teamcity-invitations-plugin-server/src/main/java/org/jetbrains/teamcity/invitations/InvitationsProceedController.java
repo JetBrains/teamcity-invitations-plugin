@@ -53,6 +53,10 @@ public class InvitationsProceedController extends BaseController {
                 Loggers.SERVER.warn("User accepted the invitation with token " + token + " but invitation doesn't exist anymore");
                 return new ModelAndView(new RedirectView("/"));
             }
+            if (!invitation.isEnabled()) {
+                Loggers.SERVER.warn("User accepted the invitation with token " + token + " but invitation is disabled");
+                return new ModelAndView(new RedirectView("/"));
+            }
             ModelAndView result = invitation.invitationAccepted(user, request, response);
             Loggers.ACTIVITIES.info("User " + user.describe(false) + " accepted the invitation " + invitation.describe(true) + ".");
             if (!invitation.isReusable()) {
