@@ -89,6 +89,22 @@ public class InvitationsStorage {
         }
     }
 
+    public boolean updateInvitation(@NotNull Invitation invitation, @NotNull String description) {
+        Optional<SProjectFeatureDescriptor> featureDescriptor = invitation.getProject().getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
+                .filter(feature -> feature.getParameters().get(TOKEN_PARAM_NAME).equals(invitation.getToken()))
+                .findFirst();
+
+        if (featureDescriptor.isPresent()) {
+            Map<String, String> params = invitation.asMap();
+            params.put(INVITATION_TYPE, invitation.getType().getId());
+            invitation.getProject().updateFeature(featureDescriptor.get().getId(), PROJECT_FEATURE_TYPE, params);
+            teamCityCore.persist(invitation.getProject(), description);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Nullable
     public Invitation getInvitation(@NotNull String token) {
         synchronized (this) {

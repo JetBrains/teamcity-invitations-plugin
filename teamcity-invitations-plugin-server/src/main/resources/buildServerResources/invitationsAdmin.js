@@ -108,5 +108,13 @@ BS.Invitations = {
                 });
             }
         });
+    },
+
+    setEnabled: function (token, projectId, enabled) {
+        BS.ajaxRequest(window['base_uri'] + '/admin/invitations.html?setEnabled=' + enabled + '&token=' + token + "&projectId=" + projectId, {
+            onComplete: function () {
+                $('invitationsList').refresh();
+            }
+        });
     }
 };

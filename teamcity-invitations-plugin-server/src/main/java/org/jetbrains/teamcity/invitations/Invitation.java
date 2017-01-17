@@ -22,6 +22,10 @@ public interface Invitation extends Loggable {
     @NotNull
     SProject getProject();
 
+    boolean isEnabled();
+
+    void setEnabled(boolean enabled);
+
     @NotNull
     ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response);
 

@@ -143,6 +143,21 @@ public class InvitationAdminController extends BaseFormXmlController {
                 } else {
                     ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' doesn't exist.");
                 }
+            } else if (request.getParameter("setEnabled") != null && token != null) {
+                //disable
+                Invitation invitation = invitations.getInvitation(token);
+                if (invitation != null && !invitation.isAvailableFor(SessionUser.getUser(request))) {
+                    throw new AccessDeniedException(SessionUser.getUser(request), "You don't have permissions to edit the invitation " + token);
+                }
+                if (invitation != null) {
+                    Boolean enabled = Boolean.valueOf(request.getParameter("setEnabled"));
+                    invitation.setEnabled(enabled);
+                    String comment = enabled ? "Invitation '" + invitation.getName() + "' enabled." : "Invitation '" + invitation.getName() + "' disabled.";
+                    invitations.updateInvitation(invitation, comment);
+                    ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, comment);
+                } else {
+                    ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + token + "' doesn't exist.");
+                }
             } else {
                 Loggers.SERVER.warn("Unrecognized invitation request: " + WebUtil.getRequestDump(request));
             }

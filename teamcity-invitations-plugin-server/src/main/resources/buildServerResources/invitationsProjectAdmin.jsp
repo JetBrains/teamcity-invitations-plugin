@@ -95,11 +95,12 @@
                         <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
                         <c:set value="BS.InvitationDialog.openEditDialog('${invitation.token}', '${invitation.type.description}', '${invitation.type.id}', '${projectExternalId}');"
                                var="onclick"/>
-                        <tr>
+                        <tr style="${not invitation.enabled ? 'color: #888': ''}">
                             <td class="highlight">
                                 <c:if test="${invitation.type.description != invitation.name}"><em>(<c:out
-                                        value='${invitation.type.description}'/>)</em> </c:if><c:out
+                                        value='${invitation.type.description}'/>)</em><br/> </c:if><c:out
                                     value='${invitation.name}'/>
+                                <c:if test="${!invitation.enabled}"> (disabled)</c:if>
                             </td>
                             <td class="highlight">
                                 <c:set value="${invitation}" scope="request" var="invitation"/>
@@ -115,8 +116,32 @@
                                 <a href="#">Edit</a>
                             </td>
                             <td class="edit">
-                                <a href="#"
-                                   onclick="BS.Invitations.deleteInvitation('${invitation.token}', '${projectExternalId}'); return false">Delete</a>
+                                <bs:actionsPopup controlId="invitationActions${invitation.token}"
+                                                 popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
+                                    <jsp:attribute name="content">
+                                        <div>
+                                            <ul class="menuList">
+                                              <l:li>
+                                                  <c:if test="${invitation.enabled}">
+                                                    <a href="#"
+                                                       onclick="BS.Invitations.setEnabled('${invitation.token}', '${projectExternalId}', false); return false">Disable
+                                                        invitation</a>
+                                                  </c:if>
+                                                  <c:if test="${!invitation.enabled}">
+                                                    <a href="#"
+                                                       onclick="BS.Invitations.setEnabled('${invitation.token}', '${projectExternalId}', true); return false">Enable
+                                                        invitation</a>
+                                                  </c:if>
+                                              </l:li>
+                                                <l:li>
+                                                <a href="#"
+                                                   onclick="BS.Invitations.deleteInvitation('${invitation.token}', '${projectExternalId}'); return false">Delete...</a>
+                                              </l:li>
+                                            </ul>
+                                        </div>
+                                    </jsp:attribute>
+                                    <jsp:body></jsp:body>
+                                </bs:actionsPopup>
                             </td>
                         </tr>
                     </c:forEach>

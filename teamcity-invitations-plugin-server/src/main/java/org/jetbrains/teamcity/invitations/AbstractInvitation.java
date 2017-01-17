@@ -20,6 +20,7 @@ public abstract class AbstractInvitation implements Invitation {
     protected final String welcomeText;
     private final InvitationType type;
     private final String name;
+    protected volatile boolean enabled;
 
     protected AbstractInvitation(@NotNull SProject project, String name, @NotNull String token, boolean multi, InvitationType type, long createdByUserId,
                                  @NotNull String welcomeText) {
@@ -30,10 +31,12 @@ public abstract class AbstractInvitation implements Invitation {
         this.createdByUserId = createdByUserId;
         this.project = project;
         this.welcomeText = welcomeText;
+        this.enabled = true;
     }
 
     protected AbstractInvitation(Map<String, String> params, SProject project, InvitationType type) {
         this.name = params.get("name");
+        this.enabled = !Boolean.valueOf(params.get("disabled"));
         this.token = params.get(TOKEN_PARAM_NAME);
         this.multi = Boolean.valueOf(params.get("multi"));
         this.createdByUserId = Long.parseLong(params.get("createdByUserId"));
@@ -79,6 +82,7 @@ public abstract class AbstractInvitation implements Invitation {
     public Map<String, String> asMap() {
         Map<String, String> result = new HashMap<>();
         result.put("name", name);
+        result.put("disabled", !enabled + "");
         result.put("multi", multi + "");
         result.put("createdByUserId", createdByUserId + "");
         result.put("welcomeText", welcomeText);
@@ -95,5 +99,15 @@ public abstract class AbstractInvitation implements Invitation {
     @Override
     public SProject getProject() {
         return project;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }
