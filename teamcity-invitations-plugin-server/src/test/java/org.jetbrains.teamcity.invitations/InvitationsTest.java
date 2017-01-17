@@ -143,7 +143,7 @@ public class InvitationsTest extends BaseTestCase {
         //user registered
         SUser user = core.createUser("oleg");
         login(user);
-        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(token);
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
         then(((RedirectView) afterRegistrationMAW.getView()).getUrl()).endsWith("/admin/createObjectMenu.html?showMode=createProjectMenu&projectId=TestDriveProjectId");
 
@@ -179,7 +179,7 @@ public class InvitationsTest extends BaseTestCase {
         //user registered
         SUser user = core.createUser("oleg");
         login(user);
-        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(token);
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
         then(user.getRolesWithScope(projectScope("TestDriveProjectId"))).extracting(Role::getId).contains("PROJECT_DEVELOPER");
     }
@@ -203,7 +203,7 @@ public class InvitationsTest extends BaseTestCase {
         //user registered
         SUser user = core.createUser("oleg");
         login(user);
-        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(token);
         then(afterRegistrationMAW.getView()).isInstanceOf(RedirectView.class);
         then(core.getGroupUsers(developers)).contains(user);
     }
@@ -222,10 +222,10 @@ public class InvitationsTest extends BaseTestCase {
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getUser()).isEqualTo(systemAdmin);
         then(((CreateNewProjectInvitationType.InvitationImpl) invitationResponse.getModel().get("invitation")).getProject()).isEqualTo(testDriveProject);
         then((invitationResponse.getModel().get("loggedInUser"))).isEqualTo(user);
-        then((invitationResponse.getModel().get("proceedUrl"))).isEqualTo(InvitationsProceedController.PATH);
+        then((invitationResponse.getModel().get("proceedUrl"))).isEqualTo(InvitationsProceedController.PATH + "?token=" + token);
 
         //user registered
-        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(token);
         then(((RedirectView) afterRegistrationMAW.getView()).getUrl()).endsWith("/admin/createObjectMenu.html?showMode=createProjectMenu&projectId=TestDriveProjectId");
 
         newRequest(HttpMethod.GET, ((RedirectView) afterRegistrationMAW.getView()).getUrl());
@@ -276,7 +276,7 @@ public class InvitationsTest extends BaseTestCase {
 
         SUser user = core.createUser("oleg");
         login(user);
-        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl();
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(token);
         assertRedirectTo(afterRegistrationMAW, "/");
     }
 
@@ -288,7 +288,7 @@ public class InvitationsTest extends BaseTestCase {
         logout();
         assertViewName(goToInvitationUrl(token), "invitationLanding.jsp");
         login(core.createUser("oleg"));
-        goToAfterRegistrationUrl();
+        goToAfterRegistrationUrl(token);
         newRequest(HttpMethod.GET, "/");
         core.createProject("TestDriveProjectId", "oleg project");
 
@@ -296,7 +296,7 @@ public class InvitationsTest extends BaseTestCase {
         logout();
         assertViewName(goToInvitationUrl(token), "invitationLanding.jsp");
         login(core.createUser("ivan"));
-        goToAfterRegistrationUrl();
+        goToAfterRegistrationUrl(token);
         newRequest(HttpMethod.GET, "/");
         core.createProject("TestDriveProjectId", "ivan project");
 
@@ -312,7 +312,7 @@ public class InvitationsTest extends BaseTestCase {
         logout();
         assertViewName(goToInvitationUrl(token), "invitationLanding.jsp");
         login(core.createUser("oleg"));
-        goToAfterRegistrationUrl();
+        goToAfterRegistrationUrl(token);
 
         //second
         assertRedirectTo(goToInvitationUrl(token), "/");
@@ -383,8 +383,8 @@ public class InvitationsTest extends BaseTestCase {
         then(ActionMessages.getMessages(request).getMessage("accessDenied")).isNotNull();
     }
 
-    private ModelAndView goToAfterRegistrationUrl() throws Exception {
-        newRequest(HttpMethod.GET, InvitationsProceedController.PATH);
+    private ModelAndView goToAfterRegistrationUrl(String token) throws Exception {
+        newRequest(HttpMethod.GET, InvitationsProceedController.PATH + "?token=" + token);
         return invitationsProceedController.doHandle(request, response);
     }
 

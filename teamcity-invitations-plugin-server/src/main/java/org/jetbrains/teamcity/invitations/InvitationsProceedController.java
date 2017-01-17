@@ -65,7 +65,7 @@ public class InvitationsProceedController extends BaseController {
             }
             return result;
         } else {
-            Loggers.SERVER.warn("User accepted the invitation but token doesn't exist in the session:" + WebUtil.getRequestDump(request));
+            Loggers.SERVER.warn("User accepted the invitation with unknown token: " + WebUtil.getRequestDump(request));
             return new ModelAndView(new RedirectView("/"));
         }
     }
