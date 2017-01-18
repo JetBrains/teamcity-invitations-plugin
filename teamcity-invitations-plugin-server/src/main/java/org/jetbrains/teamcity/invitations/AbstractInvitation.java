@@ -101,6 +101,11 @@ public abstract class AbstractInvitation implements Invitation {
         return project;
     }
 
+    @NotNull
+    public String getWelcomeText() {
+        return welcomeText;
+    }
+
     @Override
     public boolean isEnabled() {
         return this.enabled;

@@ -14,4 +14,6 @@
     </c:choose>
     <br/>
     Reusable: <c:if test="${invitation.reusable}">Yes</c:if><c:if test="${!invitation.reusable}">No</c:if>
+    <br/>
+    Welcome text: <bs:trimWithTooltip maxlength="25"><c:out value="${invitation.welcomeText}"/></bs:trimWithTooltip>
 </div>
