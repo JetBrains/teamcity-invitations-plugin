@@ -125,10 +125,13 @@ public class InvitationAdminController extends BaseFormXmlController {
                                     "<span class=\"clipboard-btn tc-icon icon16 tc-icon_copy\" data-clipboard-action=\"copy\"data-clipboard-target=\"#justCreatedInvitation\"></span>");
                 } else {
                     //edit
-                    Invitation invitation = createFromRequest(token, project, request);
-                    invitations.removeInvitation(project, token);
-                    invitations.addInvitation(invitation);
-                    ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + invitation.getName() + "' updated.");
+                    Invitation updated = createFromRequest(token, project, request);
+                    Invitation current = invitations.getInvitation(token);
+                    if (current != null) {
+                        updated.setEnabled(current.isEnabled());
+                        invitations.updateInvitation(updated, "Invitation '" + updated.getName() + "' updated.");
+                        ActionMessages.getOrCreateMessages(request).addMessage(MESSAGES_KEY, "Invitation '" + updated.getName() + "' updated.");
+                    }
                 }
 
             } else if (request.getParameter("removeInvitation") != null && token != null) {
