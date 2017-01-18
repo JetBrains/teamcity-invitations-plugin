@@ -87,8 +87,8 @@
             <c:if test="${not empty invitations}">
                 <l:tableWithHighlighting className="parametersTable" highlightImmediately="true">
                     <tr>
-                        <th>Invitation</th>
-                        <th>Parameters Description</th>
+                        <th style="width: 20%">Invitation</th>
+                        <th style="width: 20%">Parameters Description</th>
                         <th colspan="3">URL</th>
                     </tr>
                     <c:forEach items="${invitations}" var="invitation">
