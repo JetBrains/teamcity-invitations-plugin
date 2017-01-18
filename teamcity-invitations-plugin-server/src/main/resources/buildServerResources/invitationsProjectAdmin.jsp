@@ -96,13 +96,13 @@
                         <c:set value="BS.InvitationDialog.openEditDialog('${invitation.token}', '${invitation.type.description}', '${invitation.type.id}', '${projectExternalId}');"
                                var="onclick"/>
                         <tr style="${not invitation.enabled ? 'color: #888': ''}">
-                            <td class="highlight">
+                            <td class="highlight" onclick="${onclick}">
                                 <c:if test="${invitation.type.description != invitation.name}"><em>(<c:out
                                         value='${invitation.type.description}'/>)</em><br/> </c:if><c:out
                                     value='${invitation.name}'/>
                                 <c:if test="${!invitation.enabled}"> (disabled)</c:if>
                             </td>
-                            <td class="highlight">
+                            <td class="highlight" onclick="${onclick}">
                                 <c:set value="${invitation}" scope="request" var="invitation"/>
                                 <jsp:include page="${invitation.type.descriptionViewPath}"/>
                             </td>

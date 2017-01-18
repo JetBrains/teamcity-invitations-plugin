@@ -6,7 +6,7 @@
     Role:
     <c:choose>
         <c:when test="${invitation.role != null}">
-            <a target="_blank" href="/admin/admin.html?item=roles#${invitation.role.id}">${invitation.role.name}</a>
+            <c:out value="${invitation.role.name}"/>
         </c:when>
         <c:otherwise>
             not specified
@@ -16,8 +16,7 @@
     Group:
     <c:choose>
         <c:when test="${invitation.group != null}">
-            <a target="_blank"
-               href="/admin/editGroup.html?groupCode=${invitation.group.key}">${invitation.group.name}</a>
+            <c:out value="${invitation.group.name}"/>
         </c:when>
         <c:otherwise>
             not specified

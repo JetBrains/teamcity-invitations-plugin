@@ -1,3 +1,4 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include-internal.jsp" %>
 <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.CreateNewProjectInvitationType.InvitationImpl"--%>
 
@@ -5,7 +6,7 @@
     Role:
     <c:choose>
         <c:when test="${invitation.role != null}">
-            <a target="_blank" href="/admin/admin.html?item=roles#${invitation.role.id}">${invitation.role.name}</a>
+            <c:out value="${invitation.role.name}"/>
         </c:when>
         <c:otherwise>
             not specified
