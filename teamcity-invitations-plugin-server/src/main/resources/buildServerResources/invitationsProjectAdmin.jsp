@@ -95,8 +95,12 @@
                         <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
                         <c:set value="BS.InvitationDialog.openEditDialog('${invitation.token}', '${invitation.type.description}', '${invitation.type.id}', '${projectExternalId}');"
                                var="onclick"/>
-                        <tr style="${not invitation.enabled ? 'color: #888': ''}">
+                        <tr style="${not invitation.enabled || invitation.validationError != null ? 'color: #888': ''}">
                             <td class="highlight" onclick="${onclick}">
+                                <c:if test="${invitation.validationError != null}">
+                                    <span class="icon icon16 yellowTriangle" <bs:tooltipAttrs
+                                            text="The invitation is not valid anymore and is disabled: ${invitation.validationError}"></bs:tooltipAttrs>></span>
+                                </c:if>
                                 <c:if test="${invitation.type.description != invitation.name}"><em>(<c:out
                                         value='${invitation.type.description}'/>)</em><br/> </c:if><c:out
                                     value='${invitation.name}'/>

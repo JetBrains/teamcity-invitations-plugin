@@ -197,7 +197,16 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         public boolean isAvailableFor(@NotNull AuthorityHolder user) {
             Role role = getRole();
             return user.isPermissionGrantedForProject(getProject().getProjectId(), Permission.CREATE_SUB_PROJECT) &&
-                    role != null && canAssignRole(user, project, role);
+                    (role == null || canAssignRole(user, project, role));
+        }
+
+        @Nullable
+        @Override
+        public String getValidationError() {
+            if (getRole() == null) {
+                return "Role '" + roleId + "' doesn't exists anymore";
+            }
+            return null;
         }
 
         @NotNull
@@ -224,6 +233,11 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         @Nullable
         public Role getRole() {
             return CreateNewProjectInvitationType.this.core.findRoleById(roleId);
+        }
+
+        @NotNull
+        public String getRoleId() {
+            return roleId;
         }
 
         @NotNull

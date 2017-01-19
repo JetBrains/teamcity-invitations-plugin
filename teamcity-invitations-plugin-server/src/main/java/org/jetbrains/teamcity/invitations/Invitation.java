@@ -5,6 +5,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AuthorityHolder;
 import jetbrains.buildServer.users.SUser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,4 +45,10 @@ public interface Invitation extends Loggable {
      * Check whether the user can view and edit the invitation.
      */
     boolean isAvailableFor(@NotNull AuthorityHolder user);
+
+    /**
+     * Returns error description if invitation becomes invalid or null otherwise
+     */
+    @Nullable
+    String getValidationError();
 }

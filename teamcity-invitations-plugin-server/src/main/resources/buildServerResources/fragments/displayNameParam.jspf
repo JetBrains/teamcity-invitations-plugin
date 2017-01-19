@@ -1,5 +1,5 @@
 <tr>
-    <td><label for="name">Display name:</label><l:star/></td>
+    <td><label for="name">Title: </label><l:star/></td>
     <td>
         <forms:textField name="name" value="${name}" className="longField"/>
         <span class="smallNote">Provide some name (it will be shown as a title on the invitation landing page)</span>

@@ -9,7 +9,7 @@
             <c:out value="${invitation.role.name}"/>
         </c:when>
         <c:otherwise>
-            not specified
+            <c:out value="${invitation.roleId}"/>
         </c:otherwise>
     </c:choose>
     <br/>

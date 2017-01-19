@@ -8,6 +8,9 @@
         <c:when test="${invitation.role != null}">
             <c:out value="${invitation.role.name}"/>
         </c:when>
+        <c:when test="${invitation.roleId != null}">
+            <c:out value="${invitation.roleId}"/>
+        </c:when>
         <c:otherwise>
             not specified
         </c:otherwise>
@@ -17,6 +20,9 @@
     <c:choose>
         <c:when test="${invitation.group != null}">
             <c:out value="${invitation.group.name}"/>
+        </c:when>
+        <c:when test="${invitation.groupKey != null}">
+            <c:out value="${invitation.groupKey}"/>
         </c:when>
         <c:otherwise>
             not specified

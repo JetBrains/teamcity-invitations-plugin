@@ -49,6 +49,9 @@ public class InvitationsLandingController extends BaseController {
             Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
             return new ModelAndView(new RedirectView("/"));
         }
+        if (invitation.getValidationError() != null) {
+            Loggers.SERVER.warn("User tries to accept the invitation '" + token + "' that is invalid: " + invitation.getValidationError());
+        }
         request.getSession().setAttribute(TeamCityInternalKeys.FIRST_LOGIN_REDIRECT_URL,
                 InvitationsProceedController.PATH + "?token=" + token);
         return invitation.processInvitationRequest(request, response);

@@ -185,6 +185,20 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
                     && (group == null || getAvailableGroups(user, project).contains(group));
         }
 
+        @Nullable
+        @Override
+        public String getValidationError() {
+            String result = "";
+            if (roleId != null && JoinProjectInvitationType.this.core.findRoleById(roleId) == null) {
+                result += "Role '" + roleId + "' doesn't exists anymore";
+            }
+            if (groupKey != null && JoinProjectInvitationType.this.core.findGroup(groupKey) == null) {
+                if (!result.isEmpty()) result += "; ";
+                result += "Group '" + groupKey + "' doesn't exists anymore";
+            }
+            return result.isEmpty() ? null : result;
+        }
+
         @NotNull
         public ModelAndView invitationAccepted(@NotNull SUser user, @NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
             try {
@@ -225,6 +239,16 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
         @Nullable
         public SUser getUser() {
             return JoinProjectInvitationType.this.core.getUser(createdByUserId);
+        }
+
+        @Nullable
+        public String getRoleId() {
+            return roleId;
+        }
+
+        @Nullable
+        public String getGroupKey() {
+            return groupKey;
         }
 
         @NotNull
