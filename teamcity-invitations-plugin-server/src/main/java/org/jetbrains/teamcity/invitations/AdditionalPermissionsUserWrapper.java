@@ -10,6 +10,7 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.users.*;
+import jetbrains.buildServer.users.impl.ProjectVisibilityHolder;
 import jetbrains.buildServer.users.impl.UserEx;
 import jetbrains.buildServer.vcs.InvalidVcsNameException;
 import jetbrains.buildServer.vcs.SVcsModification;
@@ -500,6 +501,11 @@ public class AdditionalPermissionsUserWrapper implements UserEx {
     @Override
     public boolean deleteProperty(@NotNull PropertyKey propertyKey) {
         return delegate.deleteProperty(propertyKey);
+    }
+
+    @Override
+    public ProjectVisibilityHolder getProjectVisibilityHolder() {
+        return delegate.getProjectVisibilityHolder();
     }
 
     @Override

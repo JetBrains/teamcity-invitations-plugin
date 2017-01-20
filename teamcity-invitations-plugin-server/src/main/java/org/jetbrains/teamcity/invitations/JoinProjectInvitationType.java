@@ -217,7 +217,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
 
 
                 if (user.isPermissionGrantedForProject(created.getProjectId(), Permission.EDIT_PROJECT)) {
-                    return new ModelAndView(new RedirectView("/editProject.html?projectId=" + created.getExternalId(), true));
+                    return new ModelAndView(new RedirectView("/admin/editProject.html?projectId=" + created.getExternalId(), true));
                 }
                 return new ModelAndView(new RedirectView("/project.html?projectId=" + created.getExternalId(), true));
             } catch (Exception e) {
