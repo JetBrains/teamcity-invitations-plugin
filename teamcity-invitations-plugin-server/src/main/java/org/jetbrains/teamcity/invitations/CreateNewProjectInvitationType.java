@@ -219,9 +219,9 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
             });
             additionalPermissions.put(project.getProjectId(), asList(Permission.CREATE_SUB_PROJECT, Permission.VIEW_PROJECT));
 
-            AdditionalPermissionsUserWrapper wrappedUser = new AdditionalPermissionsUserWrapper(originalUser, additionalPermissions);
-            SessionUser.setUser(request, wrappedUser);
-            myProcessingInvitations.add(new ProcessingInvitation(originalUser, this, wrappedUser::disable));
+            AdditionalPermissionsUserWrapper wrapper = new AdditionalPermissionsUserWrapper(originalUser, additionalPermissions);
+            SessionUser.setUser(request, wrapper.getWrappedUser());
+            myProcessingInvitations.add(new ProcessingInvitation(originalUser, this, wrapper::disable));
             return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateProjectPageUrl(project.getExternalId()), true));
         }
 
