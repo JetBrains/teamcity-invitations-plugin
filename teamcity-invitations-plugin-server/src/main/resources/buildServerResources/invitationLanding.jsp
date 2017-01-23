@@ -22,6 +22,9 @@
     <bs:_loginPageDecoration id="loginPage" title="${title}">
       <p id="formNote">
         <c:choose>
+             <c:when test="${invitation == null}">
+                This invitation doesn't exist anymore.
+            </c:when>
              <c:when test="${!invitation.enabled}">
                 This invitation is currently disabled, try again later.
             </c:when>

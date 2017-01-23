@@ -10,10 +10,10 @@ import jetbrains.buildServer.web.util.WebUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 
 public class InvitationsLandingController extends BaseController {
     private static final String INVITATIONS_PATH = "/invitations.html";
@@ -47,7 +47,7 @@ public class InvitationsLandingController extends BaseController {
         Invitation invitation = core.runAsSystem(() -> invitations.getInvitation(token));
         if (invitation == null) {
             Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
-            return new ModelAndView(new RedirectView("/"));
+            return new ModelAndView(core.getPluginResourcesPath("invitationLanding.jsp"), Collections.singletonMap("title", "Not found invitation"));
         }
         if (invitation.getValidationError() != null) {
             Loggers.SERVER.warn("User tries to accept the invitation '" + token + "' that is invalid: " + invitation.getValidationError());
