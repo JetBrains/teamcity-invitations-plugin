@@ -261,7 +261,8 @@ public class InvitationsTest extends BaseTestCase {
         //user go to invitation url
         logout();
         ModelAndView invitationResponse = goToInvitationUrl(token);
-        assertRedirectTo(invitationResponse, "/");
+        assertViewName(invitationResponse, "invitationLanding.jsp");
+        then(invitationResponse.getModel().get("invitation")).isNull();
     }
 
     public void invitation_removed_during_user_registration() throws Exception {
@@ -315,7 +316,9 @@ public class InvitationsTest extends BaseTestCase {
         goToAfterRegistrationUrl(token);
 
         //second
-        assertRedirectTo(goToInvitationUrl(token), "/");
+        ModelAndView secondView = goToInvitationUrl(token);
+        assertViewName(secondView, "invitationLanding.jsp");
+        then(secondView.getModel().get("invitation")).isNull();
     }
 
     public void user_cant_invite_project_admin_to_inaccessible_project() throws Exception {
