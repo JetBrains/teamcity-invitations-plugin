@@ -63,10 +63,6 @@ public class InvitationsProceedController extends BaseController {
             }
             ModelAndView result = invitation.invitationAccepted(user, request, response);
             Loggers.ACTIVITIES.info("User " + user.describe(false) + " accepted the invitation " + invitation.describe(true) + ".");
-            if (!invitation.isReusable()) {
-                Loggers.ACTIVITIES.info("Single user invitation " + token + " was used by user " + SessionUser.getUser(request).describe(false));
-                core.runAsSystem(() -> invitations.removeInvitation(invitation.getProject(), token));
-            }
             return result;
         } else {
             Loggers.SERVER.warn("User accepted the invitation with unknown token: " + WebUtil.getRequestDump(request));

@@ -30,7 +30,8 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
 
     private final TeamCityCoreFacade core;
 
-    public JoinProjectInvitationType(TeamCityCoreFacade core) {
+    public JoinProjectInvitationType(InvitationsStorage invitationsStorage, TeamCityCoreFacade core) {
+        super(invitationsStorage, core);
         this.core = core;
     }
 
@@ -215,6 +216,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
                     return project;
                 });
 
+                invitationWorkflowFinished(this);
 
                 if (user.isPermissionGrantedForProject(created.getProjectId(), Permission.EDIT_PROJECT)) {
                     return new ModelAndView(new RedirectView("/admin/editProject.html?projectId=" + created.getExternalId(), true));

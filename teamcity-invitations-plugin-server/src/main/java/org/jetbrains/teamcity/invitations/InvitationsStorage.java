@@ -15,10 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static org.jetbrains.teamcity.invitations.AbstractInvitation.TOKEN_PARAM_NAME;
 
 @ThreadSafe
@@ -34,10 +33,9 @@ public class InvitationsStorage {
     private Map<String, Invitation> myInvitationByTokenCache;
 
     public InvitationsStorage(@NotNull TeamCityCoreFacade teamCityCore,
-                              @NotNull List<InvitationType> invitationTypes,
                               @NotNull EventDispatcher<ProjectsModelListener> events) {
         this.teamCityCore = teamCityCore;
-        this.invitationTypes = invitationTypes.stream().collect(toMap(InvitationType::getId, identity()));
+        this.invitationTypes = new ConcurrentHashMap<>();
         events.addListener(new ProjectsModelListenerAdapter() {
             @Override
             public void projectFeatureAdded(@NotNull SProject project, @NotNull SProjectFeatureDescriptor projectFeature) {
@@ -54,6 +52,10 @@ public class InvitationsStorage {
                 resetCache();
             }
         });
+    }
+
+    public void registerInvitationType(InvitationType invitationType) {
+        this.invitationTypes.put(invitationType.getId(), invitationType);
     }
 
     public Invitation addInvitation(@NotNull Invitation invitation) {

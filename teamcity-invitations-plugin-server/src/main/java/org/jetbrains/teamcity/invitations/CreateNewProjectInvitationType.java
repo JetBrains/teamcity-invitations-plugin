@@ -29,21 +29,24 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
     private final TeamCityCoreFacade core;
 
     @NotNull
-    private final List<ProcessingInvitation> myProcessingInvitations = new CopyOnWriteArrayList<>();
+    private final List<InvitationInProgress> myInvitationInProgresses = new CopyOnWriteArrayList<>();
 
-    public CreateNewProjectInvitationType(@NotNull TeamCityCoreFacade core,
+    public CreateNewProjectInvitationType(@NotNull InvitationsStorage invitationsStorage,
+                                          @NotNull TeamCityCoreFacade core,
                                           @NotNull EventDispatcher<ProjectsModelListener> events) {
+        super(invitationsStorage, core);
         this.core = core;
         events.addListener(new ProjectsModelListenerAdapter() {
             @Override
             public void projectCreated(@NotNull String projectId, @Nullable SUser user) {
                 SProject created = core.findProjectByIntId(projectId);
                 if (created != null && user != null) {
-                    Optional<ProcessingInvitation> processingInvitation = myProcessingInvitations.stream().filter(i -> i.isOurProjectCreation(created, user)).findFirst();
+                    Optional<InvitationInProgress> processingInvitation = myInvitationInProgresses.stream().filter(i -> i.isOurProjectCreation(created, user)).findFirst();
                     if (processingInvitation.isPresent()) {
                         core.addRole(user, processingInvitation.get().invitation.getRole(), projectId);
                         processingInvitation.get().dispose();
-                        myProcessingInvitations.removeIf(i -> i.isOurProjectCreation(created, user));
+                        myInvitationInProgresses.removeIf(i -> i.isOurProjectCreation(created, user));
+                        invitationWorkflowFinished(processingInvitation.get().invitation);
                         Loggers.ACTIVITIES.info("User " + user.describe(false) + " creates " + created.describe(false) + " project using the invitation " + processingInvitation.get().invitation.describe(false) + "");
                     }
                 }
@@ -141,7 +144,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         return invitation;
     }
 
-    private static final class ProcessingInvitation {
+    private static final class InvitationInProgress {
         @NotNull
         private final SUser user;
         @NotNull
@@ -149,7 +152,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         @NotNull
         private final Runnable disposeAction;
 
-        private ProcessingInvitation(@NotNull SUser user, @NotNull InvitationImpl invitation, @NotNull Runnable disposeAction) {
+        private InvitationInProgress(@NotNull SUser user, @NotNull InvitationImpl invitation, @NotNull Runnable disposeAction) {
             this.user = user;
             this.invitation = invitation;
             this.disposeAction = disposeAction;
@@ -221,7 +224,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
 
             AdditionalPermissionsUserWrapper wrapper = new AdditionalPermissionsUserWrapper(originalUser, additionalPermissions);
             SessionUser.setUser(request, wrapper.getWrappedUser());
-            myProcessingInvitations.add(new ProcessingInvitation(originalUser, this, wrapper::disable));
+            myInvitationInProgresses.add(new InvitationInProgress(originalUser, this, wrapper::disable));
             return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateProjectPageUrl(project.getExternalId()), true));
         }
 

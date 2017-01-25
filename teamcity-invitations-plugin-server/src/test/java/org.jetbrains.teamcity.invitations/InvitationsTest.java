@@ -84,9 +84,7 @@ public class InvitationsTest extends BaseTestCase {
 
         login(systemAdmin);
         testDriveProject = core.createProject("_Root", "TestDriveProjectId");
-        createNewProjectInvitationType = new CreateNewProjectInvitationType(core, events);
-        joinProjectInvitationType = new JoinProjectInvitationType(core);
-        invitations = createInvitationStorage();
+        initInvitationStorage();
 
         WebControllerManager webControllerManager = createWebControllerManager();
 
@@ -121,9 +119,10 @@ public class InvitationsTest extends BaseTestCase {
         return webControllerManager;
     }
 
-    @NotNull
-    private InvitationsStorage createInvitationStorage() {
-        return new InvitationsStorage(core, asList(createNewProjectInvitationType, joinProjectInvitationType), events);
+    private void initInvitationStorage() {
+        invitations = new InvitationsStorage(core, events);
+        createNewProjectInvitationType = new CreateNewProjectInvitationType(invitations, core, events);
+        joinProjectInvitationType = new JoinProjectInvitationType(invitations, core);
     }
 
     @Test
@@ -240,7 +239,7 @@ public class InvitationsTest extends BaseTestCase {
         Map<String, String> beforeRestartEl1 = invitations.getInvitation(token1).asMap();
         Map<String, String> beforeRestartEl2 = invitations.getInvitation(token2).asMap();
 
-        invitations = createInvitationStorage();
+        initInvitationStorage();
 
         then(invitations.getInvitation(token1)).isNotNull();
         then(invitations.getInvitation(token2)).isNotNull();
@@ -313,7 +312,10 @@ public class InvitationsTest extends BaseTestCase {
         logout();
         assertViewName(goToInvitationUrl(token), "invitationLanding.jsp");
         login(core.createUser("oleg"));
-        goToAfterRegistrationUrl(token);
+
+        ModelAndView afterRegistrationMAW = goToAfterRegistrationUrl(token);
+        newRequest(HttpMethod.GET, ((RedirectView) afterRegistrationMAW.getView()).getUrl());
+        core.createProject("TestDriveProjectId", "New Project");
 
         //second
         ModelAndView secondView = goToInvitationUrl(token);
