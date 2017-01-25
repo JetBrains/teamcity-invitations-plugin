@@ -73,8 +73,8 @@ public class InvitationsStorage {
         return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream().map(feature -> fromProjectFeature(project, feature)).collect(toList());
     }
 
-    public int getInvitationsCount(@NotNull SProject project) {
-        return project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).size();
+    public int getActiveInvitationsCount(@NotNull SProject project) {
+        return ((int) getInvitations(project).stream().filter(Invitation::isEnabled).count());
     }
 
     public Invitation removeInvitation(@NotNull SProject project, @NotNull String token) {

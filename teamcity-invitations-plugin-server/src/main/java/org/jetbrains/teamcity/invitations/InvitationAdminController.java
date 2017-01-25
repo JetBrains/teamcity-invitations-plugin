@@ -219,7 +219,7 @@ public class InvitationAdminController extends BaseFormXmlController {
             SProject project = getProject(request);
             String tabTitle = super.getTabTitle(request);
             if (project != null) {
-                int invitationsCount = invitations.getInvitationsCount(project);
+                int invitationsCount = invitations.getActiveInvitationsCount(project);
                 if (invitationsCount > 0) {
                     tabTitle += " (" + invitationsCount + ")";
                 }
