@@ -2,7 +2,7 @@
     <td><label for="welcomeText">Welcome text:</label><l:star/></td>
     <td>
         <forms:textField name="welcomeText" value="${welcomeText}" expandable="true"/>
-        <span class="smallNote">Provide the text that will be shown on the landing page.</span>
+        <span class="smallNote">A welcome text to show on the invitation landing page.</span>
         <span class="error" id="error_welcomeText"></span>
     </td>
 </tr>

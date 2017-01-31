@@ -9,22 +9,7 @@
 </bs:linkScript>
 
 <style type="text/css">
-    .invitationsList {
-        margin-top: 1em;
-    }
-
-    .textField {
-        width: 100%;
-    }
-
-    #invitationFormDialog {
-        width: 45em;
-    }
-
-    table.runnerFormTable td:first-child {
-        width: 10em;
-    }
-
+    <jsp:include page="css/admin.css"/>
 </style>
 
 <bs:modalDialog formId="invitationForm"
@@ -35,7 +20,7 @@
     <table id="invitationTypeChooser" class="runnerFormTable" style="width: 99%;">
         <tr>
             <td>
-                <label for="invitationType">Invitation type: </label>
+                <label for="invitationTypeSelect">Invitation type: </label>
             </td>
             <td>
                 <div id="invitationTypeContainer">
@@ -144,7 +129,7 @@
                                             </ul>
                                         </div>
                                     </jsp:attribute>
-                                    <jsp:body></jsp:body>
+                                    <jsp:body/>
                                 </bs:actionsPopup>
                             </td>
                         </tr>
