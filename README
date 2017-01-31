@@ -1,1 +1,6 @@
-Plugin allowing Server Administrator to invite users to use TeamCity
+Plugin allowing to invite users to create or join TeamCity projects.
+
+How to use:
+* Install plugin
+* Open 'Invitation' tab on the project administration area
+* Create an invitation
