@@ -61,7 +61,8 @@
                     <artifactId>teamcity-sdk-maven-plugin</artifactId>
                     <version>0.2</version>
                     <configuration>
-                        <teamcityDir>/Users/dmitry/IdeaProjects/TeamCity-TD</teamcityDir>
+                        <teamcityDir>${project.basedir}/servers/TeamCity-2017.1</teamcityDir>
+                        <dataDirectory>${project.basedir}/data/2017.1</dataDirectory>
                     </configuration>
                 </plugin>
             </plugins>
