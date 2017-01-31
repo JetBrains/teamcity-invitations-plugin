@@ -62,7 +62,7 @@
     <c:if test="${not project.readOnly}">
         <div>
             <forms:addButton
-                    onclick="BS.InvitationDialog.openAddDialog('${projectExternalId}');">Create invitation...</forms:addButton>
+                    onclick="BS.InvitationDialog.openAddDialog('${projectExternalId}');">Create invitation</forms:addButton>
         </div>
     </c:if>
 
