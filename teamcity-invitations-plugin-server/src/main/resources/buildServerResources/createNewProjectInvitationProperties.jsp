@@ -6,7 +6,7 @@
 <table class="runnerFormTable" style="width: 99%;">
     <tr class="greyNote">
         <td colspan="2">
-            <span class="greyNote">Invite users to create and administer sub-projects under the <c:out value="${project.name}"/> </span>
+            <span class="greyNote">Invite users to create and administer sub-projects under the <c:out value="${project.name}"/></span>
         </td>
     </tr>
 
