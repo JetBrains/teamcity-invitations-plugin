@@ -6,13 +6,9 @@
 <table class="runnerFormTable" style="width: 99%;">
     <tr class="greyNote">
         <td colspan="2">
-            <span class="greyNote">
-                Invite user to join the <c:out value="${project.name}"/> project.
-            </span>
+            <span class="greyNote">Invite users to join the <c:out value="${project.name}"/></span>
         </td>
     </tr>
-
-    <%@ include file="fragments/displayNameParam.jspf" %>
 
     <tr>
         <td><label for="role">Role:</label></td>
@@ -40,7 +36,7 @@
         <td><label for="group">Group:</label></td>
         <td>
             <forms:select id="group" name="group" enableFilter="true" className="longField">
-                <forms:option value="">-- Don't add to any group --</forms:option>
+                <forms:option value="">&lt;Don't add to any group&gt;</forms:option>
                 <c:forEach items="${groups}" var="group">
                     <%--@elvariable id="group" type="jetbrains.buildServer.groups.SUserGroup"--%>
                     <forms:option value="${group.key}" title="${group.name}" selected="${group.key eq groupKey}">
@@ -49,14 +45,15 @@
                 </c:forEach>
             </forms:select>
             <span class="smallNote">
-                Select a usergroup where invited user will be added. <br/>
-                Groups containing '<%=Permission.VIEW_PROJECT.getName()%>' permission are listed.
+                Select a group where invited user will be added. <br/>
+                Only groups with '<%=Permission.VIEW_PROJECT.getName()%>' permission are listed.
             </span>
 
             <span id="error_group" class="roleOrGroupError error" style="display: none;"></span>
         </td>
     </tr>
 
+    <%@ include file="fragments/displayNameParam.jspf" %>
     <%@ include file="fragments/welcomeTextParam.jspf" %>
     <%@ include file="fragments/reusableParam.jspf" %>
 

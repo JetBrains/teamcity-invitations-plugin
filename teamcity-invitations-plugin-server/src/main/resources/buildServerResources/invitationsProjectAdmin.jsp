@@ -9,22 +9,7 @@
 </bs:linkScript>
 
 <style type="text/css">
-    .invitationsList {
-        margin-top: 1em;
-    }
-
-    .textField {
-        width: 100%;
-    }
-
-    #invitationFormDialog {
-        width: 45em;
-    }
-
-    table.runnerFormTable td:first-child {
-        width: 10em;
-    }
-
+    <jsp:include page="css/admin.css"/>
 </style>
 
 <bs:modalDialog formId="invitationForm"
@@ -35,7 +20,7 @@
     <table id="invitationTypeChooser" class="runnerFormTable" style="width: 99%;">
         <tr>
             <td>
-                <label for="invitationType">Invitation type: </label>
+                <label for="invitationTypeSelect">Invitation type: </label>
             </td>
             <td>
                 <div id="invitationTypeContainer">
@@ -87,9 +72,9 @@
             <c:if test="${not empty invitations}">
                 <l:tableWithHighlighting className="parametersTable" highlightImmediately="true">
                     <tr>
-                        <th style="width: 20%">Invitation</th>
-                        <th style="width: 30%">Parameters Description</th>
-                        <th colspan="3">URL</th>
+                        <th style="width: 20%">Invitation Type</th>
+                        <th style="width: 30%">Description</th>
+                        <th colspan="3">Invitation URL</th>
                     </tr>
                     <c:forEach items="${invitations}" var="invitation">
                         <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
@@ -144,7 +129,7 @@
                                             </ul>
                                         </div>
                                     </jsp:attribute>
-                                    <jsp:body></jsp:body>
+                                    <jsp:body/>
                                 </bs:actionsPopup>
                             </td>
                         </tr>

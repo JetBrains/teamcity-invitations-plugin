@@ -1,0 +1,24 @@
+
+.invitationsList {
+    margin-top: 1em;
+}
+
+.textField {
+    width: 100%;
+}
+
+#invitationFormDialog {
+    width: 45em;
+}
+
+#invitationForm .content table.runnerFormTable td {
+    vertical-align: top;
+}
+
+#invitationForm .content table.runnerFormTable td:first-child {
+    width: 10em;
+}
+
+#invitationTypeChooser td:first-child {
+    width: 10em;
+}
