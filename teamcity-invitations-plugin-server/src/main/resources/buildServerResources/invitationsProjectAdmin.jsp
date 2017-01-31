@@ -72,9 +72,9 @@
             <c:if test="${not empty invitations}">
                 <l:tableWithHighlighting className="parametersTable" highlightImmediately="true">
                     <tr>
-                        <th style="width: 20%">Invitation</th>
-                        <th style="width: 30%">Parameters Description</th>
-                        <th colspan="3">URL</th>
+                        <th style="width: 20%">Invitation Type</th>
+                        <th style="width: 30%">Description</th>
+                        <th colspan="3">Invitation URL</th>
                     </tr>
                     <c:forEach items="${invitations}" var="invitation">
                         <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.Invitation"--%>
