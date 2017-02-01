@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Arrays.asList;
+import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toList;
 
 public class CreateNewProjectInvitationType extends AbstractInvitationType<CreateNewProjectInvitationType.InvitationImpl> implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
@@ -110,6 +111,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
                 filter(Role::isProjectAssociationSupported).
                 filter(role -> role.getPermissions().contains(Permission.EDIT_PROJECT)).
                 filter(role -> canAssignRole(currentUser, project, role)).
+                sorted(comparingInt(o -> -o.getPermissions().toList().size())).
                 collect(toList());
     }
 
