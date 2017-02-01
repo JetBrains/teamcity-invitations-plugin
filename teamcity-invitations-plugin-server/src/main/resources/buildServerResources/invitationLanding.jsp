@@ -23,7 +23,7 @@
       <p id="formNote">
         <c:choose>
              <c:when test="${invitation == null}">
-                This invitation doesn't exist anymore.
+                The invitation does not exist. The provided URL is incorrect or the invitation was deleted on server.
             </c:when>
              <c:when test="${!invitation.enabled}">
                 This invitation is currently disabled, try again later.
