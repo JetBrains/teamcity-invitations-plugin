@@ -10,6 +10,7 @@
     <jsp:attribute name="head_include">
     <bs:linkCSS>
       /css/forms.css
+      /css/maintenance-initialPages-common.css
       /css/initialPages.css
     </bs:linkCSS>
     <bs:linkScript>
