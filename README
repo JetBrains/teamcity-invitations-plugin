@@ -1,6 +1,6 @@
-Plugin allowing to invite users to create or join TeamCity projects.
+This plugin allows inviting users to create or join TeamCity projects.
 
 How to use:
-* Install plugin
-* Open 'Invitation' tab on the project administration area
+* Install the plugin
+* Open the 'Invitation' tab on the Project Administration area
 * Create an invitation
