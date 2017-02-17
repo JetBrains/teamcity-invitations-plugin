@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="user" uri="/WEB-INF/functions/user" %>
 <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.JoinProjectInvitationType.InvitationImpl"--%>
 <%@ include file="/include-internal.jsp" %>
@@ -35,7 +36,7 @@
             <c:otherwise>
                 <p>
                    <c:if test="${fn:length(welcomeText) > 0}">
-                       <c:out value="${welcomeText}"/>
+                       <bs:out value="${welcomeText}"/>
                    </c:if>
                 </p>
                 <c:choose>
