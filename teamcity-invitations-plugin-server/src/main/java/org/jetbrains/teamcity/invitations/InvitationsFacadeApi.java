@@ -55,6 +55,6 @@ public class InvitationsFacadeApi {
 
     @NotNull
     public String getAbsoluteUrl(@NotNull Invitation invitation) {
-        return invitationsLandingController.getInvitationsPath() + "?token" + invitation.getToken();
+        return invitationsLandingController.getInvitationsPath() + "?token=" + invitation.getToken();
     }
 }
