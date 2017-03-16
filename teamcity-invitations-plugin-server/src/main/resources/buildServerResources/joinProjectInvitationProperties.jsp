@@ -14,7 +14,7 @@
         <td><label for="role">Role:</label></td>
         <td>
             <forms:select id="role" name="role" enableFilter="true" className="longField">
-                <forms:option value="">-- Don't assign any role --</forms:option>
+                <forms:option value="">&lt;Don't assign any role&gt;</forms:option>
                 <c:forEach items="${roles}" var="role">
                     <%--@elvariable id="role" type="jetbrains.buildServer.serverSide.auth.Role"--%>
                     <forms:option value="${role.id}" title="${role.name}" selected="${role.id eq roleId}">
