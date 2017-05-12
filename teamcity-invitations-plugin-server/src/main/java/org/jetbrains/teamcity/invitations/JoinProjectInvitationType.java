@@ -80,6 +80,9 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
                     .findFirst()
                     .map(Role::getId)
                     .orElse(null);
+            if (preselectedRole == null) {
+                preselectedGroup = availableGroups.stream().findFirst().map(SUserGroup::getKey).orElse(null);
+            }
         }
 
         modelAndView.getModel().put("roleId", preselectedRole);
