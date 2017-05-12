@@ -219,7 +219,11 @@ public class InvitationAdminController extends BaseFormXmlController {
             SProject project = getProject(request);
             String tabTitle = super.getTabTitle(request);
             if (project != null) {
-                int invitationsCount = invitations.getActiveInvitationsCount(project);
+                int invitationsCount = (int) invitations.getInvitations(project)
+                        .stream()
+                        .filter(Invitation::isEnabled)
+                        .filter(i -> i.isAvailableFor(SessionUser.getUser(request)))
+                        .count();
                 if (invitationsCount > 0) {
                     tabTitle += " (" + invitationsCount + ")";
                 }
