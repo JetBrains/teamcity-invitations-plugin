@@ -94,7 +94,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
     @NotNull
     private List<SUserGroup> getAvailableGroups(@NotNull AuthorityHolder user, @NotNull SProject project) {
         return core.getAvailableGroups().stream()
-                .filter(group -> group.getPermissionsGrantedForProject(project.getProjectId()).contains(Permission.VIEW_PROJECT))
+                .filter(group -> !group.getRolesWithScope(RoleScope.projectScope(project.getProjectId())).isEmpty())
                 .filter(group -> ServerAuthUtil.canAddToRemoveFromGroup(user, group))
                 .collect(toList());
     }
