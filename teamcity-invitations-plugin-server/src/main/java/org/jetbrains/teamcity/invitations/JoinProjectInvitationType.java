@@ -79,7 +79,7 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
                     .sorted(Comparator.comparing(role -> role.getPermissions().toList().size()))
                     .findFirst()
                     .map(Role::getId)
-                    .orElse(availableRoles.get(0).getId());
+                    .orElse(null);
         }
 
         modelAndView.getModel().put("roleId", preselectedRole);
