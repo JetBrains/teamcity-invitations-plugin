@@ -17,12 +17,16 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Arrays.asList;
 import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toList;
+import static jetbrains.buildServer.serverSide.auth.Permission.*;
 
 public class CreateNewProjectInvitationType extends AbstractInvitationType<CreateNewProjectInvitationType.InvitationImpl> implements InvitationType<CreateNewProjectInvitationType.InvitationImpl> {
 
@@ -84,7 +88,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
             return false;
         }
         return core.runAsSystem(() ->
-                        authorityHolder.isPermissionGrantedForProject(project.getProjectId(), Permission.CREATE_SUB_PROJECT)
+                authorityHolder.isPermissionGrantedForProject(project.getProjectId(), CREATE_SUB_PROJECT)
         );
     }
 
@@ -109,7 +113,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         return core.getAvailableRoles().
                 stream().
                 filter(Role::isProjectAssociationSupported).
-                filter(role -> role.getPermissions().contains(Permission.EDIT_PROJECT)).
+                filter(role -> role.getPermissions().contains(EDIT_PROJECT)).
                 filter(role -> canAssignRole(currentUser, project, role)).
                 sorted(comparingInt(o -> -o.getPermissions().toList().size())).
                 collect(toList());
@@ -201,7 +205,7 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         @Override
         public boolean isAvailableFor(@NotNull AuthorityHolder user) {
             Role role = getRole();
-            return user.isPermissionGrantedForProject(getProject().getProjectId(), Permission.CREATE_SUB_PROJECT) &&
+            return user.isPermissionGrantedForProject(getProject().getProjectId(), CREATE_SUB_PROJECT) &&
                     (role == null || canAssignRole(user, project, role));
         }
 
@@ -220,9 +224,9 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
 
             Map<String, List<Permission>> additionalPermissions = new HashMap<>();
             getProject().getProjectPath().forEach(parent -> {
-                additionalPermissions.put(parent.getProjectId(), Collections.singletonList(Permission.VIEW_PROJECT));
+                additionalPermissions.put(parent.getProjectId(), asList(VIEW_BUILD_CONFIGURATION_SETTINGS, VIEW_PROJECT));
             });
-            additionalPermissions.put(project.getProjectId(), asList(Permission.CREATE_SUB_PROJECT, Permission.VIEW_PROJECT));
+            additionalPermissions.put(project.getProjectId(), asList(CREATE_SUB_PROJECT, VIEW_BUILD_CONFIGURATION_SETTINGS, VIEW_PROJECT));
 
             AdditionalPermissionsUserWrapper wrapper = new AdditionalPermissionsUserWrapper(originalUser, additionalPermissions);
             SessionUser.setUser(request, wrapper.getWrappedUser());
