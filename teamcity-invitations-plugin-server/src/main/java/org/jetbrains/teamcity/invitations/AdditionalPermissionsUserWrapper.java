@@ -8,10 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AdditionalPermissionsUserWrapper {
@@ -21,7 +20,7 @@ public class AdditionalPermissionsUserWrapper {
 
     public AdditionalPermissionsUserWrapper(UserEx originalUser, @NotNull Map<String, List<Permission>> additionalPermissions) {
         this.delegate = originalUser;
-        this.additionalPermissions = Collections.unmodifiableMap(new HashMap<>(additionalPermissions));
+        this.additionalPermissions = new ConcurrentHashMap<>(additionalPermissions);
     }
 
     public UserEx getWrappedUser() {
