@@ -221,9 +221,6 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
 
                 invitationWorkflowFinished(this);
 
-                if (user.isPermissionGrantedForProject(created.getProjectId(), Permission.EDIT_PROJECT)) {
-                    return new ModelAndView(new RedirectView("/admin/editProject.html?projectId=" + created.getExternalId(), true));
-                }
                 return new ModelAndView(new RedirectView("/project.html?projectId=" + created.getExternalId(), true));
             } catch (Exception e) {
                 Loggers.SERVER.warn("Failed to create project for the invited user " + user.describe(false), e);
