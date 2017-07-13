@@ -2,8 +2,10 @@ package org.jetbrains.teamcity.invitations;
 
 import jetbrains.buildServer.agent.Constants;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +23,7 @@ public abstract class AbstractInvitation implements Invitation {
     private final InvitationType type;
     private final String name;
     protected volatile boolean enabled;
+    protected volatile String disabledText;
 
     protected AbstractInvitation(@NotNull SProject project, String name, @NotNull String token, boolean multi, InvitationType type, long createdByUserId,
                                  @NotNull String welcomeText) {
@@ -41,6 +44,7 @@ public abstract class AbstractInvitation implements Invitation {
         this.multi = Boolean.valueOf(params.get("multi"));
         this.createdByUserId = Long.parseLong(params.get("createdByUserId"));
         this.welcomeText = params.get("welcomeText");
+        this.disabledText = params.get("disabledText");
         this.type = type;
         this.project = project;
     }
@@ -83,6 +87,9 @@ public abstract class AbstractInvitation implements Invitation {
         Map<String, String> result = new HashMap<>();
         result.put("name", name);
         result.put("disabled", !enabled + "");
+        if (!StringUtil.isEmptyOrSpaces(disabledText)) {
+            result.put("disabledText", disabledText);
+        }
         result.put("multi", multi + "");
         result.put("createdByUserId", createdByUserId + "");
         result.put("welcomeText", welcomeText);
@@ -114,5 +121,10 @@ public abstract class AbstractInvitation implements Invitation {
     @Override
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Nullable
+    public String getDisabledText() {
+        return disabledText;
     }
 }

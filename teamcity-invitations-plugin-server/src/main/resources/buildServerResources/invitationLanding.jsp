@@ -28,7 +28,14 @@
                 The invitation does not exist. The provided URL is incorrect or the invitation was deleted on server.
             </c:when>
              <c:when test="${!invitation.enabled}">
-                This invitation is currently disabled, try again later.
+                 <c:choose>
+                     <c:when test="${invitation.disabledText != null}">
+                         <c:out value="${invitation.disabledText}"/>
+                     </c:when>
+                     <c:otherwise>
+                         This invitation is currently disabled, try again later.
+                     </c:otherwise>
+                 </c:choose>
             </c:when>
             <c:when test="${invitation.validationError != null}">
                 This invitation is invalid, try again later.
