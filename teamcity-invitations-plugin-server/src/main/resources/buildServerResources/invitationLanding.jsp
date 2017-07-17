@@ -50,13 +50,13 @@
                   <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.impl.UserEx"--%>
                     <c:when test="${loggedInUser == null}">
                     <p>
-                        Please <a href="<c:url value='${proceedUrl}'/>">login or register</a> to accept the invitation.
+                        Please <a href="<c:url value='${proceedUrl}'/>">log in or register</a> to accept the invitation.
                     </p>
                   </c:when>
                   <c:when test="${loggedInUser != null && user:isGuestUser(loggedInUser)}">
                     <p>
                         You are logged in as a guest user who cannot accept invitations. <br/>
-                        Please <a class="logout" href="#" onclick="BS.Invitations.logoutGuest(); return false">re-login
+                        Please <a class="logout" href="#" onclick="BS.Invitations.logoutGuest(); return false">re-log in
                         or
                         register</a> to proceed.
                     </p>
