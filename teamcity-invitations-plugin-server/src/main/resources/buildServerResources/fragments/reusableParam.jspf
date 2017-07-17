@@ -2,6 +2,6 @@
     <td class="noBorder">&nbsp;</td>
     <td class="noBorder">
         <forms:checkbox name="multiuser" checked="${multiuser}"/> <label for="multiuser">Allow invitation to be used multiple times</label>
-        <span class="smallNote">Un-check if the invitation should be removed once the first user accepts it.</span>
+        <span class="smallNote">Uncheck for one-time invitation</span>
     </td>
 </tr>
