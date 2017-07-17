@@ -25,7 +25,8 @@
       <p id="formNote">
         <c:choose>
              <c:when test="${invitation == null}">
-                The invitation does not exist. The provided URL is incorrect or the invitation was deleted on server.
+                The invitation is no longer actual. Either the one-time invitation was already used or the invitation was suspended. Proceed to the <a
+                     href="<c:url value='/overview.html'/>">server</a>.
             </c:when>
              <c:when test="${!invitation.enabled}">
                  <c:choose>
