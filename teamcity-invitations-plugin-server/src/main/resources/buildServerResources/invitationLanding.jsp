@@ -30,7 +30,7 @@
              <c:when test="${!invitation.enabled}">
                  <c:choose>
                      <c:when test="${invitation.disabledText != null}">
-                         <c:out value="${invitation.disabledText}"/>
+                         <bs:out value="${invitation.disabledText}"/>
                      </c:when>
                      <c:otherwise>
                          This invitation is currently disabled, try again later.
