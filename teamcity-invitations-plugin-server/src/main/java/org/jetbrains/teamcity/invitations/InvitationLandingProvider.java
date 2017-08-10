@@ -21,7 +21,7 @@ public class InvitationLandingProvider {
     @NotNull
     public String getLanding(@NotNull Invitation invitation) {
         for (Function<Invitation, String> provider : customProviders) {
-            String landing = provider.apply(invitation);
+            String landing = core.runAsSystem(() -> provider.apply(invitation));
             if (landing != null) {
                 Loggers.SERVER.info("Custom invitation landing found for the invitation " + invitation.describe(false) + ": " + landing);
                 return landing;
