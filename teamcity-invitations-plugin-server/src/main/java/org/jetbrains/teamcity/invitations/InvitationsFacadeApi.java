@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
 
@@ -16,11 +17,13 @@ public class InvitationsFacadeApi {
     private final InvitationsStorage invitationsStorage;
     private final JoinProjectInvitationType joinProjectInvitationType;
     private final InvitationsLandingController invitationsLandingController;
+    private final InvitationLandingProvider invitationLandingProvider;
 
-    public InvitationsFacadeApi(InvitationsStorage invitationsStorage, JoinProjectInvitationType joinProjectInvitationType, InvitationsLandingController invitationsLandingController) {
+    public InvitationsFacadeApi(InvitationsStorage invitationsStorage, JoinProjectInvitationType joinProjectInvitationType, InvitationsLandingController invitationsLandingController, InvitationLandingProvider invitationsLandingProvider) {
         this.invitationsStorage = invitationsStorage;
         this.joinProjectInvitationType = joinProjectInvitationType;
         this.invitationsLandingController = invitationsLandingController;
+        this.invitationLandingProvider = invitationsLandingProvider;
     }
 
     public Invitation createJoinProjectInvitation(@NotNull SUser inviter, @NotNull String name, @NotNull SProject project,
@@ -56,5 +59,9 @@ public class InvitationsFacadeApi {
     @NotNull
     public String getAbsoluteUrl(@NotNull Invitation invitation) {
         return invitationsLandingController.getInvitationsPath() + "?token=" + invitation.getToken();
+    }
+
+    public void registerLandingPageProvider(@NotNull Function<Invitation, String> provider) {
+        invitationLandingProvider.registerCustomProvider(provider);
     }
 }

@@ -64,7 +64,7 @@ public abstract class AbstractInvitation implements Invitation {
     @NotNull
     @Override
     public ModelAndView processInvitationRequest(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) {
-        ModelAndView modelAndView = new ModelAndView(getLandingPage());
+        ModelAndView modelAndView = new ModelAndView(type.getLandingPage(this));
         modelAndView.addObject("loggedInUser", SessionUser.getUser(request));
         modelAndView.addObject("proceedUrl", InvitationsProceedController.PATH + "?token=" + token);
         modelAndView.addObject("invitation", this);
@@ -72,9 +72,6 @@ public abstract class AbstractInvitation implements Invitation {
         modelAndView.addObject("title", getName());
         return modelAndView;
     }
-
-    @NotNull
-    protected abstract String getLandingPage();
 
     @NotNull
     @Override

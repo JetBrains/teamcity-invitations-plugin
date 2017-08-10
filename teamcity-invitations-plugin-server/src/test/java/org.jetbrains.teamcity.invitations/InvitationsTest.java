@@ -121,8 +121,8 @@ public class InvitationsTest extends BaseTestCase {
 
     private void initInvitationStorage() {
         invitations = new InvitationsStorage(core, events);
-        createNewProjectInvitationType = new CreateNewProjectInvitationType(invitations, core, events);
-        joinProjectInvitationType = new JoinProjectInvitationType(invitations, core);
+        createNewProjectInvitationType = new CreateNewProjectInvitationType(invitations, core, events, new InvitationLandingProvider(core));
+        joinProjectInvitationType = new JoinProjectInvitationType(invitations, core, new InvitationLandingProvider(core));
     }
 
     @Test

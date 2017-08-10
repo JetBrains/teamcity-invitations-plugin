@@ -13,10 +13,12 @@ public abstract class AbstractInvitationType<T extends Invitation> implements In
 
     private final InvitationsStorage invitationsStorage;
     private final TeamCityCoreFacade core;
+    private final InvitationLandingProvider invitationLandingProvider;
 
-    protected AbstractInvitationType(InvitationsStorage invitationsStorage, TeamCityCoreFacade core) {
+    protected AbstractInvitationType(InvitationsStorage invitationsStorage, TeamCityCoreFacade core, InvitationLandingProvider invitationLandingProvider) {
         this.invitationsStorage = invitationsStorage;
         this.core = core;
+        this.invitationLandingProvider = invitationLandingProvider;
         invitationsStorage.registerInvitationType(this);
     }
 
@@ -36,5 +38,11 @@ public abstract class AbstractInvitationType<T extends Invitation> implements In
         if (StringUtil.isEmptyOrSpaces(request.getParameter("welcomeText"))) {
             errors.addError(new InvalidProperty("welcomeText", "Welcome text must not be empty"));
         }
+    }
+
+    @NotNull
+    @Override
+    public String getLandingPage(Invitation invitation) {
+        return invitationLandingProvider.getLanding(invitation);
     }
 }

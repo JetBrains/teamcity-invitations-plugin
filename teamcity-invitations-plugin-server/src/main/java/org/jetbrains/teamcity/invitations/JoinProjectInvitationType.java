@@ -30,8 +30,8 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
 
     private final TeamCityCoreFacade core;
 
-    public JoinProjectInvitationType(InvitationsStorage invitationsStorage, TeamCityCoreFacade core) {
-        super(invitationsStorage, core);
+    public JoinProjectInvitationType(InvitationsStorage invitationsStorage, TeamCityCoreFacade core, InvitationLandingProvider invitationLandingProvider) {
+        super(invitationsStorage, core, invitationLandingProvider);
         this.core = core;
     }
 
@@ -164,12 +164,6 @@ public class JoinProjectInvitationType extends AbstractInvitationType<JoinProjec
             super(params, project, JoinProjectInvitationType.this);
             this.roleId = params.get("roleId");
             this.groupKey = params.get("groupKey");
-        }
-
-        @NotNull
-        @Override
-        protected String getLandingPage() {
-            return core.getPluginResourcesPath("invitationLanding.jsp");
         }
 
         @NotNull

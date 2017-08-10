@@ -13,5 +13,6 @@
     <bean class="org.jetbrains.teamcity.invitations.CreateNewProjectInvitationType"/>
     <bean class="org.jetbrains.teamcity.invitations.JoinProjectInvitationType"/>
 
+    <bean class="org.jetbrains.teamcity.invitations.InvitationLandingProvider"/>
     <bean class="org.jetbrains.teamcity.invitations.InvitationsFacadeApi"/>
 </beans>

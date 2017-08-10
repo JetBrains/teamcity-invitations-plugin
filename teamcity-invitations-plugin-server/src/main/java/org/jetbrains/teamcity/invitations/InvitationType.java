@@ -37,4 +37,7 @@ public interface InvitationType<T extends Invitation> {
     T readFrom(@NotNull Map<String, String> params, @NotNull SProject project);
 
     boolean isAvailableFor(@NotNull AuthorityHolder authorityHolder, @NotNull SProject project);
+
+    @NotNull
+    String getLandingPage(@NotNull Invitation invitation);
 }

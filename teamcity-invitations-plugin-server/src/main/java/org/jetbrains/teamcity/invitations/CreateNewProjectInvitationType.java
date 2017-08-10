@@ -38,8 +38,9 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
 
     public CreateNewProjectInvitationType(@NotNull InvitationsStorage invitationsStorage,
                                           @NotNull TeamCityCoreFacade core,
-                                          @NotNull EventDispatcher<ProjectsModelListener> events) {
-        super(invitationsStorage, core);
+                                          @NotNull EventDispatcher<ProjectsModelListener> events,
+                                          @NotNull InvitationLandingProvider customLandingRegistry) {
+        super(invitationsStorage, core, customLandingRegistry);
         this.core = core;
         events.addListener(new ProjectsModelListenerAdapter() {
             @Override
@@ -186,12 +187,6 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
         InvitationImpl(@NotNull Map<String, String> params, @NotNull SProject project) {
             super(params, project, CreateNewProjectInvitationType.this);
             this.roleId = params.get("roleId");
-        }
-
-        @NotNull
-        @Override
-        protected String getLandingPage() {
-            return core.getPluginResourcesPath("invitationLanding.jsp");
         }
 
         @NotNull
