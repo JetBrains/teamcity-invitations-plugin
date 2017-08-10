@@ -1,10 +1,6 @@
-<%@ page import="jetbrains.buildServer.web.openapi.PlaceId" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="user" uri="/WEB-INF/functions/user" %>
-<%@ taglib prefix="ext" tagdir="/WEB-INF/tags/ext" %>
-<%@ taglib prefix="intprop" uri="/WEB-INF/functions/intprop" %>
-
 <%--@elvariable id="invitation" type="org.jetbrains.teamcity.invitations.JoinProjectInvitationType.InvitationImpl"--%>
 <%@ include file="/include-internal.jsp" %>
 <c:url value="/ajax.html?logout=1" var="logoutUrl"/>
@@ -22,14 +18,8 @@
       /js/bs/bs.js
     </bs:linkScript>
     <bs:ua/>
-    <c:if test="${intprop:getBoolean('teamcity.invitations.landing.uiExtensions.enabled')}">
-        <ext:includeExtensions placeId="<%=PlaceId.ALL_PAGES_HEADER%>"/>
-    </c:if>
   </jsp:attribute>
     <jsp:attribute name="body_include">
-    <c:if test="${intprop:getBoolean('teamcity.invitations.landing.uiExtensions.enabled')}">
-        <jsp:include page="/allPagesIncludeBeforeContentPlace.html"/>
-    </c:if>
 
     <bs:_loginPageDecoration id="loginPage" title="${title}">
       <p id="formNote">
