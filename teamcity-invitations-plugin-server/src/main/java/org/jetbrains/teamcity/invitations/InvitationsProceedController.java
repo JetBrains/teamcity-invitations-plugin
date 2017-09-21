@@ -28,16 +28,10 @@ public class InvitationsProceedController extends BaseController {
 
     public InvitationsProceedController(@NotNull WebControllerManager webControllerManager,
                                         @NotNull InvitationsStorage invitations,
-                                        @NotNull TeamCityCoreFacade core,
-                                        @NotNull AuthorizationInterceptor authorizationInterceptor) {
+                                        @NotNull TeamCityCoreFacade core) {
         this.invitations = invitations;
         this.core = core;
         webControllerManager.registerController(PATH, this);
-        authorizationInterceptor.addPathBasedPermissionsChecker(PATH, (authorityHolder, request) -> {
-            if (authorityHolder.getAssociatedUser() != null && UserFunctions.isGuestUser(authorityHolder.getAssociatedUser())) {
-                throw new AccessDeniedException(authorityHolder, "Guest user can't accept invitation, please login/register using a real user");
-            }
-        });
     }
 
 
@@ -45,9 +39,16 @@ public class InvitationsProceedController extends BaseController {
     @Override
     protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
         SUser user = SessionUser.getUser(request);
+
         Object tokenObj = request.getParameter("token");
         if (tokenObj != null) {
             String token = (String) tokenObj;
+
+            if (UserFunctions.isGuestUser(user)) {
+                redirectTo(request.getContextPath() + InvitationsLandingController.INVITATIONS_PATH + "?guestError=1&token=" + token, response);
+                return null;
+            }
+
             Invitation invitation = core.runAsSystem(() -> invitations.getInvitation(token));
             if (invitation == null) {
                 Loggers.SERVER.warn("User accepted the invitation with token " + token + " but invitation doesn't exist anymore");

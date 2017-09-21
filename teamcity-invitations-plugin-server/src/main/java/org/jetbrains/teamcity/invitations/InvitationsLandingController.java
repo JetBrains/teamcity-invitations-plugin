@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 
 public class InvitationsLandingController extends BaseController {
-    private static final String INVITATIONS_PATH = "/invitations.html";
+    public static final String INVITATIONS_PATH = "/invitations.html";
 
     private static final String TOKEN_URL_PARAM = "token";
 
