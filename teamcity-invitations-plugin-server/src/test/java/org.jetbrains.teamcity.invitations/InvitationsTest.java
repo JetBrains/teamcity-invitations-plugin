@@ -15,8 +15,10 @@ import jetbrains.buildServer.serverSide.ServerSideEventDispatcher;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.users.UserModel;
 import jetbrains.buildServer.util.EventDispatcher;
 import jetbrains.buildServer.util.FileUtil;
+import jetbrains.buildServer.web.functions.user.UserFunctions;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
@@ -99,6 +101,10 @@ public class InvitationsTest extends BaseTestCase {
                 pluginDescriptor, invitations, core, invitationsController, asList(createNewProjectInvitationType, joinProjectInvitationType));
 
         newRequest(HttpMethod.GET, "/");
+
+        final UserModel usermodel = Mockito.mock(UserModel.class);
+        when(usermodel.isGuestUser(any())).thenReturn(false);
+        new UserFunctions(usermodel);
     }
 
     private PagePlaces createPagePlaces() {
