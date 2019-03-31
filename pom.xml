@@ -25,17 +25,17 @@
     <distributionManagement>
         <repository>
             <id>JetBrains.Internal</id>
-            <url>http://repo.labs.intellij.net/teamcity/</url>
+            <url>https://repo.labs.intellij.net/teamcity/</url>
         </repository>
         <snapshotRepository>
             <id>JetBrains.Internal</id>
-            <url>http://repo.labs.intellij.net/teamcity/</url>
+            <url>https://repo.labs.intellij.net/teamcity/</url>
         </snapshotRepository>
     </distributionManagement>
     <pluginRepositories>
         <pluginRepository>
             <id>JetBrains</id>
-            <url>http://download.jetbrains.com/teamcity-repository/</url>
+            <url>https://download.jetbrains.com/teamcity-repository/</url>
         </pluginRepository>
     </pluginRepositories>
     <build>
