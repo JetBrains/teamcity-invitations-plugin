@@ -14,6 +14,9 @@
       /css/maintenance-initialPages-common.css
       /css/initialPages.css
     </bs:linkCSS>
+    <style type="text/css">
+        <jsp:include page="css/invitations.css"/>
+    </style>
     <bs:linkScript>
       /js/bs/bs.js
     </bs:linkScript>
@@ -51,24 +54,20 @@
                   <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.impl.UserEx"--%>
                     <c:when test="${loggedInUser == null}">
                     <p>
-                        Please <a href="<c:url value='${proceedUrl}'/>">log in or register</a> to accept the invitation.
+                        <a class="invitations__button" href="<c:url value='${proceedUrl}'/>">Log in and accept...</a>
                     </p>
                   </c:when>
                   <c:when test="${loggedInUser != null && user:isGuestUser(loggedInUser)}">
                     <p>
-                        You are logged in as a guest user who cannot accept invitations. <br/>
-                        Please <a class="logout" href="#" onclick="BS.Invitations.logoutGuest(); return false">re-log in
-                        or
-                        register</a> to proceed.
+                        You are logged in as a guest and cannot accept invitations. <br/>
+                        <button type="button" class="invitations__button" onclick="BS.Invitations.logoutGuest();">Re-log in and accept...</button>
                     </p>
                   </c:when>
                   <c:otherwise>
                     <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>
                       <p>
                           You are logged in as '<c:out value="${loggedInUser.descriptiveName}"/>'. <br/>
-                          Please <a href="<c:url value='${proceedUrl}'/>">proceed</a> as the currently logged in user to
-                          accept the
-                          invitation.
+                          <a class="invitations__button" href="<c:url value='${proceedUrl}'/>">Accept</a>
                       </p>
                   </c:otherwise>
                 </c:choose>

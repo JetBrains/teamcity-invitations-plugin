@@ -1,0 +1,45 @@
+.invitations__button {
+    display: inline-block;
+    float: none;
+
+    box-sizing: border-box;
+    height: 24px;
+    margin: 8px 0 0;
+    padding: 0 16px;
+
+    cursor: pointer;
+    transition: background-color 0.3s ease-out;
+    text-decoration: none;
+
+    border: 0;
+    border-radius: 3px;
+    outline: 0;
+
+    font-family: inherit;
+    font-size: 12px;
+
+    line-height: 24px;
+
+    color: white;
+    background-color: #008eff;
+}
+
+.invitations__button::-moz-focus-inner {
+    padding: 0;
+
+    border: 0;
+    outline: 0;
+}
+
+.invitations__button:hover,
+.invitations__button:focus {
+    color: white;
+    text-decoration: none;
+    transition: none;
+    background-color: #007ee5;
+}
+
+.invitations__button:active {
+    background-color: #1a98ff;
+    box-shadow: inset 0 0 0 1px #0062b2;
+}
