@@ -54,20 +54,20 @@
                   <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.impl.UserEx"--%>
                     <c:when test="${loggedInUser == null}">
                     <p>
-                        <a class="invitations__button" href="<c:url value='${proceedUrl}'/>">Log in and accept...</a>
+                        <a class="invitations__button" href="<c:url value='${proceedUrl}'/>">Log in and proceed...</a>
                     </p>
                   </c:when>
                   <c:when test="${loggedInUser != null && user:isGuestUser(loggedInUser)}">
                     <p>
                         You are logged in as a guest and cannot accept invitations. <br/>
-                        <button type="button" class="invitations__button" onclick="BS.Invitations.logoutGuest();">Re-log in and accept...</button>
+                        <button type="button" class="invitations__button" onclick="BS.Invitations.logoutGuest();">Re-log in and proceed...</button>
                     </p>
                   </c:when>
                   <c:otherwise>
                     <%--@elvariable id="loggedInUser" type="jetbrains.buildServer.users.SUser"--%>
                       <p>
                           You are logged in as '<c:out value="${loggedInUser.descriptiveName}"/>'. <br/>
-                          <a class="invitations__button" href="<c:url value='${proceedUrl}'/>">Accept</a>
+                          <a class="invitations__button" href="<c:url value='${proceedUrl}'/>">Proceed</a>
                       </p>
                   </c:otherwise>
                 </c:choose>
