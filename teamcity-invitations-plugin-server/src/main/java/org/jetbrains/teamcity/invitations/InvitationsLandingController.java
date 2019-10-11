@@ -47,7 +47,7 @@ public class InvitationsLandingController extends BaseController {
         Invitation invitation = core.runAsSystem(() -> invitations.getInvitation(token));
         if (invitation == null) {
             Loggers.SERVER.warn("Request with unknown invitation token received: " + WebUtil.getRequestDump(request));
-            return new ModelAndView(core.getPluginResourcesPath("invitationLanding.jsp"), Collections.singletonMap("title", "Not found invitation"));
+            return new ModelAndView(core.getPluginResourcesPath("invitationLanding.jsp"), Collections.singletonMap("title", "Invitation not found"));
         }
         if (invitation.getValidationError() != null) {
             Loggers.SERVER.warn("User tries to accept the invitation '" + token + "' that is invalid: " + invitation.getValidationError());
