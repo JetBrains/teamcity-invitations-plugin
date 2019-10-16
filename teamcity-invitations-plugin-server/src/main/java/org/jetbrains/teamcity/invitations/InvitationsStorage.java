@@ -87,7 +87,7 @@ public class InvitationsStorage {
         }
     }
 
-    public boolean updateInvitation(@NotNull Invitation invitation, @NotNull String description) {
+    public void updateInvitation(@NotNull Invitation invitation, @NotNull String description) {
         Optional<SProjectFeatureDescriptor> featureDescriptor = invitation.getProject().getOwnFeaturesOfType(PROJECT_FEATURE_TYPE).stream()
                 .filter(feature -> feature.getParameters().get(TOKEN_PARAM_NAME).equals(invitation.getToken()))
                 .findFirst();
@@ -97,9 +97,6 @@ public class InvitationsStorage {
             params.put(INVITATION_TYPE, invitation.getType().getId());
             invitation.getProject().updateFeature(featureDescriptor.get().getId(), PROJECT_FEATURE_TYPE, params);
             teamCityCore.persist(invitation.getProject(), description);
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -108,11 +105,14 @@ public class InvitationsStorage {
         synchronized (this) {
             if (myInvitationByTokenCache == null) {
                 myInvitationByTokenCache = new HashMap<>();
-                for (SProject project : teamCityCore.getActiveProjects()) {
-                    for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
-                        myInvitationByTokenCache.put(feature.getParameters().get(TOKEN_PARAM_NAME), fromProjectFeature(project, feature));
+                teamCityCore.runAsSystem(() -> {
+                    for (SProject project : teamCityCore.getActiveProjects()) {
+                        for (SProjectFeatureDescriptor feature : project.getOwnFeaturesOfType(PROJECT_FEATURE_TYPE)) {
+                            myInvitationByTokenCache.put(feature.getParameters().get(TOKEN_PARAM_NAME), fromProjectFeature(project, feature));
+                        }
                     }
-                }
+                    return null;
+                });
             }
             return myInvitationByTokenCache.get(token);
         }
