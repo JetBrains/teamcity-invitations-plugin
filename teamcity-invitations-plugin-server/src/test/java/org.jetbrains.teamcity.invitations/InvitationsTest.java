@@ -111,16 +111,18 @@ public class InvitationsTest extends BaseTestCase {
 
         invitationsProceedController = new InvitationsProceedController(webControllerManager, invitations, core);
 
+        final UserModel userModel = Mockito.mock(UserModel.class);
+        when(userModel.isGuestUser(any())).thenReturn(false);
+        new UserFunctions(userModel);
+
         PluginDescriptor pluginDescriptor = Mockito.mock(PluginDescriptor.class);
         when(pluginDescriptor.getPluginResourcesPath(anyString())).thenReturn("fake.jsp");
         invitationsAdminController = new InvitationAdminController(createPagePlaces(), webControllerManager,
-                pluginDescriptor, invitations, core, invitationsController, asList(createNewProjectInvitationType, joinProjectInvitationType));
+                pluginDescriptor, invitations, core, invitationsController, asList(createNewProjectInvitationType, joinProjectInvitationType), userModel);
 
         newRequest(HttpMethod.GET, "/");
 
-        final UserModel usermodel = Mockito.mock(UserModel.class);
-        when(usermodel.isGuestUser(any())).thenReturn(false);
-        new UserFunctions(usermodel);
+
     }
 
     private PagePlaces createPagePlaces() {

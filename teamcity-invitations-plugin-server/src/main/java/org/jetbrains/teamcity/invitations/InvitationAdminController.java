@@ -23,8 +23,10 @@ import jetbrains.buildServer.controllers.SimpleView;
 import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.users.UserModel;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -56,6 +58,7 @@ public class InvitationAdminController extends BaseFormXmlController {
     private final InvitationsLandingController invitationsController;
     @NotNull
     private final List<InvitationType> invitationTypes;
+    @NotNull private final UserModel myUserModel;
 
     public InvitationAdminController(@NotNull PagePlaces pagePlaces,
                                      @NotNull WebControllerManager webControllerManager,
@@ -63,11 +66,13 @@ public class InvitationAdminController extends BaseFormXmlController {
                                      @NotNull InvitationsStorage invitations,
                                      @NotNull TeamCityCoreFacade teamCityCoreFacade,
                                      @NotNull InvitationsLandingController invitationsController,
-                                     @NotNull List<InvitationType> invitationTypes) {
+                                     @NotNull List<InvitationType> invitationTypes,
+                                     @NotNull UserModel userModel) {
         this.invitations = invitations;
         this.teamCityCoreFacade = teamCityCoreFacade;
         this.invitationsController = invitationsController;
         this.invitationTypes = invitationTypes;
+        myUserModel = userModel;
         new InvitationsProjectAdminPage(pagePlaces, pluginDescriptor).register();
         webControllerManager.registerController("/admin/invitations.html", this);
     }
@@ -226,6 +231,11 @@ public class InvitationAdminController extends BaseFormXmlController {
 
         @Override
         public boolean isAvailable(@NotNull HttpServletRequest request) {
+            if (TeamCityProperties.getBoolean("teamcity.hosted.enabled")) {
+                SUser user = SessionUser.getUser(request);
+                return myUserModel.isSuperUser(user);
+            }
+
             return super.isAvailable(request) && invitationTypes.stream().anyMatch(type -> type.isAvailableFor(SessionUser.getUser(request), getProject(request)));
         }
 
