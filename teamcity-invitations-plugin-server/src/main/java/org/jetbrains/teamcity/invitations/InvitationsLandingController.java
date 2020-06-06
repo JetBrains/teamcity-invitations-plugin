@@ -21,6 +21,7 @@ import jetbrains.buildServer.controllers.AuthorizationInterceptor;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.web.impl.TeamCityInternalKeys;
+import jetbrains.buildServer.web.invitations.InvitationsRegistry;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import jetbrains.buildServer.web.util.WebUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,15 +46,22 @@ public class InvitationsLandingController extends BaseController {
     @NotNull
     private final RootUrlHolder rootUrlHolder;
 
+
     public InvitationsLandingController(@NotNull WebControllerManager webControllerManager,
                                         @NotNull InvitationsStorage invitations,
                                         @NotNull AuthorizationInterceptor authorizationInterceptor,
-                                        @NotNull TeamCityCoreFacade core, @NotNull RootUrlHolder rootUrlHolder) {
+                                        @NotNull TeamCityCoreFacade core, @NotNull RootUrlHolder rootUrlHolder,
+                                        @NotNull InvitationsRegistry invitationRegistry) {
         this.invitations = invitations;
         this.core = core;
         this.rootUrlHolder = rootUrlHolder;
         webControllerManager.registerController(INVITATIONS_PATH, this);
         authorizationInterceptor.addPathNotRequiringAuth(INVITATIONS_PATH);
+        invitationRegistry.registerInvitationsProvider(request -> {
+            String token = request.getParameter(TOKEN_URL_PARAM);
+            Invitation invitation = core.runAsSystem(() -> invitations.getInvitation(token));
+            return invitation != null;
+        });
     }
 
     @Nullable
