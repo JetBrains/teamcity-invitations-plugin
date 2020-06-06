@@ -23,7 +23,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <properties>
-        <teamcity-version>2017.1-SNAPSHOT</teamcity-version>
+        <teamcity-version>2020.1</teamcity-version>
     </properties>
     <repositories>
         <repository>
@@ -75,7 +75,7 @@
                 <plugin>
                     <groupId>org.jetbrains.teamcity</groupId>
                     <artifactId>teamcity-sdk-maven-plugin</artifactId>
-                    <version>0.2</version>
+                    <version>0.4.2</version>
                     <configuration>
                         <teamcityDir>${project.basedir}/servers/TeamCity-2017.1</teamcityDir>
                         <dataDirectory>${project.basedir}/data/2017.1</dataDirectory>

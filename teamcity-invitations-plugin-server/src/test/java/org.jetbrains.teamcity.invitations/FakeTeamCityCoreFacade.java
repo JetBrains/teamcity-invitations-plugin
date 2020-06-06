@@ -95,7 +95,7 @@ public class FakeTeamCityCoreFacade implements TeamCityCoreFacade {
         MultiMap<String, SProjectFeatureDescriptor> features = new MultiMap<>();
 
         when(project.addFeature(anyString(), anyMap())).thenAnswer(invocation -> {
-            ProjectFeatureDescriptorImpl descriptor = new ProjectFeatureDescriptorImpl(features.size() + "", invocation.getArgument(0), invocation.getArgument(1), project);
+            ProjectFeatureDescriptorImpl descriptor = new ProjectFeatureDescriptorImpl(features.size() + "", invocation.getArgument(0), invocation.getArgument(1), project.getProjectId());
             features.putValue(invocation.getArgument(0), descriptor);
             events.getMulticaster().projectFeatureAdded(project, descriptor);
             return descriptor;

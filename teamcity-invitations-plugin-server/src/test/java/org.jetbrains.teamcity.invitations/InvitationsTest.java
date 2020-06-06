@@ -28,6 +28,7 @@ import jetbrains.buildServer.groups.SUserGroup;
 import jetbrains.buildServer.serverSide.ProjectsModelListener;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.ServerSideEventDispatcher;
+import jetbrains.buildServer.serverSide.ServerResponsibilityImpl;
 import jetbrains.buildServer.serverSide.auth.*;
 import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.users.SUser;
@@ -35,6 +36,7 @@ import jetbrains.buildServer.users.UserModel;
 import jetbrains.buildServer.util.EventDispatcher;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.web.functions.user.UserFunctions;
+import jetbrains.buildServer.web.invitations.InvitationsRegistry;
 import jetbrains.buildServer.web.openapi.*;
 import jetbrains.buildServer.web.util.SessionUser;
 import org.jdom.Element;
@@ -90,7 +92,7 @@ public class InvitationsTest extends BaseTestCase {
     @BeforeMethod
     public void setUp() throws Exception {
         super.setUp();
-        securityContext = new SecurityContextImpl();
+        securityContext = new SecurityContextImpl(new ServerResponsibilityImpl());
         events = ServerSideEventDispatcher.create(securityContext, ProjectsModelListener.class);
         core = new FakeTeamCityCoreFacade(securityContext, events);
         systemAdminRole = core.addRole("SYSTEM_ADMIN", new Permissions(Permission.values()), false);
@@ -107,7 +109,7 @@ public class InvitationsTest extends BaseTestCase {
         WebControllerManager webControllerManager = createWebControllerManager();
 
         invitationsController = new InvitationsLandingController(webControllerManager, invitations, Mockito.mock(AuthorizationInterceptor.class),
-                core, Mockito.mock(RootUrlHolder.class));
+                core, Mockito.mock(RootUrlHolder.class), Mockito.mock(InvitationsRegistry.class));
 
         invitationsProceedController = new InvitationsProceedController(webControllerManager, invitations, core);
 
