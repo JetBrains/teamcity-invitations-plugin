@@ -72,7 +72,7 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
         }
         String projectExternalId = projectIdentifiersManager.generateNewExternalId(parentExtId, name, null);
         SProject project = parent.createProject(projectExternalId, name);
-        project.persist();
+        project.schedulePersisting("New project is created by invitation plugin");
         return project;
     }
 
@@ -106,7 +106,7 @@ public class TeamCityCoreFacadeImpl implements TeamCityCoreFacade {
 
     @Override
     public void persist(@NotNull SProject project, @NotNull String description) {
-        project.persist(myConfigActionFactory.createAction(project, description));
+        project.schedulePersisting(myConfigActionFactory.createAction(project, description));
     }
 
     @NotNull
