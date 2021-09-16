@@ -242,7 +242,13 @@ public class CreateNewProjectInvitationType extends AbstractInvitationType<Creat
             AdditionalPermissionsUserWrapper wrapper = new AdditionalPermissionsUserWrapper(originalUser, additionalPermissions);
             SessionUser.setUser(request, wrapper.getWrappedUser());
             myInvitationInProgresses.add(new InvitationInProgress(originalUser, this, wrapper::disable));
-            return new ModelAndView(new RedirectView(new RelativeWebLinks().getCreateProjectPageUrl(project.getExternalId()), true));
+
+            String createProjectPageUrl = new RelativeWebLinks().getCreateProjectPageUrl(project.getExternalId());
+
+            String target = request.getParameter("target");
+            String redirectUrl = (target != null && target.equals("wizard")) ? "/wizard.html" : createProjectPageUrl;
+
+            return new ModelAndView(new RedirectView(redirectUrl, true));
         }
 
         @Nullable
